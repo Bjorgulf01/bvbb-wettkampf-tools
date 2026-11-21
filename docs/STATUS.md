@@ -4,17 +4,17 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | (Datum, Rechner: Windows-PC oder MacBook) |
-| Aktueller Zweig | |
-| Letzte fertige Aufgabe | (zum Beispiel: Task 2) |
-| In Arbeit | (Task, Zweig, Rechner) |
+| Zuletzt bearbeitet | 21.11.2026, Windows-PC (über Claude-App) |
+| Aktueller Zweig | task-1-test-runner |
+| Letzte fertige Aufgabe | Task 1 |
+| In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
 
 | Task | Stand | Zweig | Bemerkung |
 |---|---|---|---|
-| 0 Umgebung | offen | | |
-| 1 Test-Runner, Konfiguration | offen | | |
+| 0 Umgebung | teilweise | | Git und Dateien geprüft (Repo, noreply-Adresse, Hook-Pfad). Docker, PHP 8.4 und NAS-Datenbank in dieser Sitzung nicht erreichbar, `check-env.php` bitte auf dem PC ausführen |
+| 1 Test-Runner, Konfiguration | fertig | task-1-test-runner | 4 Tests grün unter PHP 8.3.6, noch nicht unter PHP 8.4 gelaufen |
 | 2 Datenbank, Migrationen | offen | | |
 | 3 Altersklasse | offen | | |
 | 4 Vereinszuordnung | offen | | |
@@ -31,8 +31,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 ## Entscheidungen und Abweichungen vom Plan
 
-(Hier trägt Claude Code ein, was er anders gemacht hat und warum.)
+- Task 1: Zusätzlich zu den drei geplanten Tests gibt es einen vierten (fromFile meldet fehlende oder ungültige Datei). Ein Lauf, in dem nur übersprungene Tests vorkommen, endet mit Exit-Code 0 und der Warnung, dass dies kein Erfolg ist.
 
 ## Nächster Schritt
 
-(Eine Zeile: was die nächste Sitzung als Erstes tut.)
+Auf dem PC `docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tests/run.php` ausführen (PHP 8.4), dann Task 2 (Datenbank, Migrationen).
