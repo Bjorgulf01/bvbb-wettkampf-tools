@@ -13,8 +13,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Task | Stand | Zweig | Bemerkung |
 |---|---|---|---|
-| 0 Umgebung | fertig (PC) | | `check-env.php` auf dem PC: „Alles in Ordnung.“ (PHP 8.4 in Docker, MariaDB 10.11.19 auf dem NAS, `bvbb_test_pc`). MacBook noch nicht geprüft |
-| 1 Test-Runner, Konfiguration | fertig | task-1-test-runner | 4 Tests grün, auch unter PHP 8.4 |
+| 0 Umgebung | fertig | | `check-env.php` meldet „Alles in Ordnung“ (21.11.2026, Windows-PC). Claude in der App erreicht Docker und NAS nicht, Tests mit Datenbank laufen auf dem PC |
+| 1 Test-Runner, Konfiguration | fertig | task-1-test-runner | 4 Tests grün, auch im Docker-Container unter PHP 8.4 (21.11.2026) |
 | 2 Datenbank, Migrationen | fertig | task-2-database | 13 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
 | 3 Altersklasse | offen | | |
 | 4 Vereinszuordnung | offen | | |
