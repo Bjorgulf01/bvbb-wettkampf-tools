@@ -102,7 +102,9 @@ final class Router
     private function run(array $route, Request $r, array $params): Response
     {
         try {
-            if ($this->guard !== null && ($route['opts']['auth'] || $route['opts']['csrf'])) {
+            // Der Wächter wird bei jeder Anfrage gefragt, auch bei öffentlichen Routen:
+            // so gilt currentUser() nie aus einer vorigen Anfrage weiter.
+            if ($this->guard !== null) {
                 $denied = $this->guard->check($r, $route['opts']);
                 if ($denied !== null) {
                     return $denied;

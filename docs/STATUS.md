@@ -5,8 +5,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 21.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-6-http |
-| Letzte fertige Aufgabe | Task 6 |
+| Aktueller Zweig | task-7-auth |
+| Letzte fertige Aufgabe | Task 7 |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -20,8 +20,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 4 Vereinszuordnung | fertig | task-4-club-directory | 15 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #4) |
 | 4b Ampel | fertig | task-4b-health-status | 11 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #5) |
 | 5 Rechte | fertig | task-5-permissions | 12 Tests grün (PHP 8.4, `fromDb` gegen `bvbb_test_pc`), Review erledigt, zusammengeführt (Pull-Request #6) |
-| 6 HTTP-Grundlage | fertig | task-6-http | 15 Tests grün (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
-| 7 Anmeldung, Sitzung, CSRF | offen | | |
+| 6 HTTP-Grundlage | fertig | task-6-http | 15 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #7) |
+| 7 Anmeldung, Sitzung, CSRF | fertig | task-7-auth | 24 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
 | 8 Spieler-Schnittstelle | offen | | |
 | 9 Datenprüfung, Import | offen | | |
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
@@ -58,8 +58,13 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 6: Platzhalter im Pfad mit ungültigem UTF-8, Steuerzeichen oder kodiertem Schrägstrich ergeben 404, ein Zeilenumbruch am Pfadende auch. HEAD wird nicht unterstützt (405). Ein doppelter Platzhalter im Muster scheitert schon bei `add()`.
 - Task 6: Bei Serverfehlern protokolliert der Router nur Methode, Routenmuster (nicht den konkreten Pfad), Art der Ausnahme, Datei, Zeile und Code. Der Text der Ausnahme und Pfadwerte können Personendaten enthalten und stehen weder in der Antwort noch im Protokoll. Das Protokoll ist als zweiter Konstruktorparameter einsetzbar (Standard `error_log`).
 - Task 6: `Response::json` nimmt optional zusätzliche Header (zum Beispiel `Allow`) und setzt immer `Content-Type: application/json; charset=utf-8`, `X-Content-Type-Options: nosniff` und `Cache-Control: no-store`. Ein leerer Body wird als `{}` ausgegeben.
+- Task 7: `env` muss `development`, `staging` oder `production` sein, sonst bricht `assertSafe` ab (auch wenn `env` fehlt). `staging` ist der Test-Webspace: Testanmeldung erlaubt, Cookie mit `Secure` (Task 12). Im Echtbetrieb ist jeder Wert von `test_auth` außer `false` oder fehlend unsicher, auch `1` oder `"ja"`. `testAuthEnabled()` ist nur bei genau `true` und nur in `development` oder `staging` wahr. Die Testanmeldung ist im Echtbetrieb damit auch dann aus, wenn `assertSafe` nicht aufgerufen wurde. `session_max_age` muss eine positive ganze Zahl sein.
+- Task 7: Die Sitzung läuft ab der Anmeldung höchstens `session_max_age` Sekunden und wird durch Aktivität nicht verlängert. Bei An- und Abmeldung wird die Sitzungs-ID erneuert (Schutz gegen Session Fixation; Standard `session_regenerate_id(true)`, in Tests ein Callback). Abgelaufene Sitzung: 401 `session_expired`, ohne Sitzung: 401 `unauthenticated`. Reihenfolge im Wächter: Sitzung (401), aktiv (403 `inactive`), Token (403 `csrf`).
+- Task 7: Testpersonen (alle erfunden, `@example.org`, Kennung `test:<Schlüssel>`): `admin`, `kaderpflege`, `nada`, `pruefer`, `trainer`, `basis`, `trainer-kaderpflege` (zwei Rollen), `ohne-rolle`. Unbekannte Person: 400 `unknown_person`.
+- Task 7: `first_admin_subject` gibt beim ersten Anlegen zusätzlich `admin`. Rollen werden nur beim ersten Anlegen vergeben. Das Anlegen steht im Änderungsprotokoll (`user_created`, Zusammenfassung nur mit Rollenschlüsseln, ohne Name oder E-Mail). In Task 8 kommt `AuditRepo` dazu, dann schreibt `UserRepo` darüber.
+- Task 7: Abmelden mit laufender Sitzung braucht das Token. Ohne Sitzung (zum Beispiel nach dem Ablauf) gelingt es ohne Token. Der Router fragt den Wächter jetzt bei jeder Anfrage, damit `currentUser()` nie aus einer vorigen Anfrage weitergilt. Die Kennung vom Anmeldedienst muss aus 1 bis 190 sichtbaren ASCII-Zeichen bestehen. Name wird auf 190 Zeichen gekürzt, eine zu lange E-Mail-Adresse nicht gespeichert. Daten inaktiver Personen werden bei einem Anmeldeversuch nicht überschrieben.
 - **Geklärt am 21.11.2026 (betrifft Task 5 und 8):** Laut Entwurf, Abschnitt 6, schreibt NADA/Sportmedizin die „Daten und Termine“. In Etappe 1 gilt aber der Plan (Abgrenzung): Die Textspalten SpoMed und Anti Doping (`player.private`) sehen nur Kaderpflege und Administrator, `health_staff` sieht nur die Ampel (`player.health_light`). Der Projektinhaber hat das bestätigt.
 
 ## Nächster Schritt
 
-Task 6 zusammenführen (Pull-Request von `task-6-http`). Danach Task 7 (Anmeldung, Sitzung, CSRF).
+Task 7 zusammenführen (Pull-Request von `task-7-auth`). Danach Task 8 (Spieler-Schnittstelle).
