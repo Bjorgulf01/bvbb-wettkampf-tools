@@ -1,5 +1,5 @@
 # Zugangsdaten und lokale Konfiguration
-config.php
+/config.php
 .env
 *.local
 
