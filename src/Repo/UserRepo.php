@@ -55,9 +55,13 @@ final class UserRepo
             foreach ($roleIds as $roleId) {
                 $ins->execute([$id, $roleId]);
             }
-            $this->pdo->prepare(
-                "INSERT INTO audit_log (user_id, action, object_type, object_id, summary) VALUES (NULL, 'user_created', 'user', ?, ?)"
-            )->execute([$id, 'roles: ' . ($roleKeys === [] ? '(keine)' : implode(', ', $roleKeys))]);
+            (new AuditRepo($this->pdo))->log(
+                null,
+                'user_created',
+                'user',
+                $id,
+                'roles: ' . ($roleKeys === [] ? '(keine)' : implode(', ', $roleKeys))
+            );
             $this->pdo->commit();
         } catch (PDOException $e) {
             $this->pdo->rollBack();

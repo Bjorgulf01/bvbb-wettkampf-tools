@@ -5,8 +5,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 21.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-7-auth |
-| Letzte fertige Aufgabe | Task 7 |
+| Aktueller Zweig | task-8-players-api |
+| Letzte fertige Aufgabe | Task 8 |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -21,8 +21,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 4b Ampel | fertig | task-4b-health-status | 11 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #5) |
 | 5 Rechte | fertig | task-5-permissions | 12 Tests grün (PHP 8.4, `fromDb` gegen `bvbb_test_pc`), Review erledigt, zusammengeführt (Pull-Request #6) |
 | 6 HTTP-Grundlage | fertig | task-6-http | 15 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #7) |
-| 7 Anmeldung, Sitzung, CSRF | fertig | task-7-auth | 24 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
-| 8 Spieler-Schnittstelle | offen | | |
+| 7 Anmeldung, Sitzung, CSRF | fertig | task-7-auth | 24 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #8) |
+| 8 Spieler-Schnittstelle | fertig | task-8-players-api | 23 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
 | 9 Datenprüfung, Import | offen | | |
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
 | 10 Benutzer, Rollen, Protokoll | offen | | |
@@ -63,8 +63,12 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 7: Testpersonen (alle erfunden, `@example.org`, Kennung `test:<Schlüssel>`): `admin`, `kaderpflege`, `nada`, `pruefer`, `trainer`, `basis`, `trainer-kaderpflege` (zwei Rollen), `ohne-rolle`. Unbekannte Person: 400 `unknown_person`.
 - Task 7: `first_admin_subject` gibt beim ersten Anlegen zusätzlich `admin`. Rollen werden nur beim ersten Anlegen vergeben. Das Anlegen steht im Änderungsprotokoll (`user_created`, Zusammenfassung nur mit Rollenschlüsseln, ohne Name oder E-Mail). In Task 8 kommt `AuditRepo` dazu, dann schreibt `UserRepo` darüber.
 - Task 7: Abmelden mit laufender Sitzung braucht das Token. Ohne Sitzung (zum Beispiel nach dem Ablauf) gelingt es ohne Token. Der Router fragt den Wächter jetzt bei jeder Anfrage, damit `currentUser()` nie aus einer vorigen Anfrage weitergilt. Die Kennung vom Anmeldedienst muss aus 1 bis 190 sichtbaren ASCII-Zeichen bestehen. Name wird auf 190 Zeichen gekürzt, eine zu lange E-Mail-Adresse nicht gespeichert. Daten inaktiver Personen werden bei einem Anmeldeversuch nicht überschrieben.
+- Task 8: Antworten: `GET /api/players` liefert `{players:[…]}`, `GET /api/players/{id}` liefert `{player:{…}}`, `POST` liefert 201 `{id}`, `PUT` liefert `{id, changed:[…]}`. Je Zeile stehen `id`, genau die lesbaren Felder (einschließlich `club_short`, `state` und Ampel) und mit `player.roster` die berechnete `ak`. Sortiert nach Name, Vorname, id. Passive Spieler sind enthalten. `year` muss 19xx oder 20xx sein (sonst 422), ohne `year` gilt das laufende Jahr (Europe/Berlin). Die Ampel nutzt den heutigen Tag als Stichtag.
+- Task 8: Fehler: nicht schreibbares oder unbekanntes Feld 403 `{error:"forbidden", fields:[…]}` für die ganze Anfrage, auch für eine Liste als Body und beim Anlegen ohne Schreibrecht auf Name und Vorname. Ungültige Werte ergeben 422 `{error:"invalid", fields:[…]}`, ein leerer Body 422 `invalid_body`, ein unbekannter Spieler 404, ohne jedes Leserecht `GET /api/players/{id}` 403. Prüfregeln: Typen und Längen wie im Schema, `birth_year` 1900 bis 2100, `birth_date` als `JJJJ-MM-TT`, `active` nur `true` oder `false`. Leerraum am Rand wird entfernt (auch geschützte und Null-Breite-Leerzeichen und BOM aus Excel), leere Texte werden zu `null`. Steuerzeichen werden abgelehnt, nur in `trainer_info`, `sportmed_note` und `antidoping_note` sind Zeilenumbruch und Tabulator erlaubt. Die genaue Datenprüfung (Befunde) folgt in Task 9.
+- Task 8: `club_id` wird wie bestätigt bei jedem Speichern aus `club_name` über `ClubDirectory` abgeleitet, innerhalb der Transaktion. **Inaktive Vereine werden dabei nicht mehr zugeordnet**, ihr Text gilt als unbekannt (`club_id` leer). Das Protokoll (`AuditRepo`) nennt bei `update` nur die geänderten Felder (`fields: email1`), bei `create` die gesetzten Feldnamen, nie Werte. Ohne Änderung gibt es keinen Eintrag. `UserRepo` schreibt jetzt auch über `AuditRepo`.
+- **Frage an den Projektinhaber (Datenschutz):** `sportmed_note` und `antidoping_note` sind bis Etappe 3 Freitext aus der Kaderliste. Über die Schnittstelle sind sie auf 200 Zeichen begrenzt (längster Wert der Testliste: etwa 60). Ein Befund lässt sich technisch trotzdem eintragen. Reicht die Begrenzung zusammen mit einem Hinweis in der Oberfläche (Task 11), oder sollen nur bestimmte Werte erlaubt sein (zum Beispiel „Erledigt“, „/“, Datum, „Termin …“, „angefragt“, „abgesagt“)?
 - **Geklärt am 21.11.2026 (betrifft Task 5 und 8):** Laut Entwurf, Abschnitt 6, schreibt NADA/Sportmedizin die „Daten und Termine“. In Etappe 1 gilt aber der Plan (Abgrenzung): Die Textspalten SpoMed und Anti Doping (`player.private`) sehen nur Kaderpflege und Administrator, `health_staff` sieht nur die Ampel (`player.health_light`). Der Projektinhaber hat das bestätigt.
 
 ## Nächster Schritt
 
-Task 7 zusammenführen (Pull-Request von `task-7-auth`). Danach Task 8 (Spieler-Schnittstelle).
+Task 8 zusammenführen (Pull-Request von `task-8-players-api`). Danach Task 9 (Vereine, Datenprüfung, Excel-Import). Offene Frage an den Projektinhaber: Freitext in SpoMed und Anti Doping (siehe oben).
