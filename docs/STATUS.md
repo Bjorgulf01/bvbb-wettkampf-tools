@@ -5,8 +5,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 21.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-4-club-directory |
-| Letzte fertige Aufgabe | Task 4 |
+| Aktueller Zweig | task-4b-health-status |
+| Letzte fertige Aufgabe | Task 4b |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -17,8 +17,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 1 Test-Runner, Konfiguration | fertig | task-1-test-runner | 4 Tests grün, auch im Docker-Container unter PHP 8.4 (21.11.2026) |
 | 2 Datenbank, Migrationen | fertig | task-2-database | 13 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #2) |
 | 3 Altersklasse | fertig | task-3-age-class | 8 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #3) |
-| 4 Vereinszuordnung | fertig | task-4-club-directory | 15 Tests grün (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
-| 4b Ampel | offen | | |
+| 4 Vereinszuordnung | fertig | task-4-club-directory | 15 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #4) |
+| 4b Ampel | fertig | task-4b-health-status | 11 Tests grün (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
 | 5 Rechte | offen | | |
 | 6 HTTP-Grundlage | offen | | |
 | 7 Anmeldung, Sitzung, CSRF | offen | | |
@@ -45,8 +45,12 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 4: Reihenfolge Langname vor Kürzel vor Alias. Passt ein Text auf einer Stufe zu mehreren Vereinen (zum Beispiel gleiches Kürzel), entscheidet die nächste Stufe. Ein von Hand gepflegter Alias kann so den Konflikt auflösen. Bleibt der Text mehrdeutig, gilt er als unbekannt, statt zu raten.
 - Task 4: Der Vergleich faltet Groß- und Kleinschreibung einschließlich ß/SS („GRÜN-WEISS“ findet „Grün-Weiß“) und behandelt Leerraum im Namen als ein Leerzeichen, auch geschützte und Null-Breite-Leerzeichen aus Excel. Das geht etwas über den Plan hinaus, der nur Leerzeichen am Rand nennt.
 - Task 4: Ein Bundesland außer genau `BER` oder `BRA` wird als leer (nicht gepflegt) ausgegeben. Eine doppelte Vereins-ID im Konstruktor ergibt einen Fehler.
+- Task 4b: Die Rechtezeile `player.health_light` steht schon seit Task 2 im Seed. `FIELD_GROUPS` folgt in Task 5, die Ausgabe in Task 8.
+- Task 4b: „Erledigt“ und „/“ gelten nur als ganzer Eintrag („Erledigt.“ und „Erledigt ✓“ zählen auch). „Erledigt 12.03.2026“ richtet sich nach dem Datum. „abgesagt“ zählt dagegen auch als Teil des Textes und geht wie in der Regeltabelle Termin und Datum vor: „Termin abgesagt“, „abgesagt 12.03.2026“ und auch „abgesagt, neuer Termin 10.06“ ergeben `open`. Eine abgesagte Untersuchung erscheint so nie grün oder gelb.
+- Task 4b: Nicht in der Regeltabelle und so entschieden: Ein Datum aus einem späteren Jahr als `$year` (zum Beispiel 10.01.2027 im Jahr 2026) und ein ungültiges Datum (31.02.2026) ergeben `unclear`. Stehen mehrere vollständige Daten im Text, zählt das späteste. Der Stichtag selbst zählt als erledigt. Text, der kein gültiges UTF-8 ist, ergibt `unclear`.
+- Task 4b: Alle Werte der Spalten SpoMed und Anti Doping aus der Testkaderliste sind abgedeckt und getestet.
 - **Geklärt am 21.11.2026 (betrifft Task 5 und 8):** Laut Entwurf, Abschnitt 6, schreibt NADA/Sportmedizin die „Daten und Termine“. In Etappe 1 gilt aber der Plan (Abgrenzung): Die Textspalten SpoMed und Anti Doping (`player.private`) sehen nur Kaderpflege und Administrator, `health_staff` sieht nur die Ampel (`player.health_light`). Der Projektinhaber hat das bestätigt.
 
 ## Nächster Schritt
 
-Task 4 zusammenführen (Pull-Request von `task-4-club-directory`). Danach sind Task 4b (Ampel) und 5 (Rechte) voneinander unabhängig. Vorschlag: Task 4b.
+Task 4b zusammenführen (Pull-Request von `task-4b-health-status`). Danach Task 5 (Rechte).
