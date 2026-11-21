@@ -5,8 +5,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 21.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-3-age-class |
-| Letzte fertige Aufgabe | Task 3 |
+| Aktueller Zweig | task-4-club-directory |
+| Letzte fertige Aufgabe | Task 4 |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -16,8 +16,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 0 Umgebung | fertig | | `check-env.php` meldet „Alles in Ordnung“ (21.11.2026, Windows-PC). Claude in der App erreicht Docker und NAS nicht, Tests mit Datenbank laufen auf dem PC |
 | 1 Test-Runner, Konfiguration | fertig | task-1-test-runner | 4 Tests grün, auch im Docker-Container unter PHP 8.4 (21.11.2026) |
 | 2 Datenbank, Migrationen | fertig | task-2-database | 13 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #2) |
-| 3 Altersklasse | fertig | task-3-age-class | 8 Tests grün (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
-| 4 Vereinszuordnung | offen | | |
+| 3 Altersklasse | fertig | task-3-age-class | 8 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #3) |
+| 4 Vereinszuordnung | fertig | task-4-club-directory | 15 Tests grün (PHP 8.4), Review erledigt, noch nicht zusammengeführt |
 | 4b Ampel | offen | | |
 | 5 Rechte | offen | | |
 | 6 HTTP-Grundlage | offen | | |
@@ -41,8 +41,12 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 3: Als Jahrgang zählt nur eine eigenständige Jahreszahl 19xx oder 20xx (nicht Teil einer längeren Zahl wie einer Excel-Seriennummer `41896`). Ein Jahrgang nach dem Turnierjahr gilt als unbrauchbar. In beiden Fällen gilt wie ohne Jahrgang die AK aus der Liste. Die Datenprüfung (Task 9) soll solche Jahrgänge melden.
 - Task 3: Eine AK aus der Liste, die keine gültige Klasse ist (zum Beispiel `U10`), ergibt `''`. Der Prototyp lieferte hier `U10`. In der Testkaderliste kommen nur `U09` bis `U22`, `O22` und `U 09` vor. Die Datenprüfung (Task 9) soll ungültige AK-Werte melden.
 - Task 3: `yearFromTerm` erkennt wie der Prototyp nur vierstellige Jahreszahlen 19xx und 20xx. Ein Termin mit zweistelliger Jahreszahl („02.–04.01.27“) ergibt das laufende Jahr. Im Prototyp lässt sich das AK-Jahr deshalb von Hand setzen, das gehört in Etappe 2 (Turniere).
+- Task 4: Umgesetzt ist die geänderte Schnittstelle aus „Vereinsstammdaten aus der Mitgliederliste“ (`id`, `member_no`, `aliases`; `lookup` liefert `club_id`, `member_no`, `name`, `short`, `state`, `known`). Unbekannte Vereine bekommen kein Kürzel (`short` leer), der alte Testfall `NVE` aus Step 1 entfällt.
+- Task 4: Reihenfolge Langname vor Kürzel vor Alias. Passt ein Text auf einer Stufe zu mehreren Vereinen (zum Beispiel gleiches Kürzel), entscheidet die nächste Stufe. Ein von Hand gepflegter Alias kann so den Konflikt auflösen. Bleibt der Text mehrdeutig, gilt er als unbekannt, statt zu raten.
+- Task 4: Der Vergleich faltet Groß- und Kleinschreibung einschließlich ß/SS („GRÜN-WEISS“ findet „Grün-Weiß“) und behandelt Leerraum im Namen als ein Leerzeichen, auch geschützte und Null-Breite-Leerzeichen aus Excel. Das geht etwas über den Plan hinaus, der nur Leerzeichen am Rand nennt.
+- Task 4: Ein Bundesland außer genau `BER` oder `BRA` wird als leer (nicht gepflegt) ausgegeben. Eine doppelte Vereins-ID im Konstruktor ergibt einen Fehler.
 - **Geklärt am 21.11.2026 (betrifft Task 5 und 8):** Laut Entwurf, Abschnitt 6, schreibt NADA/Sportmedizin die „Daten und Termine“. In Etappe 1 gilt aber der Plan (Abgrenzung): Die Textspalten SpoMed und Anti Doping (`player.private`) sehen nur Kaderpflege und Administrator, `health_staff` sieht nur die Ampel (`player.health_light`). Der Projektinhaber hat das bestätigt.
 
 ## Nächster Schritt
 
-Task 3 zusammenführen (Pull-Request von `task-3-age-class`). Danach Task 4 (Vereinszuordnung), 4b (Ampel) oder 5 (Rechte), die voneinander unabhängig sind. Vorschlag: Task 4.
+Task 4 zusammenführen (Pull-Request von `task-4-club-directory`). Danach sind Task 4b (Ampel) und 5 (Rechte) voneinander unabhängig. Vorschlag: Task 4b.
