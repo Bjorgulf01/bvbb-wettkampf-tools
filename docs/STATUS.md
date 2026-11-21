@@ -38,7 +38,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 2: `testPdo()` löscht nur, wenn der Datenbankname mit `bvbb_test` beginnt. Das schützt vor versehentlich falschen Zugangsdaten.
 - Task 2, nach dem Review: `users.subject` vergleicht exakt (`ascii_nopad_bin`: Groß- und Kleinschreibung und Leerzeichen am Ende zählen), `clubs.state` lässt nur genau `BER` und `BRA` zu (`ascii_bin`). `Db::connect` setzt den Strict-Modus (zu lange Werte ergeben einen Fehler, statt abgeschnitten zu werden) und ergänzt `charset=utf8mb4` im DSN, falls er fehlt. Die Tabellen in 001 entstehen mit `CREATE TABLE IF NOT EXISTS`, damit nach einem Abbruch ein neuer Lauf möglich ist. `sportmed_note` und `antidoping_note` sind `TEXT`. Ausführbare Kommentare (`/*! … */`) in Migrationen werden mit einem Fehler abgelehnt.
 - Task 2: Die Zeitzone der Datenbankverbindung ist nicht festgelegt (Serverstandard). Sie wird geklärt, sobald Zeitstempel angezeigt werden (Protokoll, Task 10).
-- **Zur Klärung (betrifft Task 5 und 8):** Laut Entwurf, Abschnitt 6, schreibt NADA/Sportmedizin die „Daten und Termine“. Laut Plan (Abgrenzung) sind die Textspalten SpoMed und Anti Doping in Etappe 1 nur für Kaderpflege und Administrator sichtbar (`player.private`). Umgesetzt ist der Plan: `health_staff` sieht nur die Ampel.
+- **Geklärt am 21.11.2026 (betrifft Task 5 und 8):** Laut Entwurf, Abschnitt 6, schreibt NADA/Sportmedizin die „Daten und Termine“. In Etappe 1 gilt aber der Plan (Abgrenzung): Die Textspalten SpoMed und Anti Doping (`player.private`) sehen nur Kaderpflege und Administrator, `health_staff` sieht nur die Ampel (`player.health_light`). Der Projektinhaber hat das bestätigt.
 
 ## Nächster Schritt
 
