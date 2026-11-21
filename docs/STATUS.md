@@ -5,7 +5,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 21.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-5-permissions |
+| Aktueller Zweig | task-6-http |
 | Letzte fertige Aufgabe | Task 5 |
 | In Arbeit | nichts |
 
@@ -19,7 +19,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 3 Altersklasse | fertig | task-3-age-class | 8 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #3) |
 | 4 Vereinszuordnung | fertig | task-4-club-directory | 15 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #4) |
 | 4b Ampel | fertig | task-4b-health-status | 11 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #5) |
-| 5 Rechte | fertig | task-5-permissions | 12 Tests grün (PHP 8.4, `fromDb` gegen `bvbb_test_pc`), Review erledigt, noch nicht zusammengeführt |
+| 5 Rechte | fertig | task-5-permissions | 12 Tests grün (PHP 8.4, `fromDb` gegen `bvbb_test_pc`), Review erledigt, zusammengeführt (Pull-Request #6) |
 | 6 HTTP-Grundlage | offen | | |
 | 7 Anmeldung, Sitzung, CSRF | offen | | |
 | 8 Spieler-Schnittstelle | offen | | |
@@ -52,9 +52,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 5: `FIELD_GROUPS` enthält schon die späteren Ergänzungen: die Gruppe `player.health_light` (`sportmed_status`, `antidoping_status`, aus Task 4b) sowie `club_short` in `player.basic` und `state` in `player.roster` (aus der Änderung zu Task 8). Die Reihenfolge der Gruppen ist basic, roster, health_light, private.
 - Task 5: Nie schreibbar sind die Gruppe `player.health_light` (`READ_ONLY_GROUPS`, auch wenn die Datenbank ein Schreibrecht enthielte) und die abgeleiteten Felder `club_short`, `state`, `sportmed_status`, `antidoping_status` (`READ_ONLY_FIELDS`). `fieldsFor(…, 'write')` lässt sie weg.
 - Task 5, nach dem Review: Neue Methode `deniedFields(roles, fields, mode)`. Sie liefert die nicht erlaubten und unbekannten Felder einer Anfrage. **Task 8 muss beim Speichern diese Methode (oder `fieldsFor`) verwenden, nie `can()` auf eine Gruppe**, weil `can()` die nur lesbaren Felder einer Gruppe nicht kennt. Fehlerhafte Rechtezeilen (fehlender Schlüssel, leere Rolle oder Gruppe, unbekannter Modus) und Rollenschlüssel, die keine Zeichenketten sind, geben nichts frei und werfen keinen Fehler. Ein unbekannter Modus beim Aufruf (`delete`) ergibt dagegen einen Fehler (Programmierfehler).
-- **Vorschlag für Task 8 (zur Bestätigung):** `players.club_id` steht in keiner Feldgruppe und ist nicht direkt schreibbar. Der Server leitet `club_id` bei jedem Speichern von `club_name` über `ClubDirectory` neu ab, wie beim Import (Task 9). So können Vereinstext und Zuordnung (und damit Kürzel und Bundesland) nicht auseinanderlaufen.
+- **Geklärt am 21.11.2026 (betrifft Task 8):** `players.club_id` steht in keiner Feldgruppe und ist nicht direkt schreibbar. Der Server leitet `club_id` bei jedem Speichern von `club_name` über `ClubDirectory` neu ab, wie beim Import (Task 9). So können Vereinstext und Zuordnung (und damit Kürzel und Bundesland) nicht auseinanderlaufen. Der Projektinhaber hat das bestätigt.
 - **Geklärt am 21.11.2026 (betrifft Task 5 und 8):** Laut Entwurf, Abschnitt 6, schreibt NADA/Sportmedizin die „Daten und Termine“. In Etappe 1 gilt aber der Plan (Abgrenzung): Die Textspalten SpoMed und Anti Doping (`player.private`) sehen nur Kaderpflege und Administrator, `health_staff` sieht nur die Ampel (`player.health_light`). Der Projektinhaber hat das bestätigt.
 
 ## Nächster Schritt
 
-Task 5 zusammenführen (Pull-Request von `task-5-permissions`). Danach Task 6 (HTTP-Grundlage).
+Task 6 (HTTP-Grundlage) auf dem Zweig `task-6-http`.
