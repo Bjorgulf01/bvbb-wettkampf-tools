@@ -13,8 +13,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Task | Stand | Zweig | Bemerkung |
 |---|---|---|---|
-| 0 Umgebung | teilweise | | Git und Dateien geprüft (Repo, noreply-Adresse, Hook-Pfad). Docker, PHP 8.4 und NAS-Datenbank in dieser Sitzung nicht erreichbar, `check-env.php` bitte auf dem PC ausführen |
-| 1 Test-Runner, Konfiguration | fertig | task-1-test-runner | 4 Tests grün unter PHP 8.3.6, noch nicht unter PHP 8.4 gelaufen |
+| 0 Umgebung | fertig | | `check-env.php` meldet „Alles in Ordnung“ (21.11.2026, Windows-PC). Claude in der App erreicht Docker und NAS nicht, Tests mit Datenbank laufen auf dem PC |
+| 1 Test-Runner, Konfiguration | fertig | task-1-test-runner | 4 Tests grün, auch im Docker-Container unter PHP 8.4 (21.11.2026) |
 | 2 Datenbank, Migrationen | offen | | |
 | 3 Altersklasse | offen | | |
 | 4 Vereinszuordnung | offen | | |
