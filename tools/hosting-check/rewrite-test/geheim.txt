@@ -1,0 +1,1 @@
+Wenn du das liest, wird .htaccess nicht beachtet. Diesen Ordner loeschen und dem Hoster melden.

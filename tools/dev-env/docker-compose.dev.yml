@@ -1,0 +1,42 @@
+# PHP 8.4 läuft lokal in Docker, die Test-Datenbank auf dem NAS (Zugangsdaten in tools/dev-env/.env).
+# Aufruf aus dem Projektordner (dem mit CLAUDE.md):
+#   docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/dev-env/check-env.php
+#   docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tests/run.php
+#   docker compose -f tools/dev-env/docker-compose.dev.yml up web      (Vorschau auf http://localhost:8080)
+# Unterwegs ohne NAS: Profil "local" startet eine lokale Datenbank (siehe README).
+# Die Tests löschen alle Tabellen der Datenbank aus TEST_DB_DSN.
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile.php-dev
+    volumes:
+      - ../..:/app
+    environment:
+      TEST_DB_DSN: ${TEST_DB_DSN}
+      TEST_DB_USER: ${TEST_DB_USER}
+      TEST_DB_PASS: ${TEST_DB_PASS}
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.php-dev
+    volumes:
+      - ../..:/app
+    environment:
+      TEST_DB_DSN: ${TEST_DB_DSN}
+      TEST_DB_USER: ${TEST_DB_USER}
+      TEST_DB_PASS: ${TEST_DB_PASS}
+    ports:
+      - "127.0.0.1:8080:8080"
+    command: php -S 0.0.0.0:8080 -t public public/index.php
+  db-local:
+    profiles: ["local"]
+    image: mariadb:10.11
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MARIADB_ROOT_PASSWORD: lokal-nur-fuer-tests
+      MARIADB_DATABASE: bvbb_test_local
+      MARIADB_USER: bvbb_test
+      MARIADB_PASSWORD: lokal-nur-fuer-tests
+    ports:
+      - "127.0.0.1:3308:3306"

@@ -1,0 +1,27 @@
+# Gemeinsame Test-Datenbank auf dem NAS (nur erfundene Testdaten!)
+# Portainer: Stacks > Add stack > Web editor, Inhalt einfügen.
+# Unter "Environment variables" setzen: MARIADB_ROOT_PASSWORD und MARIADB_PASSWORD (lange, zufällige Werte).
+# Die Datenbank bvbb_test_pc legt der Stack an. bvbb_test_mac und bvbb_test_local legst du einmalig an (siehe README).
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: bvbb-mariadb-test
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: bvbb_test_pc
+      MARIADB_USER: bvbb_test
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      TZ: Europe/Berlin
+    ports:
+      - "3307:3306"
+    volumes:
+      - bvbb_mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+volumes:
+  bvbb_mariadb_data:

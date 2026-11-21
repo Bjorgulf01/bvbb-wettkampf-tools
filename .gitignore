@@ -1,0 +1,21 @@
+# Zugangsdaten und lokale Konfiguration
+config.php
+.env
+*.local
+
+# Echte Daten: niemals committen
+/private/
+/real-data/
+Stammdaten_Kaderspieler*.xlsx
+Mitglieder*.xlsx
+Mitglieder*.csv
+*.sql.gz
+*.dump
+
+# Werkzeuge und Betriebssystem
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+node_modules/
+

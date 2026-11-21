@@ -1,0 +1,10 @@
+# Rewrite-Test: leitet alles, was keine echte Datei ist, an index.php weiter
+Options -MultiViews
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+
+# Zugriffsschutz-Test: diese Datei darf nicht abrufbar sein
+<Files "geheim.txt">
+    Require all denied
+</Files>

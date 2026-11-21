@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wettkampf-Tools</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#eef0f3;--fg:#1c1f24;--bar:#fff;--bd:#c9ced6;--ac:#1f5fbf}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181c;--fg:#e6e8eb;--bar:#20242a;--bd:#3a4048;--ac:#6ea8ff}}
+:root[data-theme="dark"]{--bg:#15181c;--fg:#e6e8eb;--bar:#20242a;--bd:#3a4048;--ac:#6ea8ff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font:14px Arial,Helvetica,sans-serif;background:var(--bg);color:var(--fg)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bar);z-index:10}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;background:var(--bar);border-bottom:1px solid var(--bd);padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+button{font:inherit;padding:5px 10px;border:1px solid var(--bd);border-radius:6px;background:var(--bar);color:var(--fg);cursor:pointer}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+button.x{padding:0 7px;color:#b00020}
+.add{margin:4px 0 0}
+#stt{color:#c0392b;font-size:12px;margin-left:auto;text-align:right}
+dialog label{font-size:12px;font-weight:bold;display:block}
+dialog input{width:100%;box-sizing:border-box;margin:3px 0 12px;padding:5px 7px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
+#ds{width:min(520px,92vw)}#dsf{font-size:12px;opacity:.85;margin:0 0 12px}
+#wn{max-width:820px;margin:8px auto 0;color:#c0392b;font-size:13px;padding:0 12px}
+.paper{background:#fff;color:#000;max-width:820px;margin:12px auto;padding:20px 24px;box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:12px}
+.paper h2{margin:10px 0 6px;font-size:20px}.paper h3{margin:16px 0 4px;font-size:14px;border-bottom:1px solid #000;break-after:avoid}
+.sc{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #888;padding:2px 4px;text-align:left;vertical-align:middle}
+th{background:#f0f0f0}
+tr{break-inside:avoid}
+.k th{width:90px}.r{text-align:right}.c{text-align:center}
+.paper input,.paper select,.paper textarea{font:inherit;width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:3px;background:#fff;color:#000;padding:2px 3px}
+.paper input[type=checkbox]{width:auto}
+td input.r{text-align:right}
+.sum{width:auto;min-width:320px;margin:6px 0 0 auto}.sum td{border:none;border-bottom:1px solid #ddd}
+.sig{display:flex;gap:24px;margin-top:46px}.sig div{flex:1;border-top:1px solid #000;padding-top:3px;font-size:11px}
+.note{font-size:11px;color:#333;margin-top:3px}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:10px}
+.hl{flex:1;min-width:0}.paper .hl h2{margin:0 0 6px;font-size:28px}.vb{font-size:14px;font-weight:bold;margin-bottom:2px}
+.paper .hl input{width:260px;max-width:100%}
+.logo{width:140px;height:auto;flex:none}
+@media (max-width:520px){.logo{width:92px}}
+#dqm{white-space:pre-line}
+.paper,#mbar,#wn,.sdv,#home{display:none}
+body.v-abr .paper,body.v-abr #wn,body.v-kader .sdv,body.v-home #home{display:block}
+body.v-abr #mbar{display:flex}
+.hw{max-width:760px;margin:0 auto;padding:28px 16px;text-align:center}
+.hlogo{width:120px;height:auto;background:#fff;padding:10px;border-radius:10px}
+.hw h1{margin:12px 0 2px;font-size:26px}.hw p{margin:0 0 22px;opacity:.75}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:24px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--bar);color:var(--fg);text-align:center}
+.tile:hover:not(:disabled){border-color:var(--ac);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.tile:disabled{opacity:.55;cursor:default}
+.ti{font-size:34px;color:var(--ac);line-height:1.1}.tile b{font-size:16px}.tile small{opacity:.75;font-size:12px}
+.sdv .sdn{padding:8px 12px;font-size:12px;opacity:.85}
+.sc2{overflow:auto;max-height:68vh;margin:0 12px;border:1px solid var(--bd)}
+.sdv table{width:auto}.sdv th,.sdv td{border:1px solid var(--bd);background:var(--bar);padding:1px}
+.sdv th{position:sticky;top:0;font-size:11px;white-space:nowrap;padding:3px 4px}
+.sdv input,.sdv textarea{font:12px Arial;background:var(--bar);color:var(--fg);border:none;box-sizing:border-box;padding:3px 4px}
+.sdv input{width:100%}
+.sdl{padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.sdl textarea{width:100%;border:1px solid var(--bd);margin-top:3px}
+.sdl label{font-size:12px;font-weight:bold}
+.chip{padding:1px 6px;margin:2px 2px 2px 0;font-size:12px}
+dialog{background:var(--bar);color:var(--fg);border:1px solid var(--bd);border-radius:8px;max-width:min(520px,92vw)}
+@media print{
+ @page{size:A4;margin:14mm}
+ body{background:#fff}body::before{display:none}:root{padding:0}
+ .noprint,.sdv{display:none!important}
+ .paper{box-shadow:none;margin:0;padding:0;max-width:none}
+ .paper input,.paper select,.paper textarea{border:none;background:none;padding:0;appearance:none;-webkit-appearance:none;resize:none}
+ .info:has(textarea:placeholder-shown){display:none}
+ .sc{overflow:visible}
+}
+</style></head><body>
+<div id="home" class="noprint"><div class="hw"><img class="hlogo" alt="BVBB-Logo"><h1>Wettkampf-Tools</h1><p>Badminton-Verband Berlin-Brandenburg e.V.</p>
+ <div class="tiles">
+  <button class="tile" data-act="abr"><span class="ti">€</span><b>Turnierabrechnung</b><small id="t1s"></small></button>
+  <button class="tile" disabled><span class="ti">⇄</span><b>Meldegeldweiterberechnung</b><small>In Planung</small></button>
+  <button class="tile" data-act="sd"><span class="ti">☰</span><b>Kaderliste pflegen</b><small id="t2s"></small></button>
+ </div>
+ <p style="margin-top:26px"><button data-act="ver" id="vbtn2"></button></p></div></div>
+<div class="bar noprint" id="mbar">
+ <button data-act="home">⌂ Start</button><button data-act="neu">Neu</button><button data-act="tpl" title="Teilnehmer und Betreuer behalten, Beträge leeren">Als Vorlage kopieren</button>
+ <button data-act="open">Öffnen</button><button class="p" data-act="save">Speichern</button><button data-act="saveas">Speichern unter</button>
+ <button data-act="sd">Stammdaten</button><button class="p" data-act="print">Drucken / PDF</button>
+ <span id="stt"></span><button data-act="ver" id="vbtn" title="Änderungsprotokoll"></button>
+</div>
+<div id="wn" class="noprint"></div>
+<div class="paper">
+ <div class="hd"><div class="hl"><h2>Abrechnung</h2><div class="vb">Badminton-Verband Berlin-Brandenburg e.V.</div><input data-p="empf"></div><img class="logo" alt="BVBB-Logo" src="data:image/svg+xml;base64,PHN2ZyBpZD0iRWJlbmVfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAyNDkuNDQ5IDIzNS4yNzYiPjxnPjxwYXRoIGQ9Ik01Mi41ODYsMTk5LjkyNGguMDAzYy0yLjA0OC0xLjY0My00LjQxNC0yLjczNC03LjA5Ny0zLjI3MXYtLjQwM2MyLjAxNC0uNzM3LDMuODQyLTEuODYyLDUuNDg3LTMuMzczLDEuNjQzLTEuNTEsMi45NTItMy4yODcsMy45MjYtNS4zMzUuOTczLTIuMDQ3LDEuNDYtNC4yNDQsMS40Ni02LjU5NCwwLTMuNTU2LS44MDUtNi42Ni0yLjQxNi05LjMxMi0xLjYxLTIuNjUtNC4xNDQtNC43MzItNy42LTYuMjQyLTMuNDU4LTEuNTEtOC4wMzktMi4yNjQtMTMuNzQxLTIuMjY0SDMuNDc5Yy0xLjYwNiwwLTIuMTk3LjU5Ny0yLjE5NywyLjEzNXY3LjE3N2MwLDEuMTI0LjY1NywxLjY0MywxLjc1MiwxLjk3MiwxLjg5MS42MSwzLjc1MSwxLjIxOSw1LjYxMSwxLjgzdjUzLjMyOGMwLDIuNjg1LDEuMjQxLDQuMDI3LDMuNzI1LDQuMDI3aDIxLjY0NGM1LjcwNCwwLDEwLjQwMi0uODA2LDE0LjA5My0yLjQxNywzLjY5MS0xLjYxLDYuNDYtMy45NDIsOC4zMDYtNi45OTYsMS44NDUtMy4wNTQsMi43NjgtNi43MjgsMi43NjgtMTEuMDI1LDAtMi42MTctLjU4OC01LjA2NS0xLjc2Mi03LjM0OC0xLjE3Ni0yLjI4MS0yLjc4Ni00LjI0NC00LjgzMy01Ljg4OVpNMjQuMjUsMTc2LjMxOGgwczcuNTUsMCw3LjU1LDBjMi45NTIsMCw1LjEzMy42MjEsNi41NDQsMS44NjIsMS40MDksMS4yNDMsMi4xMTQsMy4xMDUsMi4xMTQsNS41ODcsMCwyLjA4Mi0uNzU1LDMuODYxLTIuMjY2LDUuMzM3LTEuNTEsMS40NzYtMy43MDksMi4yMTUtNi41OTMsMi4yMTVoLTcuMzQ5di0xNVpNNDAuOTYyLDIxOC4yOTdoMGMtMS41NDUsMS40MDktMy42OTIsMi4xMTMtNi40NDMsMi4xMTNoLTEwLjI2OHYtMTYuMDA2aDguNjU4YzMuMzU0LDAsNS45MjEuNjUzLDcuNzAxLDEuOTYzLDEuNzc4LDEuMzA5LDIuNjY4LDMuMjcyLDIuNjY4LDUuODg5cy0uNzcxLDQuNjMxLTIuMzE1LDYuMDQxWiIgZmlsbD0iIzFhMWExYSIvPjxwYXRoIGQ9Ik0xMjQuMDk1LDE2My40ODJoLS4wMDNjLS45NzQtLjM2OS0yLjUzNC0uMzUzLTQuNjgxLS4zNTNoLTUuMjk2Yy0xLjIwOSwwLTIuMjE1LS4wMzMtMy4wMi4zMDItLjgwNi4zMzYtMS4zNDQuODczLTEuNjExLDEuNjFsLTE0LjQzNCw0Ni4yNzloLS40MDJsLTE0LjQzNS00Ni4yNzljLS4yNy0uODA1LS45MDYtMS4zNTgtMS45MTMtMS42NjEtMS4wMDctLjMwMS0xNi44MzgtLjI1MS0xNi44MzgtLjI1MS0xLjYwNiwwLTIuMTk3LjU5Ny0yLjE5NywyLjEzNXY3LjE3N2MwLDEuMTI0LjY1NywxLjY0MywxLjc1MywxLjk3MiwyLjE1OC42OTYsNC4yNzgsMS4zOTEsNi40MDMsMi4wODhsMTguODcyLDU0Ljk4M2MuMjY4LjgwNi44NzEsMS4zOTQsMS44MTEsMS43NjEuOTM5LjM2OSwyLjI0OC41NTUsMy45MjcuNTU1aDUuMjM1YzEuNjc3LDAsMi45ODUtLjE4NiwzLjkyNi0uNTU1LjkzOS0uMzY3LDEuNTQ0LS45NTUsMS44MTItMS43NjFsMjIuMTQ3LTY0LjUyOWMuMTM0LS4zMzYuMjM0LS42NTUuMzAyLS45NTcuMDY2LS4zMDMuMTAyLS41ODcuMTAyLS44NTUsMC0uNzM4LS40ODgtMS4yOTItMS40Ni0xLjY2MVoiIGZpbGw9IiMxYTFhMWEiLz48cGF0aCBkPSJNMTgwLjkyNywxOTkuOTI0aDBjLTIuMDQ4LTEuNjQzLTQuNDE0LTIuNzM0LTcuMDk3LTMuMjcxdi0uNDAzYzIuMDE0LS43MzcsMy44NDItMS44NjIsNS40ODctMy4zNzMsMS42NDMtMS41MSwyLjk1Mi0zLjI4NywzLjkyNi01LjMzNS45NzMtMi4wNDcsMS40Ni00LjI0NCwxLjQ2LTYuNTk0LDAtMy41NTYtLjgwNS02LjY2LTIuNDE2LTkuMzEyLTEuNjExLTIuNjUtNC4xNDQtNC43MzItNy42MDEtNi4yNDItMy40NTctMS41MS04LjAzOC0yLjI2NC0xMy43NDEtMi4yNjRoLTI5LjEyN2MtMS42MDUsMC0yLjE5Ni41OTctMi4xOTYsMi4xMzV2Ny4xNzdjMCwxLjEyNC42NTcsMS42NDMsMS43NTIsMS45NzIsMS44OTEuNjEsMy43NTEsMS4yMTksNS42MTEsMS44M3Y1My4zMjhjMCwyLjY4NSwxLjI0MSw0LjAyNywzLjcyNSw0LjAyN2gyMS42NDNjNS43MDUsMCwxMC40MDMtLjgwNiwxNC4wOTQtMi40MTcsMy42OTEtMS42MSw2LjQ2LTMuOTQyLDguMzA2LTYuOTk2LDEuODQ1LTMuMDU0LDIuNzY4LTYuNzI4LDIuNzY4LTExLjAyNSwwLTIuNjE3LS41ODktNS4wNjUtMS43NjItNy4zNDgtMS4xNzYtMi4yODEtMi43ODYtNC4yNDQtNC44MzMtNS44ODlaTTE1Mi41OSwxNzYuMzE4aDBzNy41NSwwLDcuNTUsMGMyLjk1MiwwLDUuMTMzLjYyMSw2LjU0NCwxLjg2MiwxLjQwOSwxLjI0MywyLjExNCwzLjEwNSwyLjExNCw1LjU4NywwLDIuMDgyLS43NTUsMy44NjEtMi4yNjYsNS4zMzctMS41MSwxLjQ3Ni0zLjcwOSwyLjIxNS02LjU5MywyLjIxNWgtNy4zNDl2LTE1Wk0xNjkuMzAxLDIxOC4yOTdoLS4wMDFjLTEuNTQ1LDEuNDA5LTMuNjkyLDIuMTEzLTYuNDQzLDIuMTEzaC0xMC4yNjh2LTE2LjAwNmg4LjY1OGMzLjM1NCwwLDUuOTIxLjY1Myw3LjcwMSwxLjk2MywxLjc3NywxLjMwOSwyLjY2OCwzLjI3MiwyLjY2OCw1Ljg4OXMtLjc3Miw0LjYzMS0yLjMxNSw2LjA0MVoiIGZpbGw9IiMxYTFhMWEiLz48cGF0aCBkPSJNMjQ2LjQwNCwyMDUuODEzaDBjLTEuMTc1LTIuMjgxLTIuNzg2LTQuMjQ0LTQuODMzLTUuODg5LTIuMDQ4LTEuNjQzLTQuNDEzLTIuNzM0LTcuMDk2LTMuMjcxdi0uNDAzYzIuMDEzLS43MzcsMy44NDEtMS44NjIsNS40ODYtMy4zNzMsMS42NDMtMS41MSwyLjk1Mi0zLjI4NywzLjkyNy01LjMzNS45NzItMi4wNDcsMS40Ni00LjI0NCwxLjQ2LTYuNTkzLDAtMy41NTctLjgwNi02LjY2MS0yLjQxNy05LjMxMy0xLjYxLTIuNjUtNC4xNDQtNC43MzItNy42LTYuMjQyLTMuNDU4LTEuNTEtOC4wMzgtMi4yNjQtMTMuNzQxLTIuMjY0aC0yOS4xMjdjLTEuNjA2LDAtMi4xOTcuNTk3LTIuMTk3LDIuMTM1djcuMTc3YzAsMS4xMjQuNjU3LDEuNjQzLDEuNzUzLDEuOTcyLDEuODkuNjEsMy43NSwxLjIyLDUuNjEsMS44M3Y1My4zMjhjMCwyLjY4NSwxLjI0MSw0LjAyNywzLjcyNSw0LjAyN2gyMS42NDRjNS43MDQsMCwxMC40MDMtLjgwNiwxNC4wOTQtMi40MTcsMy42OS0xLjYxLDYuNDU5LTMuOTQxLDguMzA1LTYuOTk2LDEuODQ2LTMuMDU0LDIuNzY4LTYuNzI4LDIuNzY4LTExLjAyNCwwLTIuNjE4LS41ODgtNS4wNjYtMS43NjItNy4zNDlaTTIxMy4yMzQsMTc2LjMxOGgwczcuNTUsMCw3LjU1LDBjMi45NTIsMCw1LjEzNC42MjEsNi41NDQsMS44NjIsMS40MDksMS4yNDMsMi4xMTQsMy4xMDUsMi4xMTQsNS41ODcsMCwyLjA4Mi0uNzU1LDMuODYxLTIuMjY2LDUuMzM3LTEuNTEsMS40NzYtMy43MDksMi4yMTUtNi41OTMsMi4yMTVoLTcuMzQ5di0xNVpNMjI5Ljk0NiwyMTguMjk3aC0uMDAxYy0xLjU0NCwxLjQwOS0zLjY5MSwyLjExMy02LjQ0MywyLjExM2gtMTAuMjY4di0xNi4wMDZoOC42NThjMy4zNTUsMCw1LjkyMS42NTQsNy43MDEsMS45NjMsMS43NzgsMS4zMDksMi42NjksMy4yNzIsMi42NjksNS44ODlzLS43NzIsNC42MzItMi4zMTYsNi4wNDFaIiBmaWxsPSIjMWExYTFhIi8+PC9nPjxnPjxwYXRoIGQ9Ik0yMTcuNjQ2LDEyLjM5MWwtLjAwOC0uMDA1Yy01LjkwMi0xMC4yNjItMTguOTQ1LTE0LjAwOC0yOS4yMDctOC4xMDZsLTEuMzQ2Ljc3MmMtMi41ODUsMS40ODctNS4xNSwyLjgwNy03LjY0MSwzLjk1MmwtMS4yOTMuNTI3YzEuOTAxLDE1LjEzMiwxNS40OTksMzAuODU5LDE1LjYzNCwzMS4wMTQuODUxLjk3OS43NSwyLjQ2LS4yMjgsMy4zMTItLjk3Ny44NTEtMi40NTkuNzUtMy4zMTEtLjIyNy0uMzM0LS4zODItNC45My01LjcwNS05LjI1Ny0xMy4xOTgtMy4xODgtNS41MjItNi4yMjEtMTIuMzA5LTcuMzAzLTE5LjA4MywwLDAtMS4wMzcuNDIxLTEuMDguNDM1LDAsMC00NS42MSwxNS4yNzQtMTI1LjA2NSwyNy4yOCwwLDAtNC4wMDMuNTEtNy43OTQsMi4zM2gtLjAwMmMtNy40NjMsNC4zMS0xMC4wOTUsMTIuODA4LTEwLjc3MSwxNS41NTEtLjEyMi40OTguMTYzLDEuMDAxLjY1NSwxLjE0NCwyLjE5Ni42MzgsOC4zMzIsMi4wNiwxNC41NjIuMjY0LTcuMzg4LDUuMDM1LTkuMzk0LDE0Ljc4Ny05LjgyMywxNy41NDUtLjA2OS40NDIuMTgxLjg2Ny41OTksMS4wMjksMi4yMTIuODU0LDkuMzE0LDMuMjI4LDE2LjMyNCwxLjU4NS03LjA4Nyw1LjQyLTguMTc5LDE2LjQ3MS04LjM0MSwxOS4yMDYtLjAyMy4zODIuMTc5LjczNi41Mi45MDcsMi4zMTEsMS4xNTcsMTEuNDk2LDUuMzI1LDE5LjQ1OSwyLjg2OS02LjEwOSw1LjY2Ni03LjA5MiwxNS43MDUtNy4yNDYsMTguMjg1LS4wMjMuMzgyLjE4NC43MzMuNTI2LjkwNCwyLjQ0OSwxLjIyNywxMi41NjcsNS44MDcsMjAuODAzLDIuMzgtNC45MjcsNS4yNS02LjQyMywxMi41ODctNi43ODksMTQuOTMtLjA2OS40NDMuMTc0Ljg3Mi41OTEsMS4wMzQsMi42MDQsMS4wMDYsMTIuMDUxLDQuMTQ1LDIwLjEwNi4yNjQtNC42NjksNC40OTctNi41MDUsMTAuNTIzLTcuMDUyLDEyLjc0My0uMTIyLjQ5OC4xNzEuOTk2LjY2NCwxLjEzOSwyLjcxMi43ODYsMTEuMzg4LDIuNzU2LDE4Ljg1MS0xLjU1M2wuMDA5LS4wMDZzMS41ODgtLjgyMiw1LjU1My01Ljc2OGM4Ljk3NS0xMS4xNjcsMTcuNTAzLTIxLjM0OSwyNS40NTItMzAuNTQ3LDcuMzY5LTguNTI4LDE0LjI0NC0xNi4yMDQsMjAuNTI3LTIzLjAzNGwuMDI5LS4wM2MtLjAxNi0uMDE1LS4wMzMtLjAyNS0uMDQ4LS4wMzktMS42LTEuNjEzLTMuMTc3LTMuMzA4LTQuNzM0LTUuMDYzLTMuMzU4LDMuMTU3LTYuNzIsNi4zLTEwLjA4LDkuNDI0LTEwLjQyMSw5LjU5OC0yMC44MTEsMTkuNTQtMzEuNjM5LDI4LjY5NC0zLjY0NSwzLjA1Mi03LjM2MSw2LjAyNy0xMS4yNzMsOC43OTYtLjIyLjE1NC0uNTI0LjEwMy0uNjc5LS4xMTYtLjEyOS0uMTgxLS4xMTUtLjQyLjAxNy0uNTg2LDEyLjAxOC0xNC43MjcsMjYuMzQzLTI3LjQyOCwzOS45LTQwLjY4LDMuMzY1LTMuMjI2LDYuNzczLTYuNDY4LDEwLjE5NC05LjcxLTEuNjczLTIuMDQ3LTMuMzE3LTQuMTY1LTQuOTIyLTYuMzYyLTMuMTA0LDIuMzgzLTYuMjExLDQuNzYtOS4zMTUsNy4xMTgtMTEuMTc3LDguMzk1LTIyLjE3LDE3LjA0Mi0zMy43MTksMjQuOTMtMy44NjQsMi42MTgtNy43OTQsNS4xNS0xMS45MDMsNy40NTEtLjIxMS4xMTgtLjQ3OS4wNDItLjU5Ny0uMTY4LS4wOTctLjE3My0uMDY0LS4zODQuMDY2LS41MTgsMy4yNjUtMy4zOTQsNi43MDktNi41NTUsMTAuMjItOS42MzEsMTAuNTU1LTkuMTc3LDIxLjcwMS0xNy42MjQsMzIuNjUxLTI2LjMxNCwzLjExNy0yLjQ1Miw2LjI3MS00LjkwOCw5LjQzMy03LjM2My0xLjkzMS0yLjg0Ny0zLjY1Mi01LjU3Ni01LjE2NC04LjExLTMuMjA4LDEuODM4LTYuNDE2LDMuNjc0LTkuNjIsNS40ODktMTIuMDg4LDYuNzctMjQuMDI5LDEzLjgwNi0zNi40MTIsMjAuMDM0LTQuMTQsMi4wNjItOC4zMzQsNC4wMzMtMTIuNjcsNS43NTYtLjI0NC4wOTYtLjUyMi0uMDIzLS42MTgtLjI2Ny0uMDgtLjE5OS0uMDEzLS40MjEuMTQ3LS41NDksMy42Ni0yLjg5NCw3LjQ2My01LjU0MSwxMS4zMTktOC4wOTUsMTEuNTg2LTcuNjEsMjMuNjUtMTQuNDMzLDM1LjU1Ni0yMS41MTgsMy4xNjYtMS44NjUsNi4zNjMtMy43MzIsOS41Ny01LjU5NC0zLjU0NC02LjQxMy01LjM3My0xMC43NDktNS40OTYtMTEuMDQ1LS41LTEuMTk1LjA2NS0yLjU3LDEuMjYxLTMuMDcsMS4xOTUtLjUsMi41NzEuMDY1LDMuMDcxLDEuMjYuMDI5LjA2OSwxLjgwMSw0LjI2Myw1LjIzNiwxMC40OTMsNC41MTQtMi42MDksOS4wMzYtNS4yLDEzLjU0MS03Ljc2NS0yLjk3My01LjMyLTQuMjI2LTguNDktNC4zMDgtOC43MDEtLjQ3LTEuMjA5LjEyOS0yLjU2OSwxLjMzNi0zLjAzOSwxLjIwOC0uNDcsMi41NjUuMTI0LDMuMDM5LDEuMzM0LjAyLjA1MSwxLjIwNiwzLjAzNyw0LjAyNCw4LjA4OCw1LjQ5NS0zLjA3LDExLjQzNy02LjQzOCwxNi44Ny05LjM3NiwyLjY2Ny0xLjM1OCw0Ljg5MiwyLjM5MSwyLjM0Nyw0LjA2Ny01LjQ2OCwzLjMyOC0xMC45OTIsNi42Mi0xNi41MzMsOS44OTQsMS4wMjQsMS42NzEsMi4xNzcsMy40NzgsMy40NzYsNS40MDYsNC45MjMtMy42OTMsMTAuMTk2LTcuNjkyLDE1LjA0OC0xMS4yMjUsMi40Ni0xLjcwMSw1LjE2NiwxLjcxNiwyLjg2OSwzLjcxNi00LjkxMSwzLjk3OC05Ljg3OSw3LjkyOC0xNC44NjYsMTEuODYzLDEuMTA5LDEuNTQxLDIuMjUzLDMuMDgzLDMuNDM4LDQuNjIyLjg0OC0uNzgyLDEuNjk3LTEuNTc0LDIuNTQ0LTIuMzUxLDMuNDkxLTMuMjEzLDYuOTc4LTYuNDMyLDEwLjUxNy05LjU5NS45NjctLjg2NSwyLjQ1Mi0uNzgyLDMuMzE2LjE4Ni44MzUuOTMzLjc4MiwyLjM1NC0uMDkyLDMuMjI5LTQuMjk2LDQuMjQtOC42NDMsOC40NjItMTMuMDA5LDEyLjY3MSwxLjE5OSwxLjQ3MiwyLjQyLDIuOTQsMy42NzcsNC4zOThsLjI5OS0uMzE1YzE0LjYyMS0xNC45NjUsMjMuMi0yMi40OTcsMjMuMi0yMi40OTdsLjIyNC0uMTg5YzMuNTU3LTMuMDE3LDcuOTQ0LTYuMDk2LDEyLjg4My04LjkzNGwxLjIwNC0uNzE0YzEwLjI2Mi01LjkwMiwxMy43OTktMTkuMDA0LDcuODk5LTI5LjI2MmwtLjAwMi0uMDAyWiIgZmlsbD0iI2NkMGYxZSIvPjxwYXRoIGQ9Ik0xNjQuODYzLDczLjE2OWMtMy43NDcsMy41OTUtNy41MDYsNy4xNzMtMTEuMjc5LDEwLjczNiwxLjUxMiwxLjcwOCwzLjA0NCwzLjM1NSw0LjU5Niw0LjkyMmwxMC41MjYtMTEuMTEyYy0uMDQ5LS4wNDgtLjEwMy0uMDg3LS4xNDctLjEzOS0xLjI2My0xLjQ2MS0yLjQ5LTIuOTMxLTMuNjk2LTQuNDA3aDBaIiBmaWxsPSIjY2QwZjFlIi8+PHBhdGggZD0iTTEzNy40MzksNjEuNjQzYzEuNDE3LDIuMzc4LDMuMDE4LDQuOTI2LDQuODA1LDcuNTcxLDQuMTY3LTMuMjE4LDguMzQ1LTYuNDE5LDEyLjUwNS05LjU5LTEuNDE1LTIuMDk1LTIuNjY5LTQuMDUyLTMuNzc0LTUuODU2LTQuNTA0LDIuNjQ0LTkuMDE1LDUuMjcxLTEzLjUzNiw3Ljg3NVoiIGZpbGw9IiNjZDBmMWUiLz48cGF0aCBkPSJNMTYxLjUyMyw2OC45NjRjLTEuMjY2LTEuNjM3LTIuNDg0LTMuMjc4LTMuNjY3LTQuOTE3LTQuMTM3LDMuMjQ0LTguMjg0LDYuNDcyLTEyLjQ0NCw5LjY3OSwxLjUwOCwyLjA2OCwzLjA1LDQuMDYyLDQuNjE5LDUuOTkxLDMuODIyLTMuNjA2LDcuNjU1LTcuMTk0LDExLjQ5Mi0xMC43NTNaIiBmaWxsPSIjY2QwZjFlIi8+PC9nPjwvc3ZnPg=="></div>
+ <table class="k">
+  <tr><th>Maßnahme</th><td><input data-p="mn"></td></tr>
+  <tr><th>Ort</th><td><input data-p="ort"></td></tr>
+  <tr><th>Termin</th><td><input data-p="termin" placeholder="TT.MM.–TT.MM.JJJJ"></td></tr>
+  <tr class="noprint"><th>AK-Jahr</th><td><input data-p="by" id="by" style="width:90px" placeholder="auto"> <small>Kalenderjahr für die Altersklassen (Alter = Jahr − Jahrgang); leer = Jahr des Termins</small></td></tr>
+ </table>
+ <h3>Teilnehmer</h3>
+ <div class="sc"><table><thead><tr><th>Nr.</th><th>Teilnehmer</th><th>Verein</th><th>Bundesland</th><th>m/w</th><th>Jg.</th><th>AK</th><th>Kader</th><th>nicht teilgen.</th><th class="noprint"></th></tr></thead><tbody id="tn"></tbody></table></div>
+ <button class="noprint add" data-add="tn">+ Teilnehmer</button>
+ <div id="cnt" style="margin-top:4px"></div>
+ <div class="note" id="akn"></div>
+ <div class="note">Kader: LK = Landeskader, SK = Sparringkader, NK2 = Bundeskader</div>
+ <h3>Betreuer</h3>
+ <table><tbody id="bt"></tbody></table>
+ <button class="noprint add" data-add="bt">+ Betreuer</button>
+ <table class="k" style="margin-top:4px"><tr><th style="width:130px">sonstige Betreuer</th><td><input data-p="sb"></td></tr></table>
+ <h3>Ausgaben in EUR</h3>
+ <div class="sc"><table><thead><tr><th>Nr.</th><th>Datum</th><th>Kostenpunkt</th><th>Beschreibung</th><th>Betrag</th><th>gez. durch</th><th>Fremdw.</th><th class="noprint"></th></tr></thead><tbody id="ag"></tbody></table></div>
+ <button class="noprint add" data-add="ag">+ Ausgabe</button>
+ <table class="sum"><tbody id="sa"></tbody></table>
+ <h3>Einnahmen in EUR</h3>
+ <div class="sc"><table><thead><tr><th>Beschreibung</th><th style="width:100px">Betrag</th><th class="noprint"></th></tr></thead><tbody id="ein"></tbody></table></div>
+ <button class="noprint add" data-add="ein">+ Einnahme</button>
+ <table class="sum"><tbody id="se"></tbody></table>
+ <h3>Aufteilung und Verbuchung</h3>
+ <div class="sc"><table id="au"></table></div>
+ <div id="er" style="margin-top:6px"></div>
+ <table class="k" style="margin-top:6px"><tr><th>Konto</th><td><select id="ko" data-p="konto"></select></td></tr></table>
+ <div class="info"><h3>Informationen</h3><textarea data-p="info" rows="3" placeholder="Hinweise …"></textarea></div>
+ <div class="sig"><div>Ort, Datum</div><div>Unterschrift Abrechnende/r</div><div>sachlich und rechnerisch richtig</div></div>
+ <div class="note" id="ftr" style="margin-top:14px;text-align:right"></div>
+</div>
+
+<div class="sdv">
+ <div class="bar"><button class="p" data-act="back">← Zurück</button><button data-act="imp">Kaderliste importieren (Excel)</button><button data-act="exp">Als Excel exportieren</button><button data-act="chk">Datenprüfung</button><button data-act="addp">+ Spieler</button><input id="flt" placeholder="Suchen …" style="max-width:200px;border:1px solid var(--bd);border-radius:6px"></div>
+ <div class="sdn">Kontaktdaten (E-Mail, Telefon, Schule) bleiben nur in diesen Stammdaten in deinem Browser. Sie erscheinen weder im Ausdruck noch in den Turnierdateien. Beim Import ersetzt die Excel-Liste die bisherigen Spieler.</div>
+ <div id="chk" class="sdn" hidden></div><div class="sc2"><table id="sdt"></table></div>
+ <div class="sdl">
+  <div><label>Vereine (Verein;Kürzel;Bundesland BER/BRA)</label><textarea data-sl="vl" rows="9"></textarea></div>
+  <div><label>Betreuer</label><textarea data-sl="bt" rows="9"></textarea></div>
+  <div><label>Kostenpunkte</label><textarea data-sl="kp" rows="9"></textarea></div>
+  <div><label>Konten</label><textarea data-sl="ko" rows="9"></textarea></div>
+ </div>
+</div>
+<datalist id="dlb"></datalist><datalist id="dlz"></datalist>
+<input type="file" id="fi" accept=".json,application/json" hidden>
+<input type="file" id="fx" accept=".xlsx,.xls" hidden>
+<dialog id="ds"><h3 style="margin-top:0">Turnier speichern</h3>
+ <label for="dsn">Dateiname</label><input id="dsn">
+ <label for="dsz">Bitte die Datei in diesem Ordner ablegen (Hinweis, wird gemerkt)</label><input id="dsz" placeholder="z. B. Nextcloud/Turniere/2026">
+ <p id="dsf" hidden>Firefox: Damit das Fenster zur Ordnerwahl erscheint, unter Einstellungen → Allgemein → Downloads „Jedes Mal nachfragen, wo Dateien gespeichert werden“ aktivieren.</p>
+ <button class="p" id="dso">Speichern</button> <button id="dsc">Abbrechen</button></dialog>
+<dialog id="dq"><p id="dqm" style="margin-top:0"></p><button class="p" id="dqo">OK</button> <button id="dqc">Abbrechen</button></dialog>
+<script>
+const Q=s=>document.querySelector(s);
+const VER='1.5.1',CH=[['1.5.1','Beschriftung „Verband“ durch „Bundesland“ ersetzt (Teilnehmertabelle, Ausdruck, Vereinsliste, Hinweise)'],['1.5.0','Speichern: fester Dateiname (Datum_Ort_Maßnahme), Zielordner-Hinweis, Anzeige „zuletzt gespeichert“'],['1.4.0','Startseite mit Kacheln: Turnierabrechnung, Kaderliste pflegen (Meldegeldweiterberechnung in Planung)'],['1.3.0','Logo und neuer Kopfbereich, sichtbare Version mit Änderungsprotokoll'],['1.2.0','Altersklasse nach Kalenderjahr (Alter = Jahr − Jahrgang), Datenprüfung in den Stammdaten'],['1.1.0','Kaderliste als Stammdaten mit Excel-Import/-Export, keine Doppelauswahl, Vereinskürzel, Spalte m/w'],['1.0.0','Erste Version: Abrechnung, Speichern/Öffnen, Druckansicht']];
+const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const COLS=[['nr','Nummer',55],['name','Name',120],['vor','Vorname',100],['ak','AK',50],['mw','m/w',45],['ks','Kaderstatus',80],['st','Status',70],['ver','Verein',170],['jg','JG',90],['tr','Trainer Mail/Verein',160],['sc','Schule /Klasse /Lehrer',160],['sb','Kontakt Schulbefreiungen',200],['ort','Trainingsort',80],['alt','Alter',45],['spo','SpoMed',90],['ad','Anti Doping',90],['e1','email 1 (Hauptadresse)',180],['e2','email 2',160],['tp','Telefon Spieler',110],['tm','Telefon Mutter',110],['tv','Telefon Vater',110],['ts','T-Shirt Größe',80]];
+const SEED=`Aberle;Britta;U22;w;LK;passiv;SV Berliner Brauereien;2005;LLZ
+Cebulla;Leif;U17;m;LK;aktiv;SC Brandenburg;2010;LLZ
+Dietzel;Paula;U15;w;SK;aktiv;BC Tempelhof;2013;LLZ
+Dreher;Nils;U09;m;SK;aktiv;Pro Sport Berlin;;LLZ
+Eckhardt;Hanna;U11;w;LK;aktiv;SG RW Neuenhagen;2016;LLZ
+Engelmann;Britta;U13;w;NK2;aktiv;SV Berliner Brauereien;2014;LLZ
+Flöter;Hanna;U22;w;SK;aktiv;SC Brandenburg;2007;LLZ
+Fuchsberger;Henri;U13;m;LK;aktiv;SVBB;;LLZ
+Gerlach;Gustav;U15;m;SK;aktiv;BC Potsdam;2013;BSP
+Gerlach;Rasmus;O22;m;LK;aktiv;Pro Sport Berlin;2002;SLZB
+Grünwald;Enya;U13;w;SK;aktiv;SV Berliner Brauereien;2014;LLZ
+Grünwald;Jette;U22;w;LK;aktiv;;2007;SLZB
+Grünwald;Rasmus;U17;m;LK;aktiv;;2010;LLZ
+Hollmann;Elias;U17;m;LK;aktiv;SC Brandenburg;2010;LLZ
+Hollmann;Jette;U11;w;LK;passiv;BC Schöneiche/Rüdersdorf;2016;SLZB
+Hollmann;Yara;U15;;LK;aktiv;TSV-Spandau;2012;LLZ
+Ilgner;Finn;U22;;LK;aktiv;BC Tempelhof;2006;LLZ
+Ilgner;Jette;U13;w;LK;aktiv;SVBB;2015;BSP
+Ilgner;Mathilde;U15;w;SK;aktiv;BC Eintracht Südring;2013;LLZ
+Jaschke;Arvid;U15;m;SK;passiv;SC Siemensstadt;2013;LLZ
+Jaschke;Lotta;U19;w;;passiv;SV Berliner Brauereien;2008;SLZB
+Jaschke;Vera;U13;w;;passiv;Berliner SC;2015;LLZ
+Jessen;Dario;U13;m;;passiv;Zehlendorfer TSV;2014;LLZ
+Jessen;Lotta;U09;w;LK;aktiv;TSV Tempelhof-Mariendorf;2018;LLZ
+Jessen;Mathilde;U11;w;SK;aktiv;Berliner SC;2016;LLZ
+Jäckel;Gustav;U11;m;LK;aktiv;TSV Spandau;2015;LLZ
+Jäckel;Leif;U22;m;SK;aktiv;Pro Sport Berlin;2006;LLZ
+Kellermann;Bruno;U11;m;LK;aktiv;BC Potsdam;2016;LLZ
+Köppen;Gustav;U15;m;NK2;aktiv;Vfb Kiefholz;2013;U09
+Kühne;Alma;U19;w;NK2;aktiv;SC Brandenburg;2008;LLZ
+Kühne;Jette;U13;w;SK;aktiv;SG EBT Berlin;2014;SLZB
+Lindemann;Yara;U11;w;LK;aktiv;Neuer Verein e.V.;2016;BSP
+Lorenzen;Anton;U22;m;SK;passiv;BG Neukölln;2007;LLZ
+Lübbe;Arvid;U13;m;SK;passiv;TSV Spandau;2015;LLZ
+Lübbe;Arvid;U19;m;SK;passiv;Berliner SC;2009;BSP
+Mädler;Henri;U11;m;LK;aktiv;SV Berliner Brauereien;2017;LLZ
+Mädler;Jette;O22;w;LK;aktiv;SV Berliner Brauereien;2002;LLZ
+Möllendorf;Rieke;U22;w;LK;aktiv;Pro Sport Berlin;2005;LLZ
+Müßig;Alma;U13;w;LK;passiv;SV Berliner Brauereien;2015;BSP
+Müßig;Bruno;U15;m;LK;passiv;Pro Sport Berlin;2012;LLZ
+Müßig;Jonte;U09;m;LK;aktiv;Berliner SC;2018;LLZ
+Nowotny;Malte;U13;m;NK2;aktiv;SG EBT Berlin;2014;SLZB
+Nowotny;Thea;U17;w;LK;aktiv;TSV Spandau;2010;LLZ
+Nöthe;Gustav;U19;m;SK;aktiv;SV Berliner Brauereien;2008;LLZ
+Ostermann;Nora;U17;w;NK2;aktiv;Berliner SC;2010;SLZB
+Rademacher;Henri;U09;m;LK;aktiv;SV Berliner Brauereien;2018;LLZ
+Rühmann;Clara;U22;w;LK;aktiv;TSV Tempelhof-Mariendorf;2006;SLZB
+Rühmann;Klara;U19;w;SK;aktiv;SG EBT Berlin;2008;LLZ
+Sauerbrey;Vera;O22;w;LK;aktiv;Zehlendorfer TSV;2002;LLZ
+Thalmann;Hanna;U17;w;LK;aktiv;SV Berliner Brauereien;2010;LLZ
+Tran;Malte;U17;m;LK;aktiv;SG EBT Berlin;2010;SLZB
+Ulbricht;Yara;U13;w;LK;aktiv;SV Berliner Brauereien;2014;LLZ
+Vollmer;Dario;U17;m;LK;aktiv;SC Siemensstadt;2011;SLZB
+Weißkopf;Finn;U15;m;SK;aktiv;SV Berliner Brauereien;2013;LLZ
+Weißkopf;Piet;U17;m;LK;aktiv;BC Potsdam;2010;BSP
+Wöhler;Clara;U17;w;LK;aktiv;SC Brandenburg;2010;SLZB
+Xander;Benno;U19;m;SK;passiv;TSV Spandau;2008;LLZ
+Xander;Mathilde;U22;w;LK;passiv;SG EBT Berlin;2006;LLZ
+Ysenburg;Ivo;U19;m;LK;aktiv;SV Berliner Brauereien;2008;SLZB
+Zeidler;Rieke;U17;w;LK;aktiv;TSV-Spandau;2011;LLZ`;
+const DEFVL=`SV Berliner Brauereien;SVBB;BER
+SVBB;SVBB;BER
+SC Brandenburg;SCB;BER
+SG EBT Berlin;EBT;BER
+Berliner SC;BSC;BER
+TSV Spandau;TSV Sp;BER
+TSV-Spandau;TSV Sp;BER
+Pro Sport Berlin;ProSport;BER
+TSV Tempelhof-Mariendorf;TSV TM;BER
+Zehlendorfer TSV;ZTSV;BER
+SC Siemensstadt;SCS;BER
+BC Tempelhof;BCT;BER
+BG Neukölln;BGN;BER
+BC Eintracht Südring;BCES;BER
+Vfb Kiefholz;VfB;BER
+BC Potsdam;BCP;BRA
+BC Schöneiche/Rüdersdorf;BCSR;BRA
+SG RW Neuenhagen;RWN;BRA`;
+const newP=()=>Object.fromEntries(COLS.map(c=>[c[0],'']));
+const defSD=()=>({pl:SEED.split('\n').map((l,i)=>{const a=l.split(';');return Object.assign(newP(),{id:'s'+i,name:a[0],vor:a[1],ak:a[2],mw:a[3],ks:a[4],st:a[5],ver:a[6],jg:a[7],ort:a[8]})}),vl:DEFVL,
+bt:`Beispiel, Lena
+Muster, Jana
+Probe, Max
+Test, Tom`,
+kp:`Reisekosten
+Unterkunft
+Unterkunftsverpflegung
+Verpflegung
+Bälle
+Startgeld
+Vorschuss
+sonstige Kosten`,
+ko:`Wettkämpfe BER/BRA
+Wettkämpfe BER
+Sonstige Kosten LS BER
+Sonstige Kosten LLZ BER
+Maßnahmen BVBB BER
+Maßn. BVBB BER/BRA
+Lehrgänge DBV BRA/BER
+Lehrgänge DBV BRA
+Lehrgänge DBV BER
+Lehrgänge BVBB
+Honorare LLZ BER
+Hon. Stg. Maßn. BRA
+Hon. Stg. Maßn. BER/BRA
+Hon. Stg. Maßn. BER`});
+let SD=ld('tn2_sd'),S,fh=null,dirty=false,DL=null,VW='home',PV='home';
+if(!SD||!SD.pl)SD=defSD();
+const lines=t=>(t||'').split('\n').map(s=>s.trim()).filter(Boolean);
+const yearOf=j=>{const m=String(j||'').match(/\d{4}/);return m?m[0]:''};
+const abbr=v=>String(v||'').split(/[\s\-\/]+/).filter(Boolean).map(w=>w[0]).join('').toUpperCase();
+function vInfo(ver){const t=String(ver||'').trim().toLowerCase();for(const l of lines(SD.vl)){const a=l.split(';').map(s=>s.trim());if(a[0].toLowerCase()===t)return{k:a[1]||abbr(ver),v:a[2]||''}}return{k:abbr(ver),v:''}}
+const rowOf=p=>{const vi=vInfo(p.ver);return{pid:p.id,n:[p.name,p.vor].filter(Boolean).join(', '),k:vi.k,v:vi.v,mw:p.mw,jg:yearOf(p.jg),akl:p.ak,ks:p.ks,x:false}};
+const emptyRow=()=>({pid:'',n:'',k:'',v:'',mw:'',jg:'',akl:'',ks:'',x:false});
+function refY(){const b=String(S.by||'').trim();if(/^\d{4}$/.test(b))return+b;const y=((S.termin||'').match(/(?:19|20)\d\d/g)||[]).pop();return y?+y:new Date().getFullYear()}
+function akOf(jg,akl,Y){const y=+yearOf(jg);if(y){for(const x of[9,11,13,15,17,19])if(y>=Y-x+1)return'U'+String(x).padStart(2,'0');return'O19'}
+ const a=String(akl||'').replace(/\s/g,'').toUpperCase();if(!a)return'';if(a[0]==='O')return'O19';const n=parseInt(a.slice(1));if(!n)return'';return n>19?'O19':'U'+String(n).padStart(2,'0')}
+const A=(k,t,b,z='KK')=>({d:'',k,t,b,z,f:false});
+const blank=()=>({mn:'',ort:'',termin:'',by:'',empf:'Herr Max Mustermann',tn:[emptyRow()],bt:[''],sb:'',ag:[A('','','')],ein:[{t:'',b:''}],konto:'',info:''});
+const example=()=>{const s=blank();const f=n=>{const p=SD.pl.find(p=>(p.name+' '+p.vor).trim()===n);return p?rowOf(p):emptyRow()};
+Object.assign(s,{mn:'A-RLT U11/U13',ort:'Friedrichsdorf',termin:'27.02.–01.03.2026',konto:'Wettkämpfe BER/BRA',
+tn:['Aberle Britta','Cebulla Leif','Dietzel Paula','Dreher Nils','Engelmann Britta','Flöter Hanna','Fuchsberger Henri','Eckhardt Hanna','Gerlach Rasmus'].map(f),
+bt:['Muster, Jana','Probe, Max'],
+ag:[A('Unterkunft','Hotel Beispielstadt','832'),A('Reisekosten','Fahrt Jana Muster','175,60'),A('Reisekosten','Fahrt Max Probe','180,85'),A('Reisekosten','Taxi','27,40'),A('Verpflegung','Einkauf','4'),A('Verpflegung','Abendessen','96,60'),A('Verpflegung','Abendessen','104,42'),A('Verpflegung','Einkauf','4,90'),A('Verpflegung','Einkauf','2,74'),A('Verpflegung','Einkauf','3,65'),A('Verpflegung','Einkauf','13,55'),A('Verpflegung','Einkauf','7,70'),A('Reisekosten','3x Handyticket à 1,80','5,20','Muster, Jana')],
+ein:[{t:'4 Teilnehmer je 150 €',b:'600'},{t:'2 Teilnehmerinnen 30 € und 22,50 € für Coaching und Bälle',b:'52,50'},{t:'2 Teilnehmerinnen je 75 €, da nachgerückt und nur einen Tag Hotel in Anspruch genommen',b:'150'},{t:'Ein Teilnehmer hat kurzfristig abgesagt: 41 € Stornokosten',b:'41'}]});
+if(s.tn[6])s.tn[6].x=true;return s};
+S=ld('tn2_draft')||example();
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const num=v=>{let s=String(v==null?'':v).trim();if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const x=parseFloat(s);return isNaN(x)?0:x};
+const r2=x=>Math.round(x*100)/100;
+const eur=x=>x.toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const I=(p,v,x='')=>`<input data-p="${p}" value="${esc(v)}" ${x}>`;
+const C=(p,v)=>`<input type="checkbox" data-p="${p}"${v?' checked':''}>`;
+const X=p=>`<td class="noprint"><button class="x" data-del="${p}" title="Zeile entfernen">×</button></td>`;
+const opt=(list,v)=>{const l=[...list];if(v&&!l.includes(v))l.push(v);return '<option value=""></option>'+l.map(o=>`<option${o===v?' selected':''}>${esc(o)}</option>`).join('')};
+const setP=(p,v)=>{const a=p.split('.');let o=S;for(let i=0;i<a.length-1;i++)o=o[a[i]];o[a[a.length-1]]=v};
+const pn=p=>[p.name,p.vor].filter(Boolean).join(', ');
+function ask(m,c=true){return new Promise(r=>{Q('#dqm').textContent=m;Q('#dqc').style.display=c?'':'none';const d=Q('#dq');const done=v=>{d.close();r(v)};Q('#dqo').onclick=()=>done(true);Q('#dqc').onclick=()=>done(false);d.oncancel=()=>r(false);d.showModal()})}
+let LSV=ld('tn2_ls');
+function stat(){const e=Q('#stt'),l=LSV;
+ const t=l?(l.k==='open'?`geöffnet: ${l.name}`:`zuletzt gespeichert als ${l.name} um ${l.t}`):'noch nicht als Datei gespeichert';
+ e.textContent=(dirty?'● ungesicherte Änderungen · ':'')+t;e.style.color=dirty||!l?'#c0392b':'#2e7d32'}
+const setLS=(name,k)=>{LSV={name,k,t:new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})};sv('tn2_ls',LSV)};
+function mark(){dirty=true;sv('tn2_draft',S);stat()}
+function render(){
+ ['mn','ort','termin','by','empf','sb','info'].forEach(k=>Q(`[data-p=${k}]`).value=S[k]||'');
+ Q('#vbtn').textContent='v'+VER;Q('#vbtn2').textContent='Version v'+VER;Q('#ftr').textContent=`Turnierabrechnung v${VER} · Ausdruck vom ${new Date().toLocaleDateString('de-DE')}`;
+ const B=lines(SD.bt);
+ Q('#dlb').innerHTML=B.map(b=>`<option value="${esc(b)}">`).join('');
+ Q('#dlz').innerHTML=['KK',...B].map(b=>`<option value="${esc(b)}">`).join('');
+ const taken=new Set(S.tn.map(t=>t.pid).filter(Boolean));
+ const pls=SD.pl.filter(p=>p.name).slice().sort((a,b)=>pn(a).localeCompare(pn(b),'de'));
+ Q('#tn').innerHTML=S.tn.map((t,i)=>{const p='tn.'+i+'.';
+  let o='<option value="">– Spieler wählen –</option>',own=false;
+  pls.forEach(q=>{if(q.id===t.pid){own=true;o+=`<option value="${q.id}" selected>${esc(pn(q))}</option>`}else if(!taken.has(q.id))o+=`<option value="${q.id}">${esc(pn(q))}</option>`});
+  if(t.pid&&!own)o+=`<option value="${esc(t.pid)}" selected>${esc(t.n)}</option>`;
+  return `<tr><td>${i+1}</td><td><select data-pick="${i}">${o}</select></td><td style="width:62px">${I(p+'k',t.k)}</td><td style="width:54px">${I(p+'v',t.v)}</td><td style="width:50px"><select data-p="${p}mw"><option></option><option${t.mw==='m'?' selected':''}>m</option><option${t.mw==='w'?' selected':''}>w</option></select></td><td style="width:54px">${I(p+'jg',t.jg)}</td><td class="c" id="ak${i}" style="width:48px"></td><td style="width:56px">${I(p+'ks',t.ks)}</td><td class="c">${C(p+'x',t.x)}</td>${X('tn.'+i)}</tr>`}).join('');
+ Q('#bt').innerHTML=S.bt.map((b,i)=>`<tr><td>${I('bt.'+i,b,'list="dlb"')}</td>${X('bt.'+i)}</tr>`).join('');
+ Q('#ag').innerHTML=S.ag.map((a,i)=>{const p='ag.'+i+'.';return `<tr><td>${i+1}</td><td style="width:78px">${I(p+'d',a.d,'placeholder="TT.MM.JJ"')}</td><td><select data-p="${p}k">${opt(lines(SD.kp),a.k)}</select></td><td>${I(p+'t',a.t)}</td><td style="width:84px">${I(p+'b',a.b,'class="r" inputmode="decimal"')}</td><td style="width:120px">${I(p+'z',a.z,'list="dlz"')}</td><td class="c">${C(p+'f',a.f)}</td>${X('ag.'+i)}</tr>`}).join('');
+ Q('#ein').innerHTML=S.ein.map((e,i)=>`<tr><td>${I('ein.'+i+'.t',e.t)}</td><td>${I('ein.'+i+'.b',e.b,'class="r" inputmode="decimal"')}</td>${X('ein.'+i)}</tr>`).join('');
+ Q('#ko').innerHTML=opt(lines(SD.ko),S.konto);
+ stat();
+ calc();
+}
+function calc(){
+ const Y=refY();Q('#by').placeholder='auto: '+Y;
+ S.tn.forEach((t,i)=>{const e=Q('#ak'+i);if(e)e.textContent=akOf(t.jg,t.akl,Y)});
+ Q('#akn').textContent=`Altersklassen nach Jahrgang berechnet (Alter im Kalenderjahr ${Y}, U = unter).`;
+ const n=S.tn.length,nB=S.tn.filter(t=>t.v==='BER').length,nR=S.tn.filter(t=>t.v==='BRA').length,nx=S.tn.filter(t=>t.x).length;
+ const A_=S.ag.reduce((s,a)=>s+num(a.b),0),E=S.ein.reduce((s,e)=>s+num(e.b),0),fw=S.ag.filter(a=>a.f).reduce((s,a)=>s+num(a.b),0);
+ const z={};S.ag.forEach(a=>{const k=(a.z||'KK').trim()||'KK';z[k]=(z[k]||0)+num(a.b)});
+ Q('#cnt').textContent=`Teilnehmer gesamt: ${n} · Berlin: ${nB} · Brandenburg: ${nR}`+(nx?` · davon nicht teilgenommen: ${nx}`:'');
+ const tr=(l,v,b)=>`<tr><td>${l}</td><td class="r">${b?'<b>'+eur(v)+'</b>':eur(v)}</td></tr>`;
+ let h=tr('Gesamtausgaben',A_,1),er='';
+ for(const k in z){if(k.toLowerCase()==='kk')h+=tr('davon vom BVBB gezahlt (KK)',z[k]);else{h+=tr('davon verauslagt von '+esc(k),z[k]);er+=`<div>Erstattungsbetrag an <b>${esc(k)}</b>: <b>${eur(z[k])}</b></div>`}}
+ if(fw)h+=tr('davon Fremdwährung',fw);
+ Q('#sa').innerHTML=h;Q('#se').innerHTML=tr('Gesamteinnahmen',E,1);Q('#er').innerHTML=er;
+ const ok=n>0&&nB+nR===n,sh=(x,k)=>n?r2(x*k/n):0;
+ const pa=x=>{const b=sh(x,nB);return[x,b,r2(x-b)]};
+ const PA=pa(A_),PE=pa(E),PS=PA.map((v,i)=>r2(v-PE[i]));
+ const row=(l,v)=>`<tr><td>${l}</td>${v.map((x,i)=>`<td class="r">${i&&!ok?'–':eur(x)}</td>`).join('')}</tr>`;
+ Q('#au').innerHTML=`<tr><th></th><th class="r">Gesamt</th><th class="r">Berlin (${nB}/${n})</th><th class="r">Brandenburg (${nR}/${n})</th></tr>`+row('Ausgaben',PA)+row('Einnahmen',PE)+row('<b>Zuschuss BVBB</b>',PS);
+ const ids=S.tn.map(t=>t.pid).filter(Boolean),w=[];
+ if(ids.length!==new Set(ids).size)w.push('Ein Spieler ist mehrfach ausgewählt.');
+ if(S.tn.some(t=>t.n&&!t.v))w.push('Mindestens ein Teilnehmer hat kein Bundesland (BER/BRA), die Aufteilung ist dann nicht möglich. Verein-Zuordnung unter „Stammdaten“ ergänzen.');
+ Q('#wn').textContent=w.join(' ');
+}
+function go(v){PV=VW;VW=v;document.body.className='v-'+v;
+ try{const h={abr:'abrechnung',kader:'kader'}[v]||'';if(location.hash.slice(1)!==h)location.hash=h}catch(e){}
+ if(v==='kader')renderSD();else if(v==='abr')render();else renderHome();scrollTo(0,0)}
+function renderHome(){
+ Q('.hlogo').src=Q('.logo').src;
+ const t=[S.mn,S.ort].filter(Boolean).join(' · ');
+ Q('#t1s').textContent=t?'Entwurf: '+t:'Neue Abrechnung erstellen';
+ Q('#t2s').textContent=`${SD.pl.length} Spieler · Pflege, Import/Export, Prüfung`;
+}
+const hv=()=>({'#abrechnung':'abr','#kader':'kader'})[location.hash]||'home';
+function renderSD(){
+ const q=(Q('#flt').value||'').toLowerCase();
+ Q('#sdt').innerHTML='<thead><tr><th></th>'+COLS.map(c=>`<th>${c[1]}</th>`).join('')+'</tr></thead><tbody>'+SD.pl.map((p,i)=>({p,i})).filter(({p})=>!q||(p.name+' '+p.vor+' '+p.ver).toLowerCase().includes(q)).map(({p,i})=>`<tr><td><button class="x" data-sdel="${i}" title="Spieler löschen">×</button></td>`+COLS.map(c=>`<td><input data-sp="${i}.${c[0]}" value="${esc(p[c[0]])}" style="min-width:${c[2]}px"></td>`).join('')+'</tr>').join('')+'</tbody>';
+ document.querySelectorAll('[data-sl]').forEach(t=>t.value=SD[t.dataset.sl]||'');
+}
+document.addEventListener('input',e=>{const t=e.target,d=t.dataset;
+ if(d.sp){const[i,k]=d.sp.split('.');SD.pl[+i][k]=t.value;sv('tn2_sd',SD);return}
+ if(d.sl){SD[d.sl]=t.value;sv('tn2_sd',SD);return}
+ if(t.id==='flt'){renderSD();return}
+ if(!d.p)return;setP(d.p,t.type==='checkbox'?t.checked:t.value);mark();calc()});
+document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
+ if(d.pick!==undefined){const i=+d.pick,p=SD.pl.find(q=>q.id===t.value);
+  if(!t.value)S.tn[i]=emptyRow();else if(p&&!S.tn.some((r,j)=>j!==i&&r.pid===p.id)){const x=S.tn[i].x;S.tn[i]=Object.assign(rowOf(p),{x})}
+  render();mark();return}
+ if(d.p&&t.tagName==='SELECT'){setP(d.p,t.value);mark();calc()}
+ if(d.sp&&!Q('#chk').hidden)chk()});
+const ACT={
+ async neu(){if(await ask('Alle Eingaben verwerfen und neu beginnen?')){S=blank();fh=null;dirty=false;LSV=null;sv('tn2_ls',null);sv('tn2_draft',S);render()}},
+ async tpl(){if(await ask('Teilnehmer und Betreuer behalten, Ausgaben, Einnahmen und Termin leeren?')){Object.assign(S,{termin:'',by:'',ag:[A('','','')],ein:[{t:'',b:''}],info:''});fh=null;LSV=null;sv('tn2_ls',null);render();mark()}},
+ async open(){try{if(window.showOpenFilePicker){const[h]=await showOpenFilePicker({types:[{description:'Turnier',accept:{'application/json':['.json']}}]});fh=h;const fl=await h.getFile();apply(await fl.text(),fl.name);return}}catch(e){if(e.name==='AbortError')return}Q('#fi').click()},
+ save(){doSave(false)},saveas(){doSave(true)},
+ sd(){go('kader')},abr(){go('abr')},home(){go('home')},
+ back(){go(PV==='kader'||PV==='home'?'home':PV)},
+ imp(){Q('#fx').click()},
+ chk(){const c=Q('#chk');c.hidden=!c.hidden;if(!c.hidden)chk()},
+ addp(){Q('#flt').value='';SD.pl.push(Object.assign(newP(),{id:'n'+Date.now()}));sv('tn2_sd',SD);renderSD();const b=Q('.sc2');b.scrollTop=b.scrollHeight},
+ async exp(){if(typeof XLSX==='undefined'){await ask('Excel-Funktion nicht geladen.',false);return}
+  const ws=XLSX.utils.aoa_to_sheet([COLS.map(c=>c[1]),...SD.pl.map(p=>COLS.map(c=>p[c[0]]))]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Kader');
+  await fileOut('Kaderliste.xlsx',XLSX.write(wb,{type:'array',bookType:'xlsx'}))},
+ ver(){ask(CH.map(c=>'v'+c[0]+': '+c[1]).join('\n'),false)},
+ async print(){try{window.print()}catch(e){await ask('Drucken ist in diesem Fenster gesperrt. Bitte die Seite in einem eigenen Browser-Tab öffnen.',false)}}};
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+ if(d.add){S[d.add].push(d.add==='tn'?emptyRow():d.add==='bt'?'':d.add==='ag'?A('','',''):{t:'',b:''});render();mark()}
+ else if(d.del){const[a,i]=d.del.split('.');S[a].splice(+i,1);if(!S[a].length&&a==='tn')S.tn.push(emptyRow());render();mark()}
+ else if(d.sdel!==undefined){SD.pl.splice(+d.sdel,1);sv('tn2_sd',SD);renderSD();if(!Q('#chk').hidden)chk()}
+ else if(d.flt!==undefined){Q('#flt').value=d.flt;renderSD()}
+ else if(d.act)ACT[d.act]()});
+function chk(){
+ const Y=new Date().getFullYear(),pl=SD.pl.filter(p=>p.name||p.vor),G=[];
+ const fl=p=>[p.name,p.vor].filter(Boolean).join(' ');
+ const grp=(t,f,lab)=>{const a=pl.filter(f);if(a.length)G.push([t,a.map(p=>[fl(p),lab?lab(p):pn(p)])])};
+ grp('Jahrgang fehlt (AK kommt aus der Liste)',p=>!yearOf(p.jg));
+ grp('Verein fehlt',p=>!String(p.ver).trim());
+ grp('m/w fehlt oder ist ungültig',p=>!['m','w'].includes(p.mw));
+ grp('Kaderstatus fehlt',p=>!String(p.ks).trim());
+ grp(`AK in der Liste weicht von der berechneten ab (Jahr ${Y})`,p=>yearOf(p.jg)&&p.ak&&akOf('',p.ak,Y)!==akOf(p.jg,'',Y),p=>`${pn(p)}: Liste ${p.ak}, berechnet ${akOf(p.jg,'',Y)}`);
+ grp('Trainingsort sieht nicht nach einem Ort aus',p=>/^[UO]\s*\d/i.test(p.ort));
+ const seen={},dup=new Set();pl.forEach(p=>{const k=fl(p).toLowerCase();if(seen[k])dup.add(k);seen[k]=1});
+ grp('Name doppelt',p=>dup.has(fl(p).toLowerCase()));
+ const vk=new Set(lines(SD.vl).map(l=>l.split(';')[0].trim().toLowerCase()));
+ const vs=[...new Set(pl.map(p=>String(p.ver).trim()).filter(v=>v&&!vk.has(v.toLowerCase())))];
+ if(vs.length)G.push(['Verein fehlt in der Vereinsliste (Kürzel und Bundesland ergänzen)',vs.map(v=>[v,v])]);
+ const bad=lines(SD.vl).map(l=>l.split(';').map(s=>s.trim())).filter(a=>!['BER','BRA'].includes(a[2]));
+ if(bad.length)G.push(['Vereinsliste: Bundesland fehlt oder ist ungültig',bad.map(a=>[a[0],a[0]])]);
+ Q('#chk').innerHTML=G.length?G.map(([t,a])=>`<div style="margin-bottom:6px"><b>${t} (${a.length})</b><br>`+a.map(([f,l])=>`<button class="chip" data-flt="${esc(f)}">${esc(l)}</button>`).join('')+'</div>').join(''):'Keine Auffälligkeiten gefunden.';
+}
+async function impX(buf){
+ if(typeof XLSX==='undefined'){await ask('Excel-Funktion nicht geladen.',false);return}
+ const wb=XLSX.read(buf,{type:'array',cellDates:true}),R=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''});
+ const h=R.findIndex(r=>String(r[1]).trim()==='Name'&&String(r[2]).trim()==='Vorname');
+ if(h<0){await ask('Die Kopfzeile mit „Name“ und „Vorname“ wurde nicht gefunden.',false);return}
+ const dt=d=>[d.getDate(),d.getMonth()+1].map(x=>String(x).padStart(2,'0')).join('.')+'.'+d.getFullYear();
+ const pl=[];R.slice(h+1).forEach((r,i)=>{if(!String(r[1]).trim()||/^Legende/.test(r[1])||r[4]==='O22')return;
+  const o=Object.assign(newP(),{id:'i'+Date.now()+'_'+i});COLS.forEach((c,j)=>{let v=r[j];if(v instanceof Date)v=dt(v);o[c[0]]=v==null?'':String(v).trim()});o.ak=o.ak.replace(/\s/g,'');pl.push(o)});
+ if(await ask(`${pl.length} Spieler gefunden. Die bisherigen Spieler in den Stammdaten werden ersetzt. Bereits gespeicherte Turniere bleiben unverändert.`)){SD.pl=pl;sv('tn2_sd',SD);renderSD();Q('#chk').hidden=false;chk()}
+}
+Q('#fx').onchange=async e=>{const f=e.target.files[0];if(f)impX(await f.arrayBuffer());e.target.value=''};
+const san=x=>String(x||'').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+function fname(){const t=S.termin||'',y=(t.match(/(?:19|20)\d\d/g)||[]).pop(),m=t.match(/\b(\d{1,2})\.(\d{1,2})\./);
+ const d=y?(m?`${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`:y):'ohne-Termin';
+ return [d,san(S.ort)||'ohne-Ort',san(S.mn)||'ohne-Massnahme'].join('_')+'.json'}
+function saveDlg(){return new Promise(r=>{const d=Q('#ds');Q('#dsn').value=fname();Q('#dsz').value=SD.zo||'';Q('#dsf').hidden=!/Firefox/.test(navigator.userAgent);
+ const done=v=>{d.close();r(v)};
+ Q('#dso').onclick=()=>{let n=Q('#dsn').value.trim()||fname();if(!/\.json$/i.test(n))n+='.json';SD.zo=Q('#dsz').value.trim();sv('tn2_sd',SD);done(n)};
+ Q('#dsc').onclick=()=>done(null);d.oncancel=()=>r(null);d.showModal()})}
+async function fileOut(name,data){
+ if(DL){try{await DL.save({filename:name,data});return true}catch(e){if(e&&e.code==='declined')return false}}
+ try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data]));a.download=name;a.click();return true}catch(e){return false}}
+async function doSave(as){
+ let name=fname();
+ if(as||!fh){name=await saveDlg();if(!name)return}
+ const data=JSON.stringify({v:2,app:VER,S,L:{bt:SD.bt,kp:SD.kp,ko:SD.ko,vl:SD.vl,zo:SD.zo}},null,1);
+ try{if(window.showSaveFilePicker){if(!fh||as)fh=await showSaveFilePicker({suggestedName:name,types:[{description:'Turnier',accept:{'application/json':['.json']}}]});
+  const w=await fh.createWritable();await w.write(data);await w.close();dirty=false;setLS(fh.name||name);stat();return}}
+ catch(e){if(e.name==='AbortError')return;fh=null}
+ if(await fileOut(name,data)){dirty=false;setLS(name);stat()}
+}
+async function apply(t,nm){try{const o=JSON.parse(t);if(!o.S||!o.S.tn||o.v!==2)throw 0;S=o.S;if(o.L)['bt','kp','ko','vl','zo'].forEach(k=>{if(o.L[k])SD[k]=o.L[k]});sv('tn2_sd',SD);dirty=false;if(nm)setLS(nm,'open');sv('tn2_draft',S);render()}catch(e){await ask('Die Datei konnte nicht gelesen werden (oder stammt aus einer älteren Version).',false)}}
+Q('#fi').onchange=async e=>{const f=e.target.files[0];if(f){fh=null;apply(await f.text(),f.name)}e.target.value=''};
+try{if(window.claude&&claude.use)claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(e){}
+render();
+addEventListener('hashchange',()=>{const v=hv();if(v!==VW)go(v)});
+go(hv());
+</script></body></html>

@@ -1,0 +1,4 @@
+# PHP 8.4 für Tests und lokale Vorschau, damit auf dem Rechner kein PHP installiert sein muss
+FROM php:8.4-cli
+RUN docker-php-ext-install pdo_mysql
+WORKDIR /app
