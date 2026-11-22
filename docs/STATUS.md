@@ -5,8 +5,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 22.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-9-import |
-| Letzte fertige Aufgabe | Task 9 |
+| Aktueller Zweig | task-10-users |
+| Letzte fertige Aufgabe | Task 10 |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -23,9 +23,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 6 HTTP-Grundlage | fertig | task-6-http | 15 Tests grün (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #7) |
 | 7 Anmeldung, Sitzung, CSRF | fertig | task-7-auth | 24 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #8) |
 | 8 Spieler-Schnittstelle | fertig | task-8-players-api | 23 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #9) |
-| 9 Datenprüfung, Import | fertig, Review erledigt | task-9-import | 189 Tests grün gegen `bvbb_test_pc` (PHP 8.4); Pull-Request offen |
+| 9 Datenprüfung, Import | fertig | task-9-import | 189 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #10) |
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
-| 10 Benutzer, Rollen, Protokoll | offen | | |
+| 10 Benutzer, Rollen, Protokoll | fertig, Review erledigt | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4); Pull-Request offen |
 | 11 Oberfläche | offen | | |
 | 12 Auslieferung | offen | | |
 
@@ -37,7 +37,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 2: Zusätzliche Tests: SQL wird korrekt an Semikolons zerlegt, eine fehlerhafte Migration wird nicht vermerkt, alle Tabellen nutzen InnoDB und `utf8mb4_unicode_ci`, die Rechte-Matrix wird vollständig geprüft.
 - Task 2: `testPdo()` löscht nur, wenn der Datenbankname mit `bvbb_test` beginnt. Das schützt vor versehentlich falschen Zugangsdaten.
 - Task 2, nach dem Review: `users.subject` vergleicht exakt (`ascii_nopad_bin`: Groß- und Kleinschreibung und Leerzeichen am Ende zählen), `clubs.state` lässt nur genau `BER` und `BRA` zu (`ascii_bin`). `Db::connect` setzt den Strict-Modus (zu lange Werte ergeben einen Fehler, statt abgeschnitten zu werden) und ergänzt `charset=utf8mb4` im DSN, falls er fehlt. Die Tabellen in 001 entstehen mit `CREATE TABLE IF NOT EXISTS`, damit nach einem Abbruch ein neuer Lauf möglich ist. `sportmed_note` und `antidoping_note` sind `TEXT`. Ausführbare Kommentare (`/*! … */`) in Migrationen werden mit einem Fehler abgelehnt.
-- Task 2: Die Zeitzone der Datenbankverbindung ist nicht festgelegt (Serverstandard). Sie wird geklärt, sobald Zeitstempel angezeigt werden (Protokoll, Task 10).
+- Task 2: Die Zeitzone der Datenbankverbindung war nicht festgelegt. **Erledigt in Task 10:** Die Verbindung rechnet in UTC (siehe unten).
 - Task 3: Als Jahrgang zählt nur eine eigenständige Jahreszahl 19xx oder 20xx (nicht Teil einer längeren Zahl wie einer Excel-Seriennummer `41896`). Ein Jahrgang nach dem Turnierjahr gilt als unbrauchbar. In beiden Fällen gilt wie ohne Jahrgang die AK aus der Liste. Die Datenprüfung (Task 9) soll solche Jahrgänge melden.
 - Task 3: Eine AK aus der Liste, die keine gültige Klasse ist (zum Beispiel `U10`), ergibt `''`. Der Prototyp lieferte hier `U10`. In der Testkaderliste kommen nur `U09` bis `U22`, `O22` und `U 09` vor. Die Datenprüfung (Task 9) soll ungültige AK-Werte melden.
 - Task 3: `yearFromTerm` erkennt wie der Prototyp nur vierstellige Jahreszahlen 19xx und 20xx. Ein Termin mit zweistelliger Jahreszahl („02.–04.01.27“) ergibt das laufende Jahr. Im Prototyp lässt sich das AK-Jahr deshalb von Hand setzen, das gehört in Etappe 2 (Turniere).
@@ -80,6 +80,13 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 9, Refactoring: Die Prüfregeln der Felder liegen jetzt in `App\Domain\PlayerInput` und gelten für Schnittstelle und Import. `ClubDirectory::normalize` ist öffentlich.
 - Task 9, offen aus dem Review (klein, nicht umgesetzt): `update` in der Vorschau zählt auch unveränderte Zeilen, ein Zähler `unchanged` wäre klarer. Pro geänderter Zeile gibt es eine zusätzliche Abfrage (bei etwa 100 Zeilen unkritisch). Ein eigener Hinweis für inaktive Vereine statt `unknown_club` bräuchte eine Rückfrage.
 
+- Task 10, Benutzer: `GET /api/users` liefert `{users:[{id, name, email, active, roles}], role_keys:[…]}`, auch inaktive Personen, nach Name sortiert. Die Kennung des Anmeldedienstes (`subject`) wird nicht ausgeliefert. `role_keys` (alle Rollen) ist eine Ergänzung für die Oberfläche (Task 11). `PUT /api/users/{id}/roles` mit `{roles:[…]}` ersetzt die Rollen, `PUT /api/users/{id}` mit `{active:bool}`. Beide antworten mit `{user:{…}}`. Alle drei Endpunkte nur mit Schreibrecht `users` (nur admin). Andere Felder im Body (name, email, subject, …) ergeben 403 mit Feldliste, falsche Typen 422, unbekannte Rolle 422 `unknown_role` mit den Schlüsseln (exakter Vergleich, höchstens 20 Rollen zu je höchstens 40 Zeichen), unbekannte Person 404. Kein DELETE.
+- Task 10, letzter admin: Dem letzten **aktiven** admin kann die Rolle admin nicht entzogen werden, und er kann nicht deaktiviert werden (409 `last_admin`, nichts geändert). Das gilt auch für die eigene Person. Inaktive admins zählen nicht. Gegen gleichzeitige Änderungen sperrt jede Änderung zuerst die Zeile der Rolle admin (`SELECT … FOR UPDATE`, Transaktion mit READ COMMITTED). Bei einem Deadlock wird einmal wiederholt (nach dem Review). Gleichzeitigkeit ist im Test-Runner nicht automatisch getestet.
+- Task 10, Protokoll: Einträge `roles` (Zusammenfassung `roles: coach, roster_editor`, leer: `(keine)`), `activate` und `deactivate`, jeweils mit der handelnden Person. Ohne Änderung kein Eintrag. Deaktivieren wirkt sofort, auch auf eine laufende Sitzung (403 `inactive`). `GET /api/audit?limit=N` (Leserecht `audit`: admin und reviewer), `limit` 1 bis 1000, Standard 100, sonst 422. Antwort `{entries:[{id, at, user_id, user_name, action, object_type, object_id, summary}]}`, neueste zuerst. `user_name` ist der Name der handelnden Person („wer“ laut Entwurf), bei Einträgen ohne Person (Anlegen bei der ersten Anmeldung) `null`.
+- Task 10, Zeitzone (Abweichung vom Plan: zusätzlich geändert `src/Db.php` und `tests/DbTest.php`): `Db::connect` setzt `time_zone = '+00:00'`. Alle Zeitstempel (`CURRENT_TIMESTAMP`) werden in UTC gespeichert, `at` im Protokoll kommt als ISO 8601 mit `Z`. Die Oberfläche (Task 11) rechnet für die Anzeige in deutsche Zeit um (`TT.MM.JJJJ`). Hinweise: Zeilen, die vorher in Entwicklungsdatenbanken geschrieben wurden, stehen in Serverzeit und werden nicht umgerechnet. Per phpMyAdmin importierte Migrationen tragen `applied_at` in der Zeitzone der phpMyAdmin-Sitzung ein (nur kosmetisch).
+- Task 10, offen aus dem Review (gering, nicht umgesetzt): Ein Body wie `{"0":"x"}` gilt als Liste und ergibt 422 `invalid_body` statt 403.
+- Hinweis 22.11.2026: Während dieser Sitzung lief auf dem PC ein zweiter vollständiger Testlauf gegen `bvbb_test_pc`, nicht aus dieser Sitzung gestartet. Zwei gleichzeitige Läufe gegen dieselbe Datenbank löschen sich gegenseitig die Tabellen („Unknown table“). Testläufe auf einem Rechner nie parallel starten.
+
 ## Nächster Schritt
 
-Pull-Request für `task-9-import` prüfen und zusammenführen, danach Task 10 (Benutzer, Rollen, Protokoll). Task 9b bleibt zurückgestellt.
+Pull-Request für `task-10-users` prüfen und zusammenführen, danach Task 11 (Oberfläche). Task 9b bleibt zurückgestellt.

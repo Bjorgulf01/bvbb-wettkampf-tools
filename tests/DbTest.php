@@ -112,6 +112,12 @@ return [
         $ins = $pdo->prepare('INSERT INTO players (last_name, first_name) VALUES (?, ?)');
         assertThrows(fn() => $ins->execute([str_repeat('ä', 101), 'X']), PDOException::class);
     },
+    'Verbindung rechnet in UTC (Zeitstempel im Protokoll)' => function (): void {
+        $pdo = testPdo();
+        assertSame('+00:00', $pdo->query('SELECT @@session.time_zone')->fetchColumn());
+        $db = strtotime($pdo->query('SELECT NOW()')->fetchColumn() . ' UTC');
+        assertTrue(abs($db - time()) < 300, 'NOW() entspricht der UTC-Zeit');
+    },
     'per phpMyAdmin eingespielte Datei wird nicht erneut angewendet' => function (): void {
         $pdo = testPdo();
         // Wie ein Import in phpMyAdmin: die Datei Anweisung für Anweisung ausführen.
