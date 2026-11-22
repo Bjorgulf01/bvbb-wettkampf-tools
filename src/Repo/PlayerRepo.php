@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Repo;
 
+use App\Domain\ClubDirectory;
 use InvalidArgumentException;
 use PDO;
 
@@ -108,6 +109,25 @@ final class PlayerRepo
             )->execute(array_merge([$id], array_map(self::db(...), array_values($private))));
         }
         return array_keys($changed);
+    }
+
+    /**
+     * Leitet club_id aller Spieler neu aus club_name ab, zum Beispiel nach einer Änderung der Vereine.
+     * @return int Zahl der geänderten Spieler
+     */
+    public function reassignClubs(ClubDirectory $clubs): int
+    {
+        $update = $this->pdo->prepare('UPDATE players SET club_id = ? WHERE id = ?');
+        $n = 0;
+        foreach ($this->pdo->query('SELECT id, club_id, club_name FROM players')->fetchAll(PDO::FETCH_ASSOC) as $p) {
+            $clubId = $clubs->lookup((string) $p['club_name'])['club_id'];
+            $current = $p['club_id'] !== null ? (int) $p['club_id'] : null;
+            if ($clubId !== $current) {
+                $update->execute([$clubId, (int) $p['id']]);
+                $n++;
+            }
+        }
+        return $n;
     }
 
     /** @param list<string> $fields */
