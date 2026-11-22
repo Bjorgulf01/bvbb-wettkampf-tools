@@ -100,6 +100,78 @@ final class UserRepo
         );
     }
 
+    /** @return list<User> alle Personen, auch inaktive, nach Name sortiert */
+    public function all(): array
+    {
+        $roles = [];
+        foreach ($this->pdo->query(
+            'SELECT ur.user_id, r.role_key FROM user_roles ur JOIN roles r ON r.id = ur.role_id ORDER BY r.role_key'
+        )->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $roles[(int) $row['user_id']][] = (string) $row['role_key'];
+        }
+        $users = [];
+        foreach ($this->pdo->query('SELECT id, subject, name, email, active FROM users ORDER BY name, id')
+            ->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $id = (int) $row['id'];
+            $users[] = new User(
+                $id,
+                (string) $row['subject'],
+                (string) $row['name'],
+                $row['email'] !== null ? (string) $row['email'] : null,
+                (bool) $row['active'],
+                $roles[$id] ?? [],
+            );
+        }
+        return $users;
+    }
+
+    /** @return list<string> alle Rollenschlüssel, sortiert */
+    public function roleKeys(): array
+    {
+        return array_map('strval', $this->pdo->query('SELECT role_key FROM roles ORDER BY role_key')
+            ->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
+     * Ersetzt die Rollen einer Person. Läuft in der Transaktion des Aufrufers.
+     * @param list<string> $roleKeys
+     * @throws InvalidArgumentException bei unbekanntem Rollenschlüssel (vor jeder Änderung)
+     */
+    public function setRoles(int $userId, array $roleKeys): void
+    {
+        $roleIds = $this->roleIds(array_values(array_unique($roleKeys)));
+        $this->pdo->prepare('DELETE FROM user_roles WHERE user_id = ?')->execute([$userId]);
+        $ins = $this->pdo->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)');
+        foreach ($roleIds as $roleId) {
+            $ins->execute([$userId, $roleId]);
+        }
+    }
+
+    public function setActive(int $userId, bool $active): void
+    {
+        $this->pdo->prepare('UPDATE users SET active = ? WHERE id = ?')->execute([$active ? 1 : 0, $userId]);
+    }
+
+    /**
+     * Sperrt die Zeile der Rolle admin bis zum Ende der Transaktion. Jede Änderung, die einen admin
+     * entfernen kann, nimmt zuerst diese eine Sperre; solche Änderungen laufen dadurch nacheinander.
+     */
+    public function lockAdminRole(): void
+    {
+        $this->pdo->prepare("SELECT id FROM roles WHERE role_key = 'admin' FOR UPDATE")->execute();
+    }
+
+    /** @return list<int> Ids der aktiven Personen mit der Rolle admin */
+    public function activeAdminIds(): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT u.id FROM users u JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id
+             WHERE r.role_key = 'admin' AND u.active = 1 ORDER BY u.id"
+        );
+        $stmt->execute();
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
     private function idBySubject(string $subject): ?int
     {
         $stmt = $this->pdo->prepare('SELECT id FROM users WHERE subject = ?');

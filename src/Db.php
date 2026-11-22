@@ -28,6 +28,9 @@ final class Db
         $pdo->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
         // Zu lange oder ungültige Werte führen zu einem Fehler statt still abgeschnitten zu werden.
         $pdo->exec("SET SESSION sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ZERO_DATE,NO_ZERO_IN_DATE,NO_ENGINE_SUBSTITUTION'");
+        // Zeitstempel (DATETIME mit CURRENT_TIMESTAMP) in UTC, unabhängig von der Einstellung des Servers.
+        // Als Versatz, weil benannte Zeitzonen auf dem Webspace nicht geladen sein müssen.
+        $pdo->exec("SET SESSION time_zone = '+00:00'");
         return $pdo;
     }
 }
