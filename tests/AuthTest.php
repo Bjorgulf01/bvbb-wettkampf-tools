@@ -10,6 +10,7 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Http\Router;
 use App\Migrator;
+use App\Rbac\Permissions;
 use App\Repo\UserRepo;
 use App\UnsafeConfig;
 
@@ -30,7 +31,7 @@ $app = static function (PDO $pdo, array $config, array &$store, array &$now): Ro
     $router = new Router($guard, static function (string $line): void {
     });
     $provider = $cfg->get('test_auth') === true ? new TestAuthProvider(TestAuthProvider::defaultPersonas()) : null;
-    (new AuthController($session, $users, $guard, $provider, $cfg, $clock))->routes($router);
+    (new AuthController($session, $users, $guard, $provider, $cfg, $clock, Permissions::fromDb($pdo)))->routes($router);
     $router->add('GET', '/api/secret', fn() => Response::json(['secret' => true]));
     $router->add('POST', '/api/change', fn() => Response::json(['changed' => true]));
     return $router;
@@ -168,7 +169,7 @@ return [
         assertSame(200, $res->status);
         assertSame(['admin', 'coach'], $res->body['roles']);
         assertSame('Tina Training', $res->body['name']);
-        assertSame(['id', 'name', 'roles', 'csrf'], array_keys($res->body));
+        assertSame(['id', 'name', 'roles', 'csrf', 'permissions', 'write_fields'], array_keys($res->body));
 
         $store = [];
         $res = $login($app($pdo, ['first_admin_subject' => 'test:trainer'], $store, $now), 'pruefer');
@@ -188,6 +189,37 @@ return [
         $res = $login($app($pdo, ['first_admin_subject' => 'test:trainer'], $store, $now), 'trainer');
         assertSame([], $res->body['roles'], 'weder Test-Rollen noch Admin werden erneut vergeben');
         assertSame(1, (int) $pdo->query("SELECT COUNT(*) FROM users WHERE subject = 'test:trainer'")->fetchColumn());
+    },
+    '/api/me nennt die Rechte je Gruppe und die schreibbaren Felder' => function () use ($app, $migrated, $login): void {
+        $pdo = $migrated();
+        $now = [1000];
+        $expect = [
+            'trainer' => [['clubs' => 'read', 'player.basic' => 'read', 'player.health_light' => 'read', 'player.roster' => 'read'], []],
+            'basis' => [['clubs' => 'read', 'player.basic' => 'read'], []],
+            'admin' => [['audit' => 'read', 'clubs' => 'write', 'player.basic' => 'write', 'player.health_light' => 'read',
+                'player.private' => 'write', 'player.roster' => 'write', 'users' => 'write'], null],
+        ];
+        foreach ($expect as $person => [$groups, $write]) {
+            $store = [];
+            $router = $app($pdo, [], $store, $now);
+            $login($router, $person);
+            $res = $router->dispatch(new Request('GET', '/api/me'));
+            assertSame($groups, $res->body['permissions'], $person);
+            if ($write !== null) {
+                assertSame($write, $res->body['write_fields'], $person);
+            }
+        }
+        $fields = $res->body['write_fields'];
+        assertTrue(in_array('last_name', $fields, true) && in_array('sportmed_note', $fields, true), 'admin schreibt Name und Notiz');
+        foreach (['club_short', 'state', 'sportmed_status', 'antidoping_status'] as $derived) {
+            assertTrue(!in_array($derived, $fields, true), $derived . ' ist abgeleitet und nicht schreibbar');
+        }
+        $store = [];
+        $router = $app($pdo, [], $store, $now);
+        $login($router, 'ohne-rolle');
+        $res = $router->dispatch(new Request('GET', '/api/me'));
+        assertSame('{}', json_encode($res->body['permissions']), 'ohne Rolle: leeres Objekt');
+        assertSame([], $res->body['write_fields']);
     },
     'Person ohne Rollen: /api/me mit leerer Rollenliste und 200' => function () use ($app, $migrated, $login): void {
         $pdo = $migrated();
@@ -213,6 +245,18 @@ return [
         assertSame(400, $router->dispatch($json('POST', '/api/auth/test-login', ['person' => ['admin']]))->status);
         assertSame(400, $router->dispatch($json('POST', '/api/auth/test-login'))->status, 'ohne Body');
         assertSame(null, (new Session($store))->userId());
+    },
+    'Testpersonen für die Anmeldeseite: nur bei Testanmeldung, ohne E-Mail, ohne Sitzung erreichbar' => function () use ($app, $migrated): void {
+        $pdo = $migrated();
+        $now = [1000];
+        $store = [];
+        $res = $app($pdo, [], $store, $now)->dispatch(new Request('GET', '/api/auth/test-personas'));
+        assertSame(200, $res->status);
+        assertSame(['key' => 'admin', 'name' => 'Ada Verwaltung', 'roles' => ['admin']], $res->body['personas'][0]);
+        assertSame(count(TestAuthProvider::defaultPersonas()), count($res->body['personas']));
+        assertTrue(!str_contains(json_encode($res->body), '@'), 'keine E-Mail-Adressen');
+        assertSame(404, $app($pdo, ['test_auth' => false], $store, $now)->dispatch(new Request('GET', '/api/auth/test-personas'))->status);
+        assertSame(404, $app($pdo, ['env' => 'production'], $store, $now)->dispatch(new Request('GET', '/api/auth/test-personas'))->status);
     },
     'Abmelden beendet die Sitzung' => function () use ($app, $migrated, $login, $json): void {
         $pdo = $migrated();

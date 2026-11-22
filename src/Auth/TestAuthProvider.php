@@ -32,6 +32,19 @@ final class TestAuthProvider implements AuthProvider
         ];
     }
 
+    /**
+     * Für die Anmeldeseite: Schlüssel, Name und Rollen der Testpersonen, ohne E-Mail-Adresse.
+     * @return list<array{key:string, name:string, roles:list<string>}>
+     */
+    public function personas(): array
+    {
+        $out = [];
+        foreach ($this->personas as $key => [$name, , $roles]) {
+            $out[] = ['key' => (string) $key, 'name' => $name, 'roles' => array_values($roles)];
+        }
+        return $out;
+    }
+
     /** Liest "person" aus dem JSON-Body. Unbekannt oder fehlend: null. */
     public function identify(Request $r): ?Identity
     {

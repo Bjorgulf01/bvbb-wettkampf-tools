@@ -120,6 +120,13 @@ return [
         assertSame([], $r->fieldsFor([['admin'], null, 5], 'read'), 'Rollen, die keine Zeichenketten sind, werden ignoriert');
         assertSame(false, $r->can([['admin']], 'player.basic', 'read'));
     },
+    'groupsFor: höchster Modus je Gruppe, Vereinigung mehrerer Rollen, nach Gruppe sortiert' => function () use ($p): void {
+        assertSame(['clubs' => 'read', 'player.basic' => 'read'], $p()->groupsFor(['basic']));
+        assertSame(['clubs' => 'write', 'player.basic' => 'write', 'player.health_light' => 'read',
+            'player.private' => 'write', 'player.roster' => 'write'], $p()->groupsFor(['coach', 'roster_editor']));
+        assertSame([], $p()->groupsFor([]));
+        assertSame([], $p()->groupsFor(['unbekannt', 5]));
+    },
     'Feldgruppen überschneiden sich nicht' => function (): void {
         $all = array_merge(...array_values(Permissions::FIELD_GROUPS));
         assertSame(count($all), count(array_unique($all)));

@@ -2,6 +2,7 @@
 # Aufruf aus dem Projektordner (dem mit CLAUDE.md):
 #   docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/dev-env/check-env.php
 #   docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tests/run.php
+#   docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/dev-env/seed-preview.php
 #   docker compose -f tools/dev-env/docker-compose.dev.yml up web      (Vorschau auf http://localhost:8080)
 # Unterwegs ohne NAS: Profil "local" startet eine lokale Datenbank (siehe README).
 # Die Tests löschen alle Tabellen der Datenbank aus TEST_DB_DSN.
@@ -26,6 +27,7 @@ services:
       TEST_DB_DSN: ${TEST_DB_DSN}
       TEST_DB_USER: ${TEST_DB_USER}
       TEST_DB_PASS: ${TEST_DB_PASS}
+      BVBB_CONFIG: /app/tools/dev-env/config.dev.php
     ports:
       - "127.0.0.1:8080:8080"
     command: php -S 0.0.0.0:8080 -t public public/index.php

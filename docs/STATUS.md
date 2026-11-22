@@ -5,8 +5,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 22.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-10-users |
-| Letzte fertige Aufgabe | Task 10 |
+| Aktueller Zweig | task-11-ui |
+| Letzte fertige Aufgabe | Task 11 (Durchgang von Hand in Firefox und Safari offen) |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -25,8 +25,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 8 Spieler-Schnittstelle | fertig | task-8-players-api | 23 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #9) |
 | 9 Datenprüfung, Import | fertig | task-9-import | 189 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #10) |
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
-| 10 Benutzer, Rollen, Protokoll | fertig, Review erledigt | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4); Pull-Request offen |
-| 11 Oberfläche | offen | | |
+| 10 Benutzer, Rollen, Protokoll | fertig | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #11) |
+| 11 Oberfläche | fertig bis auf Durchgang von Hand, Review erledigt | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` von Hand in Firefox und Safari noch offen; Pull-Request offen |
 | 12 Auslieferung | offen | | |
 
 ## Entscheidungen und Abweichungen vom Plan
@@ -87,6 +87,17 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 10, offen aus dem Review (gering, nicht umgesetzt): Ein Body wie `{"0":"x"}` gilt als Liste und ergibt 422 `invalid_body` statt 403.
 - Hinweis 22.11.2026: Während dieser Sitzung lief auf dem PC ein zweiter vollständiger Testlauf gegen `bvbb_test_pc`, nicht aus dieser Sitzung gestartet. Zwei gleichzeitige Läufe gegen dieselbe Datenbank löschen sich gegenseitig die Tabellen („Unknown table“). Testläufe auf einem Rechner nie parallel starten.
 
+- **Geklärt am 22.11.2026 (Task 11, Projektinhaber):** SheetJS **0.20.3** statt 0.18.5 aus dem Plan, weil 0.18.5 zwei Lücken beim Lesen präparierter Dateien hat (CVE-2023-30533, CVE-2024-22363). Lokale Kopie `public/vendor/xlsx.full.min.js` mit Lizenz (Apache-2.0), einmal von `cdn.sheetjs.com` geladen (SHA-256 `cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41`). Die App lädt nichts von fremden Servern, SheetJS wird erst für Import und Export nachgeladen.
+- **Geklärt am 22.11.2026 (Task 11, Projektinhaber):** Erste Fassung von `public/index.php` schon in Task 11, damit die Oberfläche lokal läuft. Sie ruft `assertSafe()` vor allem anderen auf, gibt nie Fehlertexte aus (auch nicht bei fatalen Fehlern) und setzt das Sitzungs-Cookie mit `HttpOnly`, `SameSite=Lax` und `Secure` außer in `development`. `session.gc_maxlifetime` folgt `session_max_age`. Konfiguration aus `BVBB_CONFIG`, sonst `config.php` über `public/`. **Für Task 12 offen:** Lage von `src/` auf dem Webspace (`$appDir`), Health-Check, eigener `session.save_path`, Kopfzeilen im `.htaccess` (CSP mit `frame-ancestors 'none'`, `X-Frame-Options`, HSTS; `frame-ancestors` wirkt im `<meta>` nicht), Zugangsschutz (HTTP-Basic-Auth) für den Test-Webspace mit Testanmeldung, `X-Powered-By` abschalten.
+- **Geklärt am 22.11.2026 (Task 11, Projektinhaber):** Rauchtest mit Playwright in Docker (`tools/ui-smoke/`, nur Entwicklung, etwa 2 GB). Er ersetzt den Durchgang von Hand in Firefox und Safari (Plan Step 4) nicht.
+- Task 11, Erweiterungen am Server (Abweichung vom Plan): `GET /api/me` liefert zusätzlich `permissions` (Gruppe => `read`/`write`, ohne Recht `{}`) und `write_fields` (schreibbare Spielerfelder ohne abgeleitete Felder). Die Oberfläche steuert damit Kacheln und Schaltflächen, der Server prüft weiterhin jede Anfrage. Neu `GET /api/auth/test-personas` (`{personas:[{key, name, roles}]}`, ohne E-Mail), nur registriert, wenn die Testanmeldung eingeschaltet ist, sonst 404. Daran erkennt die Anmeldeseite, ob es die Testanmeldung gibt. Neue Methode `Permissions::groupsFor`.
+- Task 11, Oberfläche: `public/index.html` (Content-Security-Policy nur `'self'`), `js/api.js`, `dom.js` (Aufbau nur über Textknoten, nie HTML aus Daten), `login.js`, `home.js` (Kacheln Turniere, Kaderliste, Jahresübersicht, NADA/Sportmedizin, Verwaltung; aktiv nur Kaderliste und Verwaltung), `roster.js`, `clubs.js`, `admin.js`, `css/app.css`. Zusätzliche Dateien gegenüber dem Plan: `dom.js`, `clubs.js`, `admin.js`, `app.css`. Spalten aus den Schlüsseln der Antwort, angeordnet wie in der Kaderliste. Ampel als Punkt mit Text (erledigt, terminiert, offen, unklar). Beim Bearbeiten gehen nur geänderte Felder an den Server. Hinweis „Nur Datum und Status eintragen …“ an SpoMed, Anti Doping und im Import. Protokollzeit in deutscher Zeit (`TT.MM.JJJJ HH:MM`).
+- Task 11, Import: Das erste Blatt mit Kopfzeile „Name“/„Vorname“ in Spalte B/C (in den ersten zehn Zeilen) wird gelesen. **Alle 22 Kopfspalten A bis V werden geprüft** (nach dem Review): Fehlt eine Spalte oder kommt eine hinzu, bricht der Import mit Nennung der Spalte ab, bevor etwas gesendet wird. Sonst landete zum Beispiel SpoMed-Text in einem Feld, das Trainer sehen. Zellwerte gehen roh an den Server (JG als Seriennummer oder Text, nie als JavaScript-Datum), leere Zellen als `null` (leeren den Wert), Spalte „Alter“ wird nicht übernommen. Dateien mit Datumssystem 1904 werden abgelehnt. Meldungen nennen die Excel-Zeile.
+- Task 11, Vereine: Reiter „Vereine“ in der Kaderliste mit Liste, Bearbeiten (Name, Kürzel, Bundesland, aktiv, Aliasnamen mit Semikolon) und Anlegen. **Abweichung:** Upload und Vorschau der Mitgliederliste fehlen, weil Task 9b zurückgestellt ist.
+- Task 11, Vorschau: `tools/dev-env/seed-preview.php` setzt die Test-Datenbank dieses Rechners neu auf (nur `bvbb_test…`) und legt 16 erfundene Vereine an. `tools/dev-env/config.dev.php` (ohne Zugangsdaten, liest `TEST_DB_*`). `docker compose … up web` zeigt die Oberfläche auf http://localhost:8080. Ein Testlauf löscht die Vorschau-Daten.
+- Task 11, aus dem Review: Alle Befunde sind umgesetzt, bis auf die oben für Task 12 genannten Punkte. Dazu gehört: Abmelden zeigt die Anmeldeseite erst, wenn der Server die Sitzung beendet hat (bei veraltetem Token einmal mit neuem Token, sonst Meldung).
+
 ## Nächster Schritt
 
-Pull-Request für `task-10-users` prüfen und zusammenführen, danach Task 11 (Oberfläche). Task 9b bleibt zurückgestellt.
+1. Checkliste `tests/ui-checklist.md` von Hand in Firefox und Safari durchgehen (Projektinhaber), Pull-Request für `task-11-ui` prüfen und zusammenführen.
+2. Danach Task 12 (Auslieferung) mit den oben unter Task 11 genannten offenen Punkten. Task 9b bleibt zurückgestellt.
