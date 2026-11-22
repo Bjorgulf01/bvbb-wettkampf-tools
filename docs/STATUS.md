@@ -6,7 +6,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 |---|---|
 | Zuletzt bearbeitet | 22.11.2026, Windows-PC (Claude Code) |
 | Aktueller Zweig | task-11-ui |
-| Letzte fertige Aufgabe | Task 11 (Durchgang von Hand in Firefox und Safari offen) |
+| Letzte fertige Aufgabe | Task 11 |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -26,7 +26,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 9 Datenprüfung, Import | fertig | task-9-import | 189 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #10) |
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
 | 10 Benutzer, Rollen, Protokoll | fertig | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #11) |
-| 11 Oberfläche | fertig bis auf Durchgang von Hand, Review erledigt | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` von Hand in Firefox und Safari noch offen; Pull-Request offen |
+| 11 Oberfläche | fertig | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` am 22.11.2026 vom Projektinhaber in Firefox und Safari durchgegangen, alle Punkte erfüllt; Review erledigt, zusammengeführt (Pull-Request #12) |
 | 12 Auslieferung | offen | | |
 
 ## Entscheidungen und Abweichungen vom Plan
@@ -99,5 +99,4 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 ## Nächster Schritt
 
-1. Checkliste `tests/ui-checklist.md` von Hand in Firefox und Safari durchgehen (Projektinhaber), Pull-Request für `task-11-ui` prüfen und zusammenführen.
-2. Danach Task 12 (Auslieferung) mit den oben unter Task 11 genannten offenen Punkten. Task 9b bleibt zurückgestellt.
+Task 12 (Auslieferung) mit den oben unter Task 11 genannten offenen Punkten. Die Prüfung auf dem Test-Webspace (Step 4) macht der Projektinhaber (SFTP, phpMyAdmin). Task 9b bleibt zurückgestellt.
