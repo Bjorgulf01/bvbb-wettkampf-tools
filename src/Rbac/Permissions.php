@@ -113,6 +113,30 @@ final class Permissions
     }
 
     /**
+     * Höchster Modus je Gruppe oder Bereich für diese Rollen (Vereinigung), nach Gruppe sortiert.
+     * Gruppen ohne Recht fehlen. Für die Oberfläche (GET /api/me); geprüft wird trotzdem jede Anfrage.
+     *
+     * @param list<string> $roleKeys
+     * @return array<string, string> Gruppe => read|write
+     */
+    public function groupsFor(array $roleKeys): array
+    {
+        $out = [];
+        foreach ($roleKeys as $role) {
+            if (!is_string($role)) {
+                continue;
+            }
+            foreach ($this->grants[$role] ?? [] as $group => $mode) {
+                if (($out[$group] ?? null) !== self::WRITE) {
+                    $out[$group] = $mode;
+                }
+            }
+        }
+        ksort($out, SORT_STRING);
+        return $out;
+    }
+
+    /**
      * Recht auf eine ganze Gruppe oder einen Bereich (clubs, users, audit).
      * Achtung: Ein Schreibrecht auf eine Gruppe gilt nicht für ihre READ_ONLY_FIELDS.
      *

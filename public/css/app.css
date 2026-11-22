@@ -1,0 +1,91 @@
+/* BVBB Wettkampf-Tools. Farben und Formen wie im Prototyp (prototype/turnierabrechnung.html). */
+:root {
+  --bg: #eef0f3; --fg: #1c1f24; --bar: #fff; --bd: #c9ced6; --ac: #1f5fbf;
+  --muted: #5b6370; --err: #b00020; --warn-bg: #fff4d6; --warn-bd: #e0b84a; --hl: #fff2a8;
+  --ok: #1e7e34; --mid: #c58a00; --bad: #c0392b; --grey: #7a828e;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181c; --fg: #e6e8eb; --bar: #20242a; --bd: #3a4048; --ac: #6ea8ff;
+    --muted: #a3aab4; --err: #ff6b7f; --warn-bg: #3a3220; --warn-bd: #8a6d1f; --hl: #4a4520;
+    --ok: #5cc77a; --mid: #e0b040; --bad: #ff7b6b; --grey: #9aa1ab;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px Arial, Helvetica, sans-serif; background: var(--bg); color: var(--fg); }
+[hidden] { display: none !important; }
+button, select, input, textarea { font: inherit; color: var(--fg); }
+button { padding: 5px 10px; border: 1px solid var(--bd); border-radius: 6px; background: var(--bar); cursor: pointer; }
+button.p { background: var(--ac); border-color: var(--ac); color: #fff; }
+button:disabled { opacity: .55; cursor: default; }
+button.link { border: none; background: none; color: var(--ac); padding: 0; text-align: left; text-decoration: underline; }
+input, select, textarea { border: 1px solid var(--bd); border-radius: 6px; background: var(--bg); padding: 4px 6px; }
+input[type=checkbox] { width: auto; }
+
+.bar { position: sticky; top: 0; z-index: 11; background: var(--bar); border-bottom: 1px solid var(--bd);
+  padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bar .title { font-weight: bold; margin-right: 8px; }
+.bar .who { margin-left: auto; font-size: 12px; color: var(--muted); text-align: right; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
+.toolbar label { font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
+.toolbar .count { font-size: 12px; color: var(--muted); }
+.tabs { display: flex; gap: 4px; padding: 8px 12px 0; }
+.tabs button[aria-selected="true"] { background: var(--ac); border-color: var(--ac); color: #fff; }
+
+.msg { margin: 8px 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--bd); background: var(--bar); }
+.msg.err { border-color: var(--err); color: var(--err); }
+.msg.ok { border-color: var(--ok); }
+.warn { margin: 6px 0 10px; padding: 6px 8px; border: 1px solid var(--warn-bd); background: var(--warn-bg); border-radius: 6px; font-size: 13px; font-weight: bold; }
+
+.hw { max-width: 760px; margin: 0 auto; padding: 28px 16px; text-align: center; }
+.hw h1 { margin: 12px 0 2px; font-size: 26px; }
+.hw > p { margin: 0 0 22px; color: var(--muted); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px 14px; border: 1px solid var(--bd);
+  border-radius: 12px; background: var(--bar); text-align: center; }
+.tile:hover:not(:disabled) { border-color: var(--ac); box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+.tile .ti { font-size: 34px; color: var(--ac); line-height: 1.1; }
+.tile b { font-size: 16px; }
+.tile small { color: var(--muted); font-size: 12px; }
+
+.login { max-width: 520px; margin: 32px auto; padding: 0 16px; }
+.login h1 { font-size: 22px; }
+.login .note { font-size: 13px; color: var(--muted); }
+.personas { display: grid; gap: 8px; margin-top: 14px; }
+.personas button { text-align: left; display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; }
+.personas small { color: var(--muted); }
+
+.sc { overflow: auto; max-height: 70vh; margin: 0 12px 12px; border: 1px solid var(--bd); background: var(--bar); }
+table { border-collapse: collapse; }
+th, td { border: 1px solid var(--bd); padding: 3px 5px; text-align: left; vertical-align: top; font-size: 12px; }
+th { position: sticky; top: 0; background: var(--bar); white-space: nowrap; z-index: 1; }
+td.wrap { max-width: 260px; white-space: pre-wrap; overflow-wrap: anywhere; }
+td.num { text-align: right; }
+tr.hl td { background: var(--hl); }
+tr.passive td { color: var(--muted); }
+.light { display: inline-block; min-width: 1.2em; font-weight: bold; }
+.light.done { color: var(--ok); } .light.scheduled { color: var(--mid); } .light.open { color: var(--bad); } .light.unclear { color: var(--grey); }
+
+.panel { margin: 0 12px 12px; padding: 10px 12px; border: 1px solid var(--bd); border-radius: 8px; background: var(--bar); }
+.panel h2 { font-size: 16px; margin: 0 0 8px; }
+.panel ul { margin: 4px 0; padding-left: 18px; }
+.panel li { margin: 2px 0; }
+.stats { display: flex; gap: 18px; flex-wrap: wrap; margin: 6px 0; }
+.stats b { font-size: 18px; }
+
+dialog { background: var(--bar); color: var(--fg); border: 1px solid var(--bd); border-radius: 8px; width: min(720px, 94vw); }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px 12px; }
+.form label { font-size: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 3px; }
+.form label.full { grid-column: 1 / -1; }
+.form label.bad input, .form label.bad select, .form label.bad textarea { border-color: var(--err); }
+.form .fe { color: var(--err); font-weight: normal; }
+.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+
+.users td, .clubs td { vertical-align: middle; }
+.roles { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.roles label { font-size: 12px; display: inline-flex; gap: 3px; align-items: center; }
+.clubs input[type=text] { width: 100%; min-width: 120px; }
+input.bad, select.bad { border-color: var(--err); }

@@ -11,14 +11,16 @@ use App\Config;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\Router;
+use App\Rbac\Permissions;
 use App\Repo\UserRepo;
 use Closure;
 
 /**
  * Anmeldung, Abmeldung und eigene Angaben.
  *  POST /api/auth/test-login  {person}  nur registriert, wenn ein Test-Anbieter übergeben wird
+ *  GET  /api/auth/test-personas {personas:[{key, name, roles}]}  ebenso, für die Anmeldeseite
  *  POST /api/auth/logout      mit CSRF-Token
- *  GET  /api/me               {id, name, roles, csrf}
+ *  GET  /api/me               {id, name, roles, csrf, permissions, write_fields}
  * Die Person mit first_admin_subject bekommt beim ersten Anlegen zusätzlich die Rolle admin.
  */
 final class AuthController
@@ -32,6 +34,7 @@ final class AuthController
         private ?TestAuthProvider $testAuth,
         private Config $config,
         ?callable $clock = null,
+        private ?Permissions $permissions = null,
     ) {
         $this->clock = $clock !== null ? Closure::fromCallable($clock) : static fn(): int => time();
     }
@@ -41,6 +44,9 @@ final class AuthController
         if ($this->testAuth !== null && $this->config->testAuthEnabled()) {
             // Ohne Sitzung und Token erreichbar; Schutz gegen fremde Seiten: nur Content-Type application/json.
             $router->add('POST', '/api/auth/test-login', $this->testLogin(...), ['auth' => false, 'csrf' => false]);
+            // Liste für die Anmeldeseite. Ohne Testanmeldung gibt es die Route nicht (404).
+            $router->add('GET', '/api/auth/test-personas', fn(): Response =>
+                Response::json(['personas' => $this->testAuth->personas()]), ['auth' => false]);
         }
         // Das Token prüft der Handler selbst: Ohne Sitzung (zum Beispiel abgelaufen) ist das Abmelden schon erledigt.
         $router->add('POST', '/api/auth/logout', $this->logout(...), ['auth' => false, 'csrf' => false]);
@@ -85,14 +91,24 @@ final class AuthController
         return Response::json($this->describe($user));
     }
 
-    /** @return array{id:int, name:string, roles:list<string>, csrf:string} */
+    /**
+     * Mit Rechten zusätzlich permissions (Gruppe => read|write, ohne Recht ein leeres Objekt) und
+     * write_fields (schreibbare Spielerfelder). Beides steuert nur die Oberfläche.
+     * @return array<string, mixed>
+     */
     private function describe(User $user): array
     {
-        return [
+        $out = [
             'id' => $user->id,
             'name' => $user->name,
             'roles' => array_values($user->roles),
             'csrf' => $this->session->csrfToken(),
         ];
+        if ($this->permissions !== null) {
+            $groups = $this->permissions->groupsFor($user->roles);
+            $out['permissions'] = $groups === [] ? new \stdClass() : $groups;
+            $out['write_fields'] = $this->permissions->fieldsFor($user->roles, Permissions::WRITE);
+        }
+        return $out;
     }
 }
