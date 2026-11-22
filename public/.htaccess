@@ -1,0 +1,44 @@
+# Öffentliches Verzeichnis (auf dem Webspace webseiten/). Statische Oberfläche plus /api/… über index.php.
+Options -Indexes -MultiViews
+DirectoryIndex index.html
+
+RewriteEngine On
+# Alle Anfragen an die Schnittstelle gehen an index.php (der Router prüft Pfad und Methode).
+RewriteRule ^api/ index.php [L]
+
+# Versteckte Dateien (.htaccess, .htpasswd, .git…) nie ausliefern.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    # Gleiche Regeln wie das <meta> in index.html, dazu frame-ancestors (wirkt nur als Kopfzeile).
+    Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "no-referrer"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Header always set Strict-Transport-Security "max-age=31536000" env=HTTPS
+    # Beide Varianten: „always“ allein erfasst Kopfzeilen aus PHP-FPM nicht.
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+    # Nach einem Update sofort die neue Oberfläche: Browser fragt jedes Mal nach, ob sich etwas geändert hat.
+    <FilesMatch "\.(html|js|css)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
+
+# Immer HTTPS. Erst einschalten, wenn https:// sicher funktioniert (sonst Umleitungsschleife möglich,
+# zum Beispiel hinter einem Proxy des Hosters). Test: http://… muss auf https://… umleiten.
+# RewriteCond %{HTTPS} !=on
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# Nur Test-Webspace (env staging mit Testanmeldung): Zugangsschutz per Passwort, damit nicht jeder
+# im Internet die Testpersonen benutzen kann. Pfad zur .htpasswd absolut und außerhalb von webseiten/
+# (zum Beispiel im Programmordner). Anleitung: README.md, Abschnitt „Test-Webspace schützen“.
+# Erst einschalten, wenn http:// zuverlässig auf https:// umleitet (HTTPS-Zwang des Hosters oder die
+# Umleitung oben): Apache fragt das Passwort sonst schon über http:// ab, also unverschlüsselt.
+# AuthType Basic
+# AuthName "BVBB Test"
+# AuthUserFile /ABSOLUTER/PFAD/bvbb-app/.htpasswd
+# Require valid-user

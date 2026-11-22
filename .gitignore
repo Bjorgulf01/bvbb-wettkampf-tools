@@ -19,3 +19,7 @@ Thumbs.db
 .vscode/
 node_modules/
 
+
+# Sitzungsdateien und Passwortdatei auf dem Webspace
+/sessions/
+.htpasswd

@@ -5,8 +5,8 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 22.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-11-ui |
-| Letzte fertige Aufgabe | Task 11 |
+| Aktueller Zweig | task-12-deploy |
+| Letzte fertige Aufgabe | Task 12 im Repository (Prüfung auf dem Test-Webspace offen) |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -27,7 +27,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
 | 10 Benutzer, Rollen, Protokoll | fertig | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #11) |
 | 11 Oberfläche | fertig | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` am 22.11.2026 vom Projektinhaber in Firefox und Safari durchgegangen, alle Punkte erfüllt; Review erledigt, zusammengeführt (Pull-Request #12) |
-| 12 Auslieferung | offen | | |
+| 12 Auslieferung | im Repository fertig, Review erledigt; Prüfung auf dem Test-Webspace offen | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; Pull-Request offen |
 
 ## Entscheidungen und Abweichungen vom Plan
 
@@ -97,6 +97,15 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 11, Vorschau: `tools/dev-env/seed-preview.php` setzt die Test-Datenbank dieses Rechners neu auf (nur `bvbb_test…`) und legt 16 erfundene Vereine an. `tools/dev-env/config.dev.php` (ohne Zugangsdaten, liest `TEST_DB_*`). `docker compose … up web` zeigt die Oberfläche auf http://localhost:8080. Ein Testlauf löscht die Vorschau-Daten.
 - Task 11, aus dem Review: Alle Befunde sind umgesetzt, bis auf die oben für Task 12 genannten Punkte. Dazu gehört: Abmelden zeigt die Anmeldeseite erst, wenn der Server die Sitzung beendet hat (bei veraltetem Token einmal mit neuem Token, sonst Meldung).
 
+- Task 12, Auslieferung: Aufbau auf dem Webspace `webseiten/` (Inhalt von `public/`) und `bvbb-app/` daneben (`src/`, `migrations/`, `bin/`, `config.php`, `sessions/`, `.htaccess` aus dem Hauptordner). `public/index.php` findet den Programmordner über `BVBB_APP_DIR`, sonst `bvbb-app/` neben dem öffentlichen Verzeichnis, sonst den Ordner über `public/`. Anleitung und Prüfliste in `README.md`.
+- Task 12, zusätzliche Dateien und Schlüssel (Abweichung vom Plan): `public/.htaccess` (Weiterleitung `/api/` an `index.php`, Sicherheits-Kopfzeilen mit CSP `frame-ancestors 'none'`, `X-Frame-Options`, `nosniff`, HSTS nur bei HTTPS, Sperre versteckter Dateien, auskommentiert HTTPS-Umleitung und Passwortschutz), `public/.user.ini` (keine Fehlertexte im Browser, auch bei Syntaxfehlern), `src/Api/HealthController.php`, `src/Version.php` (1.0.0). Die `.htaccess` im Hauptordner sperrt alles (`Require all denied`). `config.example.php` hat zusätzlich `session_save_path`. `.gitignore` schließt `sessions/` und `.htpasswd` aus.
+- Task 12, Health-Check: `GET /api/health` ohne Anmeldung, `{"ok":true,"version":"1.0.0"}`. Bei Datenbankfehler oder nicht beschreibbarem Sitzungsordner 503 `{"ok":false}`, nie Details. `assertSafe()` läuft auch davor (unsichere Konfiguration ergibt 500). Der Health-Check läuft vor Sitzung und Datenbankverbindung. Verbindungs-Timeout der Datenbank 5 Sekunden.
+- Task 12, Sitzung: Cookie `__Host-bvbb_session` (außer in `development`: `bvbb_session`), `Secure`, `HttpOnly`, `SameSite=Lax`, Domain ausdrücklich leer. **Die Anwendung braucht deshalb HTTPS.** Eigener `session_save_path` mit eigener Aufräumung (`gc_probability` 1/100), weil Hoster oft nur ihren Standardordner aufräumen. `X-Powered-By` wird in `index.php` und `.htaccess` entfernt.
+- Task 12, Reihenfolge beim Test-Webspace: erst HTTPS erzwingen, dann den Passwortschutz einrichten, weil Apache das Passwort sonst auch über `http://` abfragt. Etappe 1 läuft nur mit `env` = `staging`, weil die echte Anmeldung vertagt ist.
+- Task 12, nicht lokal prüfbar: Apache, `mod_headers`, `AllowOverride` und HTTPS des Hosters. Die Prüfliste in `README.md` deckt das ab. Bei 500 auf allen Seiten erlaubt der Hoster eine Anweisung in der `.htaccess` nicht („not allowed here“ im Fehlerprotokoll).
+
 ## Nächster Schritt
 
-Task 12 (Auslieferung) mit den oben unter Task 11 genannten offenen Punkten. Die Prüfung auf dem Test-Webspace (Step 4) macht der Projektinhaber (SFTP, phpMyAdmin). Task 9b bleibt zurückgestellt.
+1. Pull-Request für `task-12-deploy` prüfen und zusammenführen.
+2. Step 4 von Task 12 auf dem Test-Webspace (Projektinhaber): nach `README.md` einrichten und die Prüfliste „Prüfen nach dem Hochladen“ durchgehen. Ergebnis hier eintragen, Fehler an Claude Code melden.
+3. Danach ist Etappe 1 abgeschlossen bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
