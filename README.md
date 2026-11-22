@@ -1,0 +1,87 @@
+# BVBB Wettkampf-Tools
+
+Webanwendung des Badminton-Verbands Berlin-Brandenburg für die zentrale Kaderliste (Etappe 1), später Turnierabrechnung. PHP 8.4 ohne Framework, MariaDB, Oberfläche als statisches HTML und JavaScript. Entwurf und Plan: `docs/`. Stand der Arbeit: `docs/STATUS.md`.
+
+## Aufbau auf dem Webspace
+
+Der Webspace hat kein SSH. Hochgeladen wird per SFTP, die Datenbank wird per phpMyAdmin eingerichtet.
+
+**Etappe 1 läuft nur auf dem Test-Webspace (`env` = `staging`) mit der Testanmeldung.** Die echte Anmeldung ist vertagt. Mit `production` gibt es deshalb noch keine Möglichkeit, sich anzumelden.
+
+```
+<Startordner des Webspace>/
+├── webseiten/          öffentliches Verzeichnis: Inhalt von public/ aus dem Repository
+│   ├── .htaccess       (versteckte Datei: Weiterleitung /api/, Sicherheits-Kopfzeilen, Sperren)
+│   ├── .user.ini       (versteckte Datei: keine Fehlertexte im Browser)
+│   ├── index.html
+│   ├── index.php
+│   ├── css/  js/  vendor/
+└── bvbb-app/           Programmordner, NICHT öffentlich
+    ├── .htaccess       (versteckte Datei, aus dem Hauptordner des Repositorys: sperrt alles)
+    ├── config.php      (aus config.example.php, mit Zugangsdaten, nie ins Repository)
+    ├── sessions/       (leerer Ordner, beschreibbar)
+    ├── bin/
+    ├── migrations/
+    └── src/
+```
+
+- `webseiten/index.php` findet `bvbb-app/` neben dem öffentlichen Verzeichnis von selbst.
+- **Versteckte Dateien:** SFTP-Programme blenden Dateien mit Punkt am Anfang oft aus. Die Anzeige versteckter Dateien einschalten und prüfen, dass `webseiten/.htaccess`, `webseiten/.user.ini` und `bvbb-app/.htaccess` auf dem Server liegen. Ohne `webseiten/.htaccess` gibt es keine Schnittstelle, keine Sicherheits-Kopfzeilen und keine Sperre versteckter Dateien. Änderungen an `.user.ini` wirken erst nach bis zu 5 Minuten.
+- **Annahme:** `webseiten/` ist das Wurzelverzeichnis der Domain (Adressen wie `https://…/api/health`). In einem Unterordner der Domain funktioniert die Schnittstelle nicht.
+- Nicht hochladen: `docs/`, `prototype/`, `testdata/`, `tests/`, `tools/`, `.git/`, `CLAUDE.md`, `config.example.php`.
+
+## Erstes Einrichten
+
+1. **Datenbank anlegen** im Kundenmenü des Hosters (MariaDB 10.11, Zeichensatz utf8mb4). Name, Benutzer, Passwort und Host notieren.
+2. **Migrationen einspielen**: in phpMyAdmin die Datenbank wählen, „Importieren“, nacheinander `migrations/001_core.sql`, dann `migrations/002_seed_roles.sql`, in der Reihenfolge der Nummern. Jede Datei trägt sich am Ende selbst in die Tabelle `schema_migrations` ein. Danach müssen dort beide Dateinamen stehen. Ein versehentlicher zweiter Import derselben Datei bricht mit einem Fehler (doppelter Eintrag) ab und ändert nichts.
+   - phpMyAdmin führt jede Anweisung einzeln aus, nicht als Ganzes. Bricht der Import von `002_seed_roles.sql` mittendrin ab (zum Beispiel Verbindung weg), im Reiter „SQL“ `DELETE FROM role_permissions; DELETE FROM roles;` ausführen (nur beim ersten Einrichten, solange es noch keine Benutzer gibt) und die Datei neu importieren. Bricht `001_core.sql` ab, die Datei einfach noch einmal importieren.
+3. **Konfiguration**: `config.example.php` lokal nach `config.php` kopieren und ausfüllen:
+   - `env`: `staging` auf dem Test-Webspace, `production` im Echtbetrieb.
+   - `db`: Zugangsdaten aus Schritt 1.
+   - `test_auth`: `true` nur auf dem Test-Webspace. Mit `production` und `true` startet der Server nicht (Antwort 500).
+   - `first_admin_subject`: Kennung der Person, die bei ihrer **ersten** Anmeldung die Rolle admin bekommt. Auf dem Test-Webspace zum Beispiel `test:kaderpflege` (Testpersonen: `test:` plus Schlüssel). Hat sich die Person schon einmal angemeldet, wirkt der Eintrag nicht mehr; dann die Rolle in der Verwaltung vergeben.
+   - `session_max_age`: Dauer einer Sitzung in Sekunden (Standard 8 Stunden).
+   - `session_save_path`: eigener Ordner für Sitzungsdateien (Vorgabe `bvbb-app/sessions`).
+4. **Hochladen** per SFTP wie oben. Den Ordner `bvbb-app/sessions/` anlegen.
+5. **Prüfen** (Abschnitt „Prüfen nach dem Hochladen“).
+
+## Aktualisieren
+
+1. Neue Migrationsdateien (höhere Nummer als in `schema_migrations`) per phpMyAdmin importieren, in der Reihenfolge der Nummern. Zuerst, weil Migrationen das Schema nur erweitern und der alte Code damit weiterläuft.
+2. Neue Fassung von `public/` nach `webseiten/` und von `src/`, `migrations/`, `bin/` nach `bvbb-app/` hochladen. `src/` dabei vollständig ersetzen (alten Ordner vorher löschen), damit keine alten Dateien liegen bleiben. `config.php` und `sessions/` bleiben.
+3. `GET /api/health` aufrufen.
+
+Gibt es später SSH, ersetzt `php bvbb-app/bin/migrate.php` Schritt 1.
+
+## Prüfen nach dem Hochladen
+
+| Prüfung | Erwartet |
+|---|---|
+| `https://…/api/health` | `{"ok":true,"version":"1.0.0"}`. Bei einem Datenbankfehler oder fehlendem Sitzungsordner `{"ok":false}` mit Status 503, ohne Details |
+| `http://…` (ohne s) | leitet auf `https://…` um, **bevor** nach einem Passwort gefragt wird (siehe unten) |
+| `https://…/.htaccess`, `https://…/.user.ini` | 403 |
+| `https://…/src/Config.php`, `https://…/migrations/001_core.sql`, `https://…/config.php`, `https://…/bvbb-app/config.php` | 403 oder 404 |
+| `config.php` kurz auf `env` = `production` und `test_auth` = `true` stellen | Seite meldet „Fehler auf dem Server“, `/api/health` antwortet 500, keine Testanmeldung. Danach zurückstellen |
+| Entwicklerwerkzeuge, Speicher, Cookies | Sitzungs-Cookie `__Host-bvbb_session` mit `Secure`, `HttpOnly`, `SameSite=Lax` |
+| Entwicklerwerkzeuge, Netzwerk, Antwort-Kopfzeilen | `Content-Security-Policy` mit `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, kein `X-Powered-By` |
+| Anmeldung als jede Testperson, Import von `testdata/Testkaderliste_fiktiv.xlsx` | wie in `tests/ui-checklist.md` |
+
+- Fehlen alle Sicherheits-Kopfzeilen, ist `mod_headers` beim Hoster nicht aktiv. Dann beim Hoster nachfragen.
+- Fehlt nur `Strict-Transport-Security`, endet HTTPS wahrscheinlich bei einem Proxy des Hosters, und Apache sieht die Anfrage als `http`. Dann beim Hoster nachfragen.
+- Antworten **alle** Seiten mit 500, im Fehlerprotokoll des Hosters nach „not allowed here“ suchen. Dann erlaubt der Hoster eine Anweisung in der `.htaccess` nicht (zum Beispiel `Options` oder `Require`), und die Zeile muss angepasst werden.
+- **Die Anwendung braucht HTTPS.** Das Sitzungs-Cookie trägt `Secure` und das Präfix `__Host-`. Über `http://` nimmt der Browser es nicht an, und die Anmeldung scheitert ohne Meldung.
+
+**HTTPS erzwingen:** Am besten mit dem HTTPS-Zwang im Kundenmenü des Hosters. Sonst in `webseiten/.htaccess` die zwei auskommentierten Zeilen einschalten. Danach `http://…` aufrufen: Es muss auf `https://…` umleiten. Gibt es eine Umleitungsschleife, die Zeilen wieder auskommentieren und beim Hoster nachfragen.
+
+## Test-Webspace schützen
+
+Mit eingeschalteter Testanmeldung kann sich jeder, der die Adresse kennt, als admin anmelden. Die Daten sind erfunden, trotzdem den Test-Webspace mit einem Passwort schützen. **Erst HTTPS erzwingen (oben), dann das Passwort einrichten.** Sonst fragt der Webserver das Passwort auch über `http://` ab, also unverschlüsselt.
+
+- Am einfachsten über den „Verzeichnisschutz“ im Kundenmenü des Hosters für `webseiten/`.
+- Oder von Hand: eine `.htpasswd` im Programmordner anlegen (Generator des Hosters) und in `webseiten/.htaccess` den auskommentierten Block am Ende einschalten. `AuthUserFile` braucht den absoluten Pfad auf dem Server. Den nennen das Kundenmenü oder die Hilfeseiten des Hosters.
+
+Der Health-Check liegt dann ebenfalls hinter dem Passwort.
+
+## Lokale Entwicklung
+
+PHP 8.4 läuft in Docker, die Test-Datenbank auf dem NAS (`tools/dev-env/README.md`). Tests: `docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tests/run.php`. Vorschau der Oberfläche: `tools/dev-env/seed-preview.php`, dann `docker compose -f tools/dev-env/docker-compose.dev.yml up web` und http://localhost:8080. Rauchtest im Browser: `tools/ui-smoke/README.md`. Die Tests und `seed-preview.php` löschen alle Tabellen der Test-Datenbank dieses Rechners.

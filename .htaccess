@@ -1,0 +1,6 @@
+# Programmordner (auf dem Webspace bvbb-app/): src/, migrations/, config.php, sessions/.
+# Er soll nicht im öffentlichen Verzeichnis liegen. Falls doch, liefert der Webserver hier nichts aus.
+# Nur der Inhalt von public/ ist öffentlich (er hat eine eigene .htaccess). Legt jemand das ganze
+# Repository unter das öffentliche Verzeichnis, sperrt diese Datei auch public/: gewollt, dann läuft nichts.
+Require all denied
+Options -Indexes

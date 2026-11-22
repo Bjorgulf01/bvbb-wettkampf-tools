@@ -23,6 +23,8 @@ final class Db
                 PDO::ATTR_EMULATE_PREPARES => false,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_STRINGIFY_FETCHES => false,
+                // Nicht erreichbarer Datenbank-Host: nach 5 Sekunden aufgeben (Health-Check 503 statt Hängen).
+                PDO::ATTR_TIMEOUT => 5,
             ]
         );
         $pdo->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
