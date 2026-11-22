@@ -92,7 +92,7 @@ final class ClubDirectory
     }
 
     /** Vergleichsschlüssel: Leerraum vereinheitlicht, Groß-/Kleinschreibung gefaltet (ß = ss). */
-    private static function normalize(string $text): string
+    public static function normalize(string $text): string
     {
         $t = preg_replace('/' . self::SPACE . '+/u', ' ', self::trim($text)) ?? $text;
         return mb_convert_case($t, MB_CASE_FOLD, 'UTF-8');

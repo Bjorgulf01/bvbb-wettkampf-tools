@@ -6,6 +6,9 @@ namespace App\Api;
 use App\Auth\AuthGuard;
 use App\Domain\AgeClass;
 use App\Domain\HealthStatus;
+use App\Domain\KaderImport;
+use App\Domain\PlayerInput;
+use App\Domain\PlayerValidator;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\Router;
@@ -25,49 +28,25 @@ use Throwable;
  *  GET  /api/players/{id}        {player:{…}}
  *  POST /api/players             201 {id}
  *  PUT  /api/players/{id}        {id, changed:[…]}
+ *  GET  /api/players/issues?year=JJJJ  {issues:[…]}  Datenprüfung aller Spieler
+ *  POST /api/players/import      {rows:[…], dry_run:bool, year?}  →  {create, update, skipped:[…], issues:[…]}
+ *       Datenprüfung und Import nur mit Schreibrecht auf player.basic, player.roster und player.private.
+ *       dry_run schreibt nichts, sonst läuft der Import in einer Transaktion. Spieler, die nicht in
+ *       der Datei stehen, bleiben unverändert.
  * Kein DELETE: Spieler werden nur auf passiv gesetzt.
  * Wer ein Feld sendet, das er nicht schreiben darf (oder das es nicht gibt), bekommt 403 für die
  * ganze Anfrage, und nichts wird gespeichert. club_id wird beim Speichern aus club_name abgeleitet.
  */
 final class PlayersController
 {
-    /**
-     * Prüfregeln je schreibbarem Feld: Typ, Grenze, Pflicht.
-     * string: Länge in Zeichen; int: [min, max]; leere Texte werden zu null (außer bei Pflichtfeldern).
-     */
-    private const RULES = [
-        'last_name' => ['string', 100, true],
-        'first_name' => ['string', 100, true],
-        'club_name' => ['string', 190, false],
-        'list_no' => ['int', [0, 99999], false],
-        'list_ak' => ['string', 5, false],
-        'gender' => ['string', 10, false],
-        'birth_year' => ['int', [1900, 2100], false],
-        'roster_status' => ['string', 10, false],
-        'active' => ['bool', null, true],
-        'training_site' => ['string', 100, false],
-        'birth_date' => ['date', null, false],
-        'trainer_info' => ['string', 10000, false],
-        'school' => ['string', 190, false],
-        'school_contact' => ['string', 500, false],
-        // Bis Etappe 3 Textspalten aus der Kaderliste: nur Datum und Status, keine Befunde. Kurz gehalten.
-        'sportmed_note' => ['string', 200, false],
-        'antidoping_note' => ['string', 200, false],
-        'email1' => ['string', 190, false],
-        'email2' => ['string', 190, false],
-        'phone_player' => ['string', 50, false],
-        'phone_mother' => ['string', 50, false],
-        'phone_father' => ['string', 50, false],
-        'shirt_size' => ['string', 10, false],
-    ];
-
-    /** Freitextfelder, in denen Zeilenumbruch und Tabulator erlaubt sind. */
-    private const MULTILINE = ['trainer_info', 'sportmed_note', 'antidoping_note'];
-
-    /** Leerraum am Rand, auch geschützte und Null-Breite-Leerzeichen und BOM aus Excel. */
-    private const EDGE_SPACE = '/^[\s\x{00A0}\x{2007}\x{202F}\x{200B}\x{FEFF}]+|[\s\x{00A0}\x{2007}\x{202F}\x{200B}\x{FEFF}]+$/u';
-
     private const TZ = 'Europe/Berlin';
+
+    /** Obergrenze je Import (Kaderliste: etwa 100 Zeilen; Schutz für memory_limit und Laufzeit). */
+    private const MAX_IMPORT_ROWS = 3000;
+
+    /** Felder, die die Datenprüfung braucht. */
+    private const CHECK_FIELDS = ['last_name', 'first_name', 'club_name', 'list_ak', 'gender', 'birth_year',
+        'roster_status', 'training_site'];
 
     private PlayerRepo $players;
     private ClubRepo $clubs;
@@ -89,6 +68,9 @@ final class PlayersController
     public function routes(Router $router): void
     {
         $router->add('GET', '/api/players', $this->list(...));
+        // Vor /api/players/{id}: der Router nimmt die erste passende Route.
+        $router->add('GET', '/api/players/issues', $this->issues(...));
+        $router->add('POST', '/api/players/import', $this->import(...));
         $router->add('GET', '/api/players/{id}', $this->show(...));
         $router->add('POST', '/api/players', $this->create(...));
         $router->add('PUT', '/api/players/{id}', $this->update(...));
@@ -137,7 +119,7 @@ final class PlayersController
         if (($denied = $this->denied($body)) !== null) {
             return $denied;
         }
-        [$data, $invalid] = self::validate($body);
+        [$data, $invalid] = PlayerInput::validate($body);
         if ($invalid !== []) {
             return Response::json(['error' => 'invalid', 'fields' => $invalid], 422);
         }
@@ -163,7 +145,7 @@ final class PlayersController
         if (($denied = $this->denied($body)) !== null) {
             return $denied;
         }
-        [$data, $invalid] = self::validate($body);
+        [$data, $invalid] = PlayerInput::validate($body);
         if ($invalid !== []) {
             return Response::json(['error' => 'invalid', 'fields' => $invalid], 422);
         }
@@ -184,6 +166,102 @@ final class PlayersController
             return $changed;
         });
         return Response::json(['id' => $id, 'changed' => $changed]);
+    }
+
+    private function issues(Request $r, array $params): Response
+    {
+        if (!$this->canImport()) {
+            return Response::json(['error' => 'forbidden'], 403);
+        }
+        $year = $this->year($r);
+        if ($year === null) {
+            return Response::json(['error' => 'invalid', 'fields' => ['year']], 422);
+        }
+        $rows = $this->players->list(self::CHECK_FIELDS);
+        return Response::json(['issues' => PlayerValidator::issues($rows, $year, $this->clubs->directory())]);
+    }
+
+    private function import(Request $r, array $params): Response
+    {
+        if (!$this->canImport()) {
+            return Response::json(['error' => 'forbidden'], 403);
+        }
+        $body = $r->json;
+        $rows = $body['rows'] ?? null;
+        $year = $body['year'] ?? (int) $this->today()->format('Y');
+        if (!is_array($body) || array_diff(array_keys($body), ['rows', 'dry_run', 'year']) !== []
+            || !is_array($rows) || !array_is_list($rows) || !is_bool($body['dry_run'] ?? null)
+            || !is_int($year) || $year < 1900 || $year > 2099) {
+            return Response::json(['error' => 'invalid_body'], 422);
+        }
+        if (count($rows) > self::MAX_IMPORT_ROWS) {
+            return Response::json(['error' => 'too_many_rows', 'max' => self::MAX_IMPORT_ROWS], 413);
+        }
+        // Wie beim Speichern: ein nicht schreibbares oder unbekanntes Feld in irgendeiner Zeile ergibt 403.
+        $keys = [];
+        foreach ($rows as $row) {
+            if (is_array($row)) {
+                foreach (array_keys($row) as $k) {
+                    $keys[(string) $k] = true;
+                }
+            }
+        }
+        if (($denied = $this->denied($keys)) !== null) {
+            return $denied;
+        }
+        $dryRun = $body['dry_run'];
+        $user = $this->guard->currentUser();
+
+        $run = function () use ($rows, $year, $dryRun, $user): array {
+            $plan = KaderImport::plan($rows, $this->players->list(['last_name', 'first_name']));
+            $directory = $this->clubs->directory();
+            $checked = [];
+            foreach ($plan['update'] as &$u) {
+                if (array_key_exists('club_name', $u['data'])) {
+                    $u['data']['club_name'] ??= '';
+                    $u['data']['club_id'] = $directory->lookup($u['data']['club_name'])['club_id'];
+                }
+                $checked[] = array_merge((array) $this->players->find($u['id'], self::CHECK_FIELDS), $u['data']);
+            }
+            unset($u);
+            foreach ($plan['create'] as &$c) {
+                $c['club_name'] ??= '';
+                $c['club_id'] = $directory->lookup($c['club_name'])['club_id'];
+                $checked[] = $c + ['id' => null];
+            }
+            unset($c);
+
+            if (!$dryRun) {
+                foreach ($plan['update'] as ['id' => $id, 'data' => $data]) {
+                    $changed = $this->players->update($id, $data);
+                    if ($changed !== []) {
+                        $this->audit->log($user?->id, 'import_update', 'player', $id, 'fields: ' . implode(', ', $changed));
+                    }
+                }
+                foreach ($plan['create'] as $data) {
+                    $id = $this->players->create($data);
+                    $this->audit->log($user?->id, 'import_create', 'player', $id, 'fields: ' . implode(', ', array_keys($data)));
+                }
+            }
+            return [
+                'create' => count($plan['create']),
+                'update' => count($plan['update']),
+                'skipped' => $plan['skipped'],
+                'issues' => PlayerValidator::issues($checked, $year, $directory),
+            ];
+        };
+        return Response::json($dryRun ? $run() : $this->transaction($run));
+    }
+
+    /** Import und Datenprüfung: nur wer alle Kaderdaten schreiben darf (Kaderpflege, Administrator). */
+    private function canImport(): bool
+    {
+        foreach (['player.basic', 'player.roster', 'player.private'] as $group) {
+            if (!$this->permissions->can($this->roles(), $group, Permissions::WRITE)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** 403 mit den Feldnamen, wenn ein Feld nicht schreibbar oder unbekannt ist. */
@@ -235,67 +313,6 @@ final class PlayersController
             $out['ak'] = AgeClass::for($by !== null ? (string) $by : null, (string) ($row['list_ak'] ?? ''), $year);
         }
         return $out;
-    }
-
-    /**
-     * Prüft und normalisiert die Werte.
-     * @param array<string, mixed> $body
-     * @return array{0: array<string, mixed>, 1: list<string>} [Daten, ungültige Felder]
-     */
-    private static function validate(array $body): array
-    {
-        $data = [];
-        $invalid = [];
-        foreach ($body as $field => $value) {
-            [$type, $limit, $required] = self::RULES[$field];
-            $ok = true;
-            switch ($type) {
-                case 'string':
-                    if ($value === null) {
-                        $value = null;
-                    } elseif (is_string($value) && mb_check_encoding($value, 'UTF-8')) {
-                        $value = (string) preg_replace(self::EDGE_SPACE, '', $value);
-                        $control = in_array($field, self::MULTILINE, true) ? '/[^\P{Cc}\t\n\r]/u' : '/\p{Cc}/u';
-                        if (mb_strlen($value, 'UTF-8') > $limit || preg_match($control, $value) === 1) {
-                            $ok = false;
-                        } elseif ($value === '' && $field !== 'club_name') {
-                            $value = null;
-                        }
-                    } else {
-                        $ok = false;
-                    }
-                    break;
-                case 'int':
-                    if (is_string($value) && preg_match('/^\d{1,9}$/', $value) === 1) {
-                        $value = (int) $value;
-                    }
-                    if ($value !== null && (!is_int($value) || $value < $limit[0] || $value > $limit[1])) {
-                        $ok = false;
-                    }
-                    break;
-                case 'bool':
-                    $ok = is_bool($value);
-                    break;
-                case 'date':
-                    if ($value === '' ) {
-                        $value = null;
-                    }
-                    if ($value !== null) {
-                        $ok = is_string($value) && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) === 1
-                            && checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
-                    }
-                    break;
-            }
-            if ($ok && $required && $value === null) {
-                $ok = false;
-            }
-            if ($ok) {
-                $data[$field] = $value;
-            } else {
-                $invalid[] = (string) $field;
-            }
-        }
-        return [$data, $invalid];
     }
 
     /** @return list<string> */
