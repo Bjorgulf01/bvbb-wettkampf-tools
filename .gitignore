@@ -20,6 +20,9 @@ Thumbs.db
 node_modules/
 
 
+# Gebaute Pakete für den Webspace (tools/package.php)
+/dist/
+
 # Sitzungsdateien und Passwortdatei auf dem Webspace
 /sessions/
 .htpasswd

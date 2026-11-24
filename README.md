@@ -28,7 +28,19 @@ Der Webspace hat kein SSH. Hochgeladen wird per SFTP, die Datenbank wird per php
 - `webseiten/index.php` findet `bvbb-app/` neben dem öffentlichen Verzeichnis von selbst.
 - **Versteckte Dateien:** SFTP-Programme blenden Dateien mit Punkt am Anfang oft aus. Die Anzeige versteckter Dateien einschalten und prüfen, dass `webseiten/.htaccess`, `webseiten/.user.ini` und `bvbb-app/.htaccess` auf dem Server liegen. Ohne `webseiten/.htaccess` gibt es keine Schnittstelle, keine Sicherheits-Kopfzeilen und keine Sperre versteckter Dateien. Änderungen an `.user.ini` wirken erst nach bis zu 5 Minuten.
 - **Annahme:** `webseiten/` ist das Wurzelverzeichnis der Domain (Adressen wie `https://…/api/health`). In einem Unterordner der Domain funktioniert die Schnittstelle nicht.
-- Nicht hochladen: `docs/`, `prototype/`, `testdata/`, `tests/`, `tools/`, `.git/`, `CLAUDE.md`, `config.example.php`.
+- Hochgeladen wird nur das Paket aus `php tools/package.php` (Abschnitt „Paket bauen“). Es enthält nie `config.php`, `sessions/`, `.htpasswd`, `tests/`, `tools/`, `docs/` oder `.git/`.
+
+## Paket bauen
+
+```
+docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/package.php
+```
+
+- Läuft nur auf `main` ohne offene Änderungen, sonst Abbruch mit Meldung. So passt das Paket immer zu einem Commit.
+- Ergebnis: `dist/bvbb-wettkampf-<Version>/` und daneben `dist/bvbb-wettkampf-<Version>.zip` mit `webseiten/`, `bvbb-app/` und `HOCHLADEN.txt` (Version, Commit, Datum, Migrationen, Dateiliste). Die Version steht in `src/Version.php`. Ein älteres Paket derselben Version in `dist/` wird vorher gelöscht.
+- Die beiden Ordner kommen auf die gleichnamigen Ordner im Webspace. `bvbb-app/config.php` und `bvbb-app/sessions/` bleiben auf dem Server und werden nie überschrieben, weil sie nie im Paket sind. `bvbb-app/config.example.php` ist nur eine Vorlage ohne Zugangsdaten.
+- Liegt `config.php`, `.htpasswd` oder ein Ordner `sessions` in einer Quelle (zum Beispiel `public/`), bricht der Bau ab.
+- **Hochladen löscht keine alten Dateien.** Die Dateiliste in `HOCHLADEN.txt` zeigt, was dazugehört. Dateien auf dem Server, die dort nicht stehen, werden nicht mehr gebraucht.
 
 ## Erstes Einrichten
 
@@ -42,13 +54,13 @@ Der Webspace hat kein SSH. Hochgeladen wird per SFTP, die Datenbank wird per php
    - `first_admin_subject`: Kennung der Person, die bei ihrer **ersten** Anmeldung die Rolle admin bekommt. Auf dem Test-Webspace zum Beispiel `test:kaderpflege` (Testpersonen: `test:` plus Schlüssel). Hat sich die Person schon einmal angemeldet, wirkt der Eintrag nicht mehr; dann die Rolle in der Verwaltung vergeben.
    - `session_max_age`: Dauer einer Sitzung in Sekunden (Standard 8 Stunden).
    - `session_save_path`: eigener Ordner für Sitzungsdateien (Vorgabe `bvbb-app/sessions`).
-4. **Hochladen** per SFTP wie oben. Den Ordner `bvbb-app/sessions/` anlegen.
+4. **Hochladen** per SFTP: Paket bauen (Abschnitt „Paket bauen“), `webseiten/` und `bvbb-app/` aus dem Paket hochladen, `config.php` nach `bvbb-app/` legen. Den Ordner `bvbb-app/sessions/` anlegen.
 5. **Prüfen** (Abschnitt „Prüfen nach dem Hochladen“).
 
 ## Aktualisieren
 
 1. Neue Migrationsdateien (höhere Nummer als in `schema_migrations`) per phpMyAdmin importieren, in der Reihenfolge der Nummern. Zuerst, weil Migrationen das Schema nur erweitern und der alte Code damit weiterläuft.
-2. Neue Fassung von `public/` nach `webseiten/` und von `src/`, `migrations/`, `bin/` nach `bvbb-app/` hochladen. `src/` dabei vollständig ersetzen (alten Ordner vorher löschen), damit keine alten Dateien liegen bleiben. `config.php` und `sessions/` bleiben.
+2. Paket bauen und `webseiten/` und `bvbb-app/` aus dem Paket auf die gleichnamigen Ordner hochladen. `bvbb-app/src/` dabei vollständig ersetzen (alten Ordner vorher löschen), damit keine alten Dateien liegen bleiben. `config.php` und `sessions/` bleiben.
 3. `GET /api/health` aufrufen.
 
 Gibt es später SSH, ersetzt `php bvbb-app/bin/migrate.php` Schritt 1.
