@@ -220,6 +220,40 @@ return [
         });
     },
 
+    'test_cli_refuses_ignored_files_in_sources' => function () use ($rmTree): void {
+        // Eine von Git ignorierte Datei (.env, echte Mitgliederliste) taucht in git status nicht auf
+        // und darf trotzdem nie ins Paket. Kopie des Repositorys auf einem Zweig main.
+        exec('git --version 2>&1', $o, $code);
+        if ($code !== 0) {
+            skip('git fehlt');
+        }
+        $tmp = sys_get_temp_dir() . '/bvbb-pkg-cli-' . bin2hex(random_bytes(6));
+        $repo = escapeshellarg(dirname(__DIR__));
+        $dir = escapeshellarg($tmp);
+        try {
+            exec("git clone -q $repo $dir 2>&1 && git -C $dir checkout -q -B main 2>&1", $o, $code);
+            assertSame(0, $code, 'Kopie des Repositorys: ' . implode("\n", $o));
+            file_put_contents($tmp . '/public/.env', "DB_PASS=erfunden\n");
+            file_put_contents($tmp . '/migrations/Mitglieder_fiktiv.csv', "Name;Vorname\n");
+            $out = [];
+            exec('php ' . escapeshellarg($tmp . '/tools/package.php') . ' 2>&1', $out, $code);
+            $text = implode("\n", $out);
+            assertSame(1, $code, 'Exit-Code: ' . $text);
+            assertTrue(str_contains($text, 'public/.env'), 'Meldung nennt public/.env: ' . $text);
+            assertTrue(str_contains($text, 'migrations/Mitglieder_fiktiv.csv'), 'Meldung nennt die Liste: ' . $text);
+            assertTrue(!file_exists($tmp . '/dist/bvbb-wettkampf-' . App\Version::NUMBER), 'kein Paket gebaut');
+
+            unlink($tmp . '/public/.env');
+            unlink($tmp . '/migrations/Mitglieder_fiktiv.csv');
+            $out = [];
+            exec('php ' . escapeshellarg($tmp . '/tools/package.php') . ' 2>&1', $out, $code);
+            assertSame(0, $code, 'sauberer Lauf: ' . implode("\n", $out));
+            assertTrue(is_file($tmp . '/dist/bvbb-wettkampf-' . App\Version::NUMBER . '/webseiten/index.php'), 'Paket gebaut');
+        } finally {
+            $rmTree($tmp);
+        }
+    },
+
     'test_real_repository' => function () use ($rmTree, $now): void {
         $repo = dirname(__DIR__);
         $tmp = sys_get_temp_dir() . '/bvbb-pkg-real-' . bin2hex(random_bytes(6));
