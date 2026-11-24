@@ -4,10 +4,10 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 22.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | main (Task 12 zusammengeführt, PR #14) |
+| Zuletzt bearbeitet | 24.11.2026, Windows-PC (Claude Code) |
+| Aktueller Zweig | dev-e1-git-flow |
 | Letzte fertige Aufgabe | Task 12 im Repository; Prüfung auf dem Test-Webspace zum größten Teil erledigt |
-| In Arbeit | nichts |
+| In Arbeit | Entwicklungsablauf E1 (Git-Abschluss), wartet auf Freigabe |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -27,7 +27,16 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
 | 10 Benutzer, Rollen, Protokoll | fertig | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #11) |
 | 11 Oberfläche | fertig | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` am 22.11.2026 vom Projektinhaber in Firefox und Safari durchgegangen, alle Punkte erfüllt; Review erledigt, zusammengeführt (Pull-Request #12) |
-| 12 Auslieferung | im Repository fertig (PR #14); Webspace-Prüfung am 22.11.2026 bis auf Gegenprobe und Passwortschutz erledigt | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; Pull-Request offen |
+| 12 Auslieferung | im Repository fertig (PR #14); Webspace-Prüfung am 22.11.2026 bis auf Gegenprobe und Passwortschutz erledigt | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; zusammengeführt (Pull-Request #14) |
+
+## Entwicklungsablauf
+
+Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/superpowers/specs/2026-11-23-entwicklungsablauf-design.md`.
+
+| Task | Stand | Zweig | Bemerkung |
+|---|---|---|---|
+| E1 Git-Abschluss | Pull-Request offen, wartet auf Freigabe | dev-e1-git-flow | Abschnitt „Abschluss eines Tasks“ in `CLAUDE.md`, Vorlage `.github/pull_request_template.md`. Zusammenführen mit `--merge`. Keine automatischen Tests (nur Dokumentation), geprüft über diesen Pull-Request. Enthält auch den bisher nicht zusammengeführten Commit 5f78024 (Webspace-Prüfung in dieser Datei) |
+| E2 Paket | offen | | |
 
 ## Entscheidungen und Abweichungen vom Plan
 
@@ -116,3 +125,4 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
    - Gegenprobe: `env` = `production` mit `test_auth` = `true` muss bei `/api/health` 500 ergeben und darf keine Testanmeldung anbieten. Danach zurück auf `staging`.
    - Passwortschutz für `webseiten/` einrichten (Verzeichnisschutz im Kundenmenü).
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
+4. Entwicklungsablauf: Pull-Request für E1 (`dev-e1-git-flow`) prüfen und freigeben, danach E2 (Webspace-Paket, `php tools/package.php`).

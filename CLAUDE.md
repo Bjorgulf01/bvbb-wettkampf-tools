@@ -30,6 +30,38 @@ Das Projekt wird auf einem Windows-PC und einem MacBook entwickelt, teils abwech
 - **Dateinamen exakt wie Klassennamen** (Groß- und Kleinschreibung). Windows und macOS unterscheiden sie nicht, der Webserver schon.
 - Aufgaben 1 und 2 macht ein Rechner allein. Danach sind 3, 4, 4b und 5 voneinander unabhängig.
 
+## Abschluss eines Tasks (Weg A)
+
+Gilt für jeden Task auf beiden Rechnern. Entwurf: `docs/superpowers/specs/2026-11-23-entwicklungsablauf-design.md`. Voraussetzung je Rechner (macht der Projektinhaber selbst): `gh` installiert und mit `gh auth login` angemeldet. Prüfen mit `gh auth status`. Fehlt die Anmeldung, anhalten und darum bitten, nie Anmeldedaten abfragen.
+
+**Methode beim Zusammenführen: `--merge`** (festgelegt am 24.11.2026 aus der Historie von `main`: Commits „Merge pull request #…“). Nicht jedes Mal neu ablesen.
+
+**Wenn Tests und Review grün sind:**
+
+1. `docs/STATUS.md` auf dem Task-Zweig nachtragen (Stand, Tests, Abweichungen, nächster Schritt) und committen.
+2. `git push -u origin <zweig>`.
+3. Beschreibung nach `.github/pull_request_template.md` in eine Datei außerhalb des Repositorys schreiben (Scratchpad). Die Abschnitte: Was ist neu, Tests (Anzahl, Datenbank, PHP-Version), Review, Abweichungen vom Plan, Was du prüfen solltest (zwei bis fünf konkrete Punkte).
+4. `gh pr create --base main --title "<Task>: <Kurzbeschreibung>" --body-file <Datei>`.
+5. Nummer des Pull-Requests in `docs/STATUS.md` eintragen, committen, `git push`.
+6. Anhalten. Link und Prüfpunkte melden. **Ohne ausdrückliche Freigabe wird nicht zusammengeführt.**
+
+**Wenn der Projektinhaber freigibt:**
+
+Freigabe heißt eine ausdrückliche Aussage im Chat, die sich auf das Zusammenführen bezieht, zum Beispiel „passt, zusammenführen“. „Sieht gut aus“ ohne Bezug zum Zusammenführen zählt nicht, dann nachfragen.
+
+1. `gh pr view <N> --json state,mergeable,statusCheckRollup`. Weiter nur, wenn `state` gleich `OPEN` ist, `mergeable` gleich `MERGEABLE` und keine Prüfung fehlgeschlagen ist. Sonst anhalten und den Grund melden. Ist `mergeable` `UNKNOWN`, kurz warten und einmal neu abfragen.
+2. `gh pr merge <N> --merge --delete-branch`.
+3. `git switch main`, `git pull --ff-only`, `git fetch --prune`, `git branch -d <zweig>`. Scheitert `--ff-only` oder `-d`, anhalten und melden, nichts erzwingen.
+4. Melden: `git status -sb`, `git log --oneline -3`, „Nächster Schritt“ aus `docs/STATUS.md`.
+
+**Grenzen:**
+
+- Kein Force-Push, kein direkter Commit auf `main`, kein `--no-verify`.
+- Bei Konflikten, fehlgeschlagenen Prüfungen auf GitHub, einem geschlossenen Pull-Request oder einem unerwartet veränderten `main` anhalten und nachfragen.
+- Zugangsdaten nie in den Chat, ins Repository oder in die Beschreibung eines Pull-Requests.
+- Kein Skript für diesen Ablauf, die Befehle laufen auf beiden Rechnern gleich.
+- Weg B (automatisch zusammenführen, wenn alles grün ist) gilt noch nicht.
+
 ## Zielumgebung (Ergebnis des Hosting-Checks)
 
 | Punkt | Wert |
