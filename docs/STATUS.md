@@ -125,4 +125,4 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
    - Gegenprobe: `env` = `production` mit `test_auth` = `true` muss bei `/api/health` 500 ergeben und darf keine Testanmeldung anbieten. Danach zurück auf `staging`.
    - Passwortschutz für `webseiten/` einrichten (Verzeichnisschutz im Kundenmenü).
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
-4. Entwicklungsablauf: Pull-Request für E2 (`dev-e2-package`) prüfen und freigeben. Danach auf `main` das Paket bauen, auf den Test-Webspace laden und `/api/health` prüfen (Plan E2, Step 8). Offene Frage: Reihenfolge in `HOCHLADEN.txt` (Migrationen zuerst wie in `README.md`, der Entwurf nennt die Ordner zuerst).
+4. Entwicklungsablauf: Pull-Request für E2 (`dev-e2-package`) prüfen und freigeben. Danach auf `main` das Paket bauen, auf den Test-Webspace laden und `/api/health` prüfen (Plan E2, Step 8). Geklärt am 24.11.2026: In `HOCHLADEN.txt` kommen die Migrationen zuerst (Projektinhaber), der Entwurf ist angepasst.
