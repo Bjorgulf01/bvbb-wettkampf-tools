@@ -52,7 +52,7 @@ bvbb-wettkampf-1.0.1/
 
 **Schutz [Vorschlag]:** Das Paket entsteht nur aus einem sauberen Stand auf `main` (keine offenen Änderungen), sonst bricht das Skript mit einer Meldung ab. So passt das Paket immer zu einem Commit. Steht `config.php` versehentlich in einem der Quellordner, bricht es ebenfalls ab.
 
-**HOCHLADEN.txt** erklärt in wenigen Zeilen: beide Ordner auf die gleichnamigen Ordner im Webspace legen, danach in phpMyAdmin `schema_migrations` mit der Migrationsliste vergleichen und fehlende Dateien importieren, dann `/api/health` aufrufen. Die Dateiliste hilft, Dateien zu finden, die auf dem Server liegen, aber nicht mehr gebraucht werden (Hochladen löscht nichts).
+**HOCHLADEN.txt** erklärt in wenigen Zeilen: zuerst in phpMyAdmin `schema_migrations` mit der Migrationsliste vergleichen und fehlende Dateien importieren, danach beide Ordner auf die gleichnamigen Ordner im Webspace legen, dann `/api/health` aufrufen. Migrationen kommen zuerst, weil sie das Schema nur erweitern und der alte Code damit weiterläuft (wie in `README.md`, „Aktualisieren“; **[Du, 24.11.2026]**). Die Dateiliste hilft, Dateien zu finden, die auf dem Server liegen, aber nicht mehr gebraucht werden (Hochladen löscht nichts).
 
 **Test:** Ein Test baut das Paket in einen temporären Ordner und prüft, dass `webseiten/index.php`, `bvbb-app/src/Version.php` und alle Migrationen enthalten sind und dass `config.php` und `sessions/` fehlen.
 

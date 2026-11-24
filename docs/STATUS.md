@@ -5,9 +5,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 24.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | dev-e1-git-flow |
-| Letzte fertige Aufgabe | Task 12 im Repository; Prüfung auf dem Test-Webspace zum größten Teil erledigt |
-| In Arbeit | Entwicklungsablauf E1 (Git-Abschluss), wartet auf Freigabe |
+| Aktueller Zweig | dev-e2-package |
+| Letzte fertige Aufgabe | Entwicklungsablauf E1 (Git-Abschluss, Pull-Request #15) |
+| In Arbeit | Entwicklungsablauf E2 (Webspace-Paket), wartet auf Freigabe |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -35,8 +35,8 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
 
 | Task | Stand | Zweig | Bemerkung |
 |---|---|---|---|
-| E1 Git-Abschluss | Pull-Request #15 offen, wartet auf Freigabe | dev-e1-git-flow | Abschnitt „Abschluss eines Tasks“ in `CLAUDE.md`, Vorlage `.github/pull_request_template.md`. Zusammenführen mit `--merge`. Keine automatischen Tests (nur Dokumentation), geprüft über diesen Pull-Request. Enthält auch den bisher nicht zusammengeführten Commit 5f78024 (Webspace-Prüfung in dieser Datei) |
-| E2 Paket | offen | | |
+| E1 Git-Abschluss | fertig, zusammengeführt (Pull-Request #15) | dev-e1-git-flow | Abschnitt „Abschluss eines Tasks“ in `CLAUDE.md`, Vorlage `.github/pull_request_template.md`. Zusammenführen mit `--merge`. Keine automatischen Tests (nur Dokumentation), geprüft über diesen Pull-Request. Enthält auch den bisher nicht zusammengeführten Commit 5f78024 (Webspace-Prüfung in dieser Datei) |
+| E2 Paket | Pull-Request #16 offen, wartet auf Freigabe | dev-e2-package | `tools/package/Packager.php`, `tools/package.php`, `tests/PackagerTest.php`. 227 Tests grün gegen `bvbb_test_pc` (PHP 8.4, 10 neue Packager-Tests, ZIP-Test läuft wirklich). Review durch frischen Reviewer: ein kritischer Befund behoben (von Git ignorierte Dateien wie `.env` in den Quellordnern kamen ins Paket, jetzt Abbruch). Das Entwicklungs-Image hat jetzt `git` und die Zip-Erweiterung: auf jedem Rechner einmal `docker compose -f tools/dev-env/docker-compose.dev.yml build php`. Paket auf `main` und Hochladen auf den Test-Webspace folgen nach dem Zusammenführen |
 
 ## Entscheidungen und Abweichungen vom Plan
 
@@ -125,4 +125,4 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
    - Gegenprobe: `env` = `production` mit `test_auth` = `true` muss bei `/api/health` 500 ergeben und darf keine Testanmeldung anbieten. Danach zurück auf `staging`.
    - Passwortschutz für `webseiten/` einrichten (Verzeichnisschutz im Kundenmenü).
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
-4. Entwicklungsablauf: Pull-Request für E1 (`dev-e1-git-flow`) prüfen und freigeben, danach E2 (Webspace-Paket, `php tools/package.php`).
+4. Entwicklungsablauf: Pull-Request für E2 (`dev-e2-package`) prüfen und freigeben. Danach auf `main` das Paket bauen, auf den Test-Webspace laden und `/api/health` prüfen (Plan E2, Step 8). Geklärt am 24.11.2026: In `HOCHLADEN.txt` kommen die Migrationen zuerst (Projektinhaber), der Entwurf ist angepasst.
