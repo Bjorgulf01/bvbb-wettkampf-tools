@@ -5,7 +5,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 24.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | docs-e2-webspace-check |
+| Aktueller Zweig | docs-e2-webspace-check (Pull-Request #17) |
 | Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft |
 | In Arbeit | nichts |
 
