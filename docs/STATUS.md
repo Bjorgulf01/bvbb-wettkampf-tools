@@ -4,10 +4,10 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 22.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | task-12-deploy |
-| Letzte fertige Aufgabe | Task 12 im Repository (Prüfung auf dem Test-Webspace offen) |
-| In Arbeit | nichts |
+| Zuletzt bearbeitet | 24.11.2026, Windows-PC (Claude Code) |
+| Aktueller Zweig | dev-e1-git-flow |
+| Letzte fertige Aufgabe | Task 12 im Repository; Prüfung auf dem Test-Webspace zum größten Teil erledigt |
+| In Arbeit | Entwicklungsablauf E1 (Git-Abschluss), wartet auf Freigabe |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -27,7 +27,16 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
 | 10 Benutzer, Rollen, Protokoll | fertig | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #11) |
 | 11 Oberfläche | fertig | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` am 22.11.2026 vom Projektinhaber in Firefox und Safari durchgegangen, alle Punkte erfüllt; Review erledigt, zusammengeführt (Pull-Request #12) |
-| 12 Auslieferung | im Repository fertig, Review erledigt; Prüfung auf dem Test-Webspace offen | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; Pull-Request offen |
+| 12 Auslieferung | im Repository fertig (PR #14); Webspace-Prüfung am 22.11.2026 bis auf Gegenprobe und Passwortschutz erledigt | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; zusammengeführt (Pull-Request #14) |
+
+## Entwicklungsablauf
+
+Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/superpowers/specs/2026-11-23-entwicklungsablauf-design.md`.
+
+| Task | Stand | Zweig | Bemerkung |
+|---|---|---|---|
+| E1 Git-Abschluss | Pull-Request #15 offen, wartet auf Freigabe | dev-e1-git-flow | Abschnitt „Abschluss eines Tasks“ in `CLAUDE.md`, Vorlage `.github/pull_request_template.md`. Zusammenführen mit `--merge`. Keine automatischen Tests (nur Dokumentation), geprüft über diesen Pull-Request. Enthält auch den bisher nicht zusammengeführten Commit 5f78024 (Webspace-Prüfung in dieser Datei) |
+| E2 Paket | offen | | |
 
 ## Entscheidungen und Abweichungen vom Plan
 
@@ -104,8 +113,16 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 - Task 12, Reihenfolge beim Test-Webspace: erst HTTPS erzwingen, dann den Passwortschutz einrichten, weil Apache das Passwort sonst auch über `http://` abfragt. Etappe 1 läuft nur mit `env` = `staging`, weil die echte Anmeldung vertagt ist.
 - Task 12, nicht lokal prüfbar: Apache, `mod_headers`, `AllowOverride` und HTTPS des Hosters. Die Prüfliste in `README.md` deckt das ab. Bei 500 auf allen Seiten erlaubt der Hoster eine Anweisung in der `.htaccess` nicht („not allowed here“ im Fehlerprotokoll).
 
+- Task 12, Prüfung auf dem Test-Webspace am 22.11.2026 durch den Projektinhaber:
+  - Ein anfängliches `{"ok":false}` beim Health-Check kam von falschen Zugangsdaten in `config.php` und ist behoben. `/api/health` liefert `{"ok":true,"version":"1.0.0"}`.
+  - Erledigt: HTTPS-Umleitung (macht der Hoster selbst, die Umleitung in `.htaccess` bleibt auskommentiert), gesperrte Adressen (`.htaccess` und `.user.ini` ergeben 403, `src/`, `config.php` und `bvbb-app/config.php` 403 oder 404), Cookie `__Host-bvbb_session` mit `Secure`, `HttpOnly` und `SameSite=Lax`, Sicherheits-Kopfzeilen vollständig und ohne `X-Powered-By`, Anmeldung aller Testpersonen und Import der Testkaderliste wie in `tests/ui-checklist.md`.
+  - Für die Nacht wird die Testanmeldung auf dem Webspace abgeschaltet (`test_auth` = `false`), solange der Passwortschutz fehlt.
+
 ## Nächster Schritt
 
-1. Pull-Request für `task-12-deploy` prüfen und zusammenführen.
-2. Step 4 von Task 12 auf dem Test-Webspace (Projektinhaber): nach `README.md` einrichten und die Prüfliste „Prüfen nach dem Hochladen“ durchgehen. Ergebnis hier eintragen, Fehler an Claude Code melden.
-3. Danach ist Etappe 1 abgeschlossen bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
+1. Testanmeldung auf dem Webspace wieder einschalten (`test_auth` = `true`), falls sie über Nacht abgeschaltet war.
+2. Restliche Webspace-Prüfung (Projektinhaber):
+   - Gegenprobe: `env` = `production` mit `test_auth` = `true` muss bei `/api/health` 500 ergeben und darf keine Testanmeldung anbieten. Danach zurück auf `staging`.
+   - Passwortschutz für `webseiten/` einrichten (Verzeichnisschutz im Kundenmenü).
+3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
+4. Entwicklungsablauf: Pull-Request für E1 (`dev-e1-git-flow`) prüfen und freigeben, danach E2 (Webspace-Paket, `php tools/package.php`).
