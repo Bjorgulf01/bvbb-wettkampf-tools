@@ -222,17 +222,23 @@ return [
 
     'test_cli_refuses_ignored_files_in_sources' => function () use ($rmTree): void {
         // Eine von Git ignorierte Datei (.env, echte Mitgliederliste) taucht in git status nicht auf
-        // und darf trotzdem nie ins Paket. Kopie des Repositorys auf einem Zweig main.
+        // und darf trotzdem nie ins Paket. Neues Repository aus dem Arbeitsstand, Zweig main, ein Commit.
         exec('git --version 2>&1', $o, $code);
         if ($code !== 0) {
             skip('git fehlt');
         }
         $tmp = sys_get_temp_dir() . '/bvbb-pkg-cli-' . bin2hex(random_bytes(6));
-        $repo = escapeshellarg(dirname(__DIR__));
         $dir = escapeshellarg($tmp);
+        $parts = ['public', 'src', 'migrations', 'bin', '.htaccess', 'config.example.php', '.gitignore', 'tools/package.php', 'tools/package'];
         try {
-            exec("git clone -q $repo $dir 2>&1 && git -C $dir checkout -q -B main 2>&1", $o, $code);
-            assertSame(0, $code, 'Kopie des Repositorys: ' . implode("\n", $o));
+            mkdir($tmp . '/tools', 0777, true);
+            foreach ($parts as $p) {
+                exec('cp -R ' . escapeshellarg(dirname(__DIR__) . '/' . $p) . ' ' . escapeshellarg($tmp . '/' . $p) . ' 2>&1', $o, $code);
+                assertSame(0, $code, "Kopie von $p: " . implode("\n", $o));
+            }
+            exec("git -C $dir init -q -b main 2>&1 && git -C $dir add -A 2>&1"
+                . " && git -C $dir -c user.name=Test -c user.email=test@example.org commit -q -m test 2>&1", $o, $code);
+            assertSame(0, $code, 'Test-Repository: ' . implode("\n", $o));
             file_put_contents($tmp . '/public/.env', "DB_PASS=erfunden\n");
             file_put_contents($tmp . '/migrations/Mitglieder_fiktiv.csv', "Name;Vorname\n");
             $out = [];

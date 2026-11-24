@@ -41,6 +41,17 @@ if (trim($branch) !== 'main' || trim($dirty) !== '') {
     $fail("Paket nur aus main ohne offene Änderungen. Aktueller Zweig: " . trim($branch)
         . (trim($dirty) !== '' ? ", offene Änderungen:\n" . $dirty : ''));
 }
+// Von Git ignorierte Dateien (.env, echte Mitgliederlisten, …) zeigt git status nicht an.
+// Liegen sie in einer Quelle, kämen sie unbemerkt ins Paket, im schlimmsten Fall öffentlich nach webseiten/.
+$sources = implode(' ', array_map('escapeshellarg', array_keys(Packager::MAP)));
+$ignored = $git('ls-files --others --ignored --exclude-standard -- ' . $sources);
+if ($ignored === null) {
+    $fail('git ls-files ist fehlgeschlagen.');
+}
+if (trim($ignored) !== '') {
+    $fail("Abbruch: Von Git ignorierte Dateien liegen in den Quellordnern und kämen ins Paket:\n"
+        . $ignored . "\nBitte entfernen oder verschieben, dann neu starten.");
+}
 $commit = trim((string) $git('rev-parse --short HEAD'));
 
 $name = 'bvbb-wettkampf-' . Version::NUMBER;

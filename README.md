@@ -39,7 +39,7 @@ docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/pa
 - Läuft nur auf `main` ohne offene Änderungen, sonst Abbruch mit Meldung. So passt das Paket immer zu einem Commit.
 - Ergebnis: `dist/bvbb-wettkampf-<Version>/` und daneben `dist/bvbb-wettkampf-<Version>.zip` mit `webseiten/`, `bvbb-app/` und `HOCHLADEN.txt` (Version, Commit, Datum, Migrationen, Dateiliste). Die Version steht in `src/Version.php`. Ein älteres Paket derselben Version in `dist/` wird vorher gelöscht.
 - Die beiden Ordner kommen auf die gleichnamigen Ordner im Webspace. `bvbb-app/config.php` und `bvbb-app/sessions/` bleiben auf dem Server und werden nie überschrieben, weil sie nie im Paket sind. `bvbb-app/config.example.php` ist nur eine Vorlage ohne Zugangsdaten.
-- Liegt `config.php`, `.htpasswd` oder ein Ordner `sessions` in einer Quelle (zum Beispiel `public/`), bricht der Bau ab.
+- Liegt `config.php`, `.htpasswd` oder ein Ordner `sessions` in einer Quelle (zum Beispiel `public/`), bricht der Bau ab. Ebenso bei jeder von Git ignorierten Datei in einer Quelle (zum Beispiel `.env` oder eine echte Mitgliederliste), weil `git status` sie nicht anzeigt.
 - **Hochladen löscht keine alten Dateien.** Die Dateiliste in `HOCHLADEN.txt` zeigt, was dazugehört. Dateien auf dem Server, die dort nicht stehen, werden nicht mehr gebraucht.
 
 ## Erstes Einrichten
