@@ -35,7 +35,7 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
 
 | Task | Stand | Zweig | Bemerkung |
 |---|---|---|---|
-| E1 Git-Abschluss | Pull-Request offen, wartet auf Freigabe | dev-e1-git-flow | Abschnitt „Abschluss eines Tasks“ in `CLAUDE.md`, Vorlage `.github/pull_request_template.md`. Zusammenführen mit `--merge`. Keine automatischen Tests (nur Dokumentation), geprüft über diesen Pull-Request. Enthält auch den bisher nicht zusammengeführten Commit 5f78024 (Webspace-Prüfung in dieser Datei) |
+| E1 Git-Abschluss | Pull-Request #15 offen, wartet auf Freigabe | dev-e1-git-flow | Abschnitt „Abschluss eines Tasks“ in `CLAUDE.md`, Vorlage `.github/pull_request_template.md`. Zusammenführen mit `--merge`. Keine automatischen Tests (nur Dokumentation), geprüft über diesen Pull-Request. Enthält auch den bisher nicht zusammengeführten Commit 5f78024 (Webspace-Prüfung in dieser Datei) |
 | E2 Paket | offen | | |
 
 ## Entscheidungen und Abweichungen vom Plan
