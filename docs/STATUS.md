@@ -5,9 +5,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 25.11.2026, MacBook (Claude Code) |
-| Aktueller Zweig | docs-status-mac |
-| Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16, zusammengeführt) |
-| In Arbeit | E2 Step 8 (Paket auf `main` bauen und hochladen), Rest der Webspace-Prüfung zu Task 12 |
+| Aktueller Zweig | docs-status-mac (Pull-Request #18) |
+| Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft; MacBook eingerichtet (227 Tests grün) |
+| In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -36,7 +36,7 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
 | Task | Stand | Zweig | Bemerkung |
 |---|---|---|---|
 | E1 Git-Abschluss | fertig, zusammengeführt (Pull-Request #15) | dev-e1-git-flow | Abschnitt „Abschluss eines Tasks“ in `CLAUDE.md`, Vorlage `.github/pull_request_template.md`. Zusammenführen mit `--merge`. Keine automatischen Tests (nur Dokumentation), geprüft über diesen Pull-Request. Enthält auch den bisher nicht zusammengeführten Commit 5f78024 (Webspace-Prüfung in dieser Datei) |
-| E2 Paket | im Repository fertig, zusammengeführt (Pull-Request #16, 24.11.2026); Paket bauen und hochladen (Step 8) offen | dev-e2-package | `tools/package/Packager.php`, `tools/package.php`, `tests/PackagerTest.php`. 227 Tests grün gegen `bvbb_test_pc` (PHP 8.4, 10 neue Packager-Tests, ZIP-Test läuft wirklich). Review durch frischen Reviewer: ein kritischer Befund behoben (von Git ignorierte Dateien wie `.env` in den Quellordnern kamen ins Paket, jetzt Abbruch). Das Entwicklungs-Image hat jetzt `git` und die Zip-Erweiterung: auf jedem Rechner einmal `docker compose -f tools/dev-env/docker-compose.dev.yml build php`. Paket auf `main` und Hochladen auf den Test-Webspace folgen nach dem Zusammenführen |
+| E2 Paket | fertig, zusammengeführt (Pull-Request #16), auf dem Test-Webspace geprüft | dev-e2-package | `tools/package/Packager.php`, `tools/package.php`, `tests/PackagerTest.php`. 227 Tests grün gegen `bvbb_test_pc` (PHP 8.4, 10 neue Packager-Tests, ZIP-Test läuft wirklich). Review durch frischen Reviewer: ein kritischer Befund behoben (von Git ignorierte Dateien wie `.env` in den Quellordnern kamen ins Paket, jetzt Abbruch). Das Entwicklungs-Image hat jetzt `git` und die Zip-Erweiterung: auf jedem Rechner einmal `docker compose -f tools/dev-env/docker-compose.dev.yml build php`. Paket auf `main` gebaut (Commit dce4cb1, 52 Dateien, Ordner und ZIP). Am 24.11.2026 vom Projektinhaber auf den Test-Webspace geladen: `/api/health` liefert `{"ok":true,"version":"1.0.0"}`, alles in Ordnung |
 
 ## Entscheidungen und Abweichungen vom Plan
 
@@ -118,7 +118,7 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
   - Erledigt: HTTPS-Umleitung (macht der Hoster selbst, die Umleitung in `.htaccess` bleibt auskommentiert), gesperrte Adressen (`.htaccess` und `.user.ini` ergeben 403, `src/`, `config.php` und `bvbb-app/config.php` 403 oder 404), Cookie `__Host-bvbb_session` mit `Secure`, `HttpOnly` und `SameSite=Lax`, Sicherheits-Kopfzeilen vollständig und ohne `X-Powered-By`, Anmeldung aller Testpersonen und Import der Testkaderliste wie in `tests/ui-checklist.md`.
   - Für die Nacht wird die Testanmeldung auf dem Webspace abgeschaltet (`test_auth` = `false`), solange der Passwortschutz fehlt.
 
-- MacBook eingerichtet am 25.11.2026: `main` auf Stand Pull-Request #16 gebracht, Entwicklungs-Image neu gebaut (mit `git` und Zip-Erweiterung), `check-env.php` meldet „Alles in Ordnung“ (PHP 8.4.28, MariaDB 10.11.19), `core.hooksPath` gesetzt. **227 Tests grün gegen `bvbb_test_mac`** (0 fehlgeschlagen, 0 übersprungen, etwa 8 Minuten). Die Verbindung vom Mac zum NAS ist langsamer als vom PC (etwa 11 ms je Abfrage, vermutlich WLAN). **Auf dem Mac fehlt noch `gh`** (Installation und `gh auth login` durch den Projektinhaber), bis dahin Pull-Requests im Browser öffnen.
+- MacBook eingerichtet am 25.11.2026: `main` auf Stand Pull-Request #16 gebracht, Entwicklungs-Image neu gebaut (mit `git` und Zip-Erweiterung), `check-env.php` meldet „Alles in Ordnung“ (PHP 8.4.28, MariaDB 10.11.19), `core.hooksPath` gesetzt. **227 Tests grün gegen `bvbb_test_mac`** (0 fehlgeschlagen, 0 übersprungen, etwa 8 Minuten). Die Verbindung vom Mac zum NAS ist langsamer als vom PC (etwa 11 ms je Abfrage, vermutlich WLAN). `gh` ist installiert und angemeldet (Homebrew, `/opt/homebrew/bin/gh`; Claudes Bash findet es nicht im Pfad, dort mit vollem Pfad aufrufen).
 - **Commit-Schutz lief auf dem Mac nie** (25.11.2026, behoben auf `docs-status-mac`): `tools/git-hooks/pre-commit` war ohne Ausführungsrecht gespeichert, macOS hat ihn still übergangen. Danach scheiterte er an der Bash 3.2 von macOS (`case` in `$( … )`). Jetzt ausführbar und mit POSIX-Klammern vor den Mustern. In einem Wegwerf-Repository geprüft: `.env`, `config.php`, Mitgliederliste und `.xlsx` außerhalb `testdata/` werden blockiert, `testdata/*.xlsx` und normale Dateien nicht. Auf dem PC beim nächsten Commit kurz prüfen, dass der Hook weiter läuft. Pull-Request #18.
 
 ## Nächster Schritt
@@ -128,4 +128,4 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
    - Gegenprobe: `env` = `production` mit `test_auth` = `true` muss bei `/api/health` 500 ergeben und darf keine Testanmeldung anbieten. Danach zurück auf `staging`.
    - Passwortschutz für `webseiten/` einrichten (Verzeichnisschutz im Kundenmenü).
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
-4. Entwicklungsablauf E2: Pull-Request #16 ist zusammengeführt. Auf `main` das Paket bauen, auf den Test-Webspace laden und `/api/health` prüfen (Plan E2, Step 8). Geklärt am 24.11.2026: In `HOCHLADEN.txt` kommen die Migrationen zuerst (Projektinhaber), der Entwurf ist angepasst.
+4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Auf dem PC einmal prüfen, dass der reparierte Commit-Schutz weiter greift (Pull-Request #18). Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer.
