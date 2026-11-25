@@ -119,6 +119,7 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
   - Für die Nacht wird die Testanmeldung auf dem Webspace abgeschaltet (`test_auth` = `false`), solange der Passwortschutz fehlt.
 
 - MacBook eingerichtet am 25.11.2026: `main` auf Stand Pull-Request #16 gebracht, Entwicklungs-Image neu gebaut (mit `git` und Zip-Erweiterung), `check-env.php` meldet „Alles in Ordnung“ (PHP 8.4.28, MariaDB 10.11.19), `core.hooksPath` gesetzt. **227 Tests grün gegen `bvbb_test_mac`** (0 fehlgeschlagen, 0 übersprungen, etwa 8 Minuten). Die Verbindung vom Mac zum NAS ist langsamer als vom PC (etwa 11 ms je Abfrage, vermutlich WLAN). **Auf dem Mac fehlt noch `gh`** (Installation und `gh auth login` durch den Projektinhaber), bis dahin Pull-Requests im Browser öffnen.
+- **Commit-Schutz lief auf dem Mac nie** (25.11.2026, behoben auf `docs-status-mac`): `tools/git-hooks/pre-commit` war ohne Ausführungsrecht gespeichert, macOS hat ihn still übergangen. Danach scheiterte er an der Bash 3.2 von macOS (`case` in `$( … )`). Jetzt ausführbar und mit POSIX-Klammern vor den Mustern. In einem Wegwerf-Repository geprüft: `.env`, `config.php`, Mitgliederliste und `.xlsx` außerhalb `testdata/` werden blockiert, `testdata/*.xlsx` und normale Dateien nicht. Auf dem PC beim nächsten Commit kurz prüfen, dass der Hook weiter läuft.
 
 ## Nächster Schritt
 
