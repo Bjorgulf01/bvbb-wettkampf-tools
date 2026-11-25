@@ -30,6 +30,16 @@ Das Projekt wird auf einem Windows-PC und einem MacBook entwickelt, teils abwech
 - **Dateinamen exakt wie Klassennamen** (Groß- und Kleinschreibung). Windows und macOS unterscheiden sie nicht, der Webserver schon.
 - Aufgaben 1 und 2 macht ein Rechner allein. Danach sind 3, 4, 4b und 5 voneinander unabhängig.
 
+## Dokumente aus dem Planungsprojekt
+
+Entwürfe, Pläne und Listen entstehen im Claude-Projekt „BVBB-Wettkampf-Tools“. Dort liegen sie nur im Projekt, nicht im Repository. Damit beide Rechner dieselben Dokumente haben, gilt:
+
+- **Jedes neue oder geänderte Planungsdokument kommt sofort ins Repository**, bevor danach gearbeitet wird. Eigener Zweig (`docs-<thema>`), Abschluss wie ein Task (Pull-Request, Freigabe abwarten).
+- Ablage und Zuordnung stehen in `docs/README.md`. Für jedes Dokument gibt es dort eine Zeile. Fehlt die Zeile, fehlt das Dokument.
+- Inhalt unverändert übernehmen. Weichen die Fassungen in Projekt und Repository voneinander ab, anhalten und beim Projektinhaber nachfragen.
+- Ausnahme: `docs/STATUS.md` wird hier gepflegt. Die Fassung im Repository ist führend.
+- **Zu Beginn jeder Sitzung** zusätzlich zu `git pull` prüfen, ob `docs/README.md` alle Dokumente nennt, die der Projektinhaber erwähnt oder die in `docs/STATUS.md` und in Plänen verlinkt sind. Fehlt eins, den Projektinhaber darauf hinweisen.
+
 ## Abschluss eines Tasks (Weg A)
 
 Gilt für jeden Task auf beiden Rechnern. Entwurf: `docs/superpowers/specs/2026-11-23-entwicklungsablauf-design.md`. Voraussetzung je Rechner (macht der Projektinhaber selbst): `gh` installiert und mit `gh auth login` angemeldet. Prüfen mit `gh auth status`. Fehlt die Anmeldung, anhalten und darum bitten, nie Anmeldedaten abfragen.
@@ -129,7 +139,7 @@ AK-Beispiele: Jahrgang 2008 ist 2026 `U19` und 2027 `O19`. Jahrgang 2015 ist 202
 
 ## Inhalt dieses Ordners
 
-- `docs/`: Entwurf und Umsetzungsplan (aus den Dokumenten exportiert, siehe `docs/README.md`).
+- `docs/`: Entwurf, Umsetzungspläne, Ideenliste und STATUS (Zuordnung zu den Projektdokumenten in `docs/README.md`). Weitere Entwürfe und Pläne liegen in `docs/superpowers/specs/` und `docs/superpowers/plans/`, zum Beispiel „Kaderliste rund machen“ (`2026-11-24-kaderliste-anpassungen`).
 - `prototype/`: Prototyp mit erfundenen Beispieldaten.
 - `testdata/Testkaderliste_fiktiv.xlsx`: erfundene Kaderliste im Format der echten Liste, mit absichtlichen Fehlern. Das Blatt „Hinweise“ nennt die erwarteten Befunde der Datenprüfung.
 - `tools/dev-env/`: Docker-Dateien, Anleitung und Umgebungstest für die Entwicklung (Portainer-Stack für die NAS-Datenbank, Compose-Datei, Umgebungstest).
