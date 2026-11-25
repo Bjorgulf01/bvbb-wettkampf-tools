@@ -4,10 +4,10 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 24.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | dev-e2-package |
-| Letzte fertige Aufgabe | Entwicklungsablauf E1 (Git-Abschluss, Pull-Request #15) |
-| In Arbeit | Entwicklungsablauf E2 (Webspace-Paket), wartet auf Freigabe |
+| Zuletzt bearbeitet | 25.11.2026, MacBook (Claude Code) |
+| Aktueller Zweig | docs-status-mac |
+| Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16, zusammengeführt) |
+| In Arbeit | E2 Step 8 (Paket auf `main` bauen und hochladen), Rest der Webspace-Prüfung zu Task 12 |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -36,7 +36,7 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
 | Task | Stand | Zweig | Bemerkung |
 |---|---|---|---|
 | E1 Git-Abschluss | fertig, zusammengeführt (Pull-Request #15) | dev-e1-git-flow | Abschnitt „Abschluss eines Tasks“ in `CLAUDE.md`, Vorlage `.github/pull_request_template.md`. Zusammenführen mit `--merge`. Keine automatischen Tests (nur Dokumentation), geprüft über diesen Pull-Request. Enthält auch den bisher nicht zusammengeführten Commit 5f78024 (Webspace-Prüfung in dieser Datei) |
-| E2 Paket | Pull-Request #16 offen, wartet auf Freigabe | dev-e2-package | `tools/package/Packager.php`, `tools/package.php`, `tests/PackagerTest.php`. 227 Tests grün gegen `bvbb_test_pc` (PHP 8.4, 10 neue Packager-Tests, ZIP-Test läuft wirklich). Review durch frischen Reviewer: ein kritischer Befund behoben (von Git ignorierte Dateien wie `.env` in den Quellordnern kamen ins Paket, jetzt Abbruch). Das Entwicklungs-Image hat jetzt `git` und die Zip-Erweiterung: auf jedem Rechner einmal `docker compose -f tools/dev-env/docker-compose.dev.yml build php`. Paket auf `main` und Hochladen auf den Test-Webspace folgen nach dem Zusammenführen |
+| E2 Paket | im Repository fertig, zusammengeführt (Pull-Request #16, 24.11.2026); Paket bauen und hochladen (Step 8) offen | dev-e2-package | `tools/package/Packager.php`, `tools/package.php`, `tests/PackagerTest.php`. 227 Tests grün gegen `bvbb_test_pc` (PHP 8.4, 10 neue Packager-Tests, ZIP-Test läuft wirklich). Review durch frischen Reviewer: ein kritischer Befund behoben (von Git ignorierte Dateien wie `.env` in den Quellordnern kamen ins Paket, jetzt Abbruch). Das Entwicklungs-Image hat jetzt `git` und die Zip-Erweiterung: auf jedem Rechner einmal `docker compose -f tools/dev-env/docker-compose.dev.yml build php`. Paket auf `main` und Hochladen auf den Test-Webspace folgen nach dem Zusammenführen |
 
 ## Entscheidungen und Abweichungen vom Plan
 
@@ -118,6 +118,8 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
   - Erledigt: HTTPS-Umleitung (macht der Hoster selbst, die Umleitung in `.htaccess` bleibt auskommentiert), gesperrte Adressen (`.htaccess` und `.user.ini` ergeben 403, `src/`, `config.php` und `bvbb-app/config.php` 403 oder 404), Cookie `__Host-bvbb_session` mit `Secure`, `HttpOnly` und `SameSite=Lax`, Sicherheits-Kopfzeilen vollständig und ohne `X-Powered-By`, Anmeldung aller Testpersonen und Import der Testkaderliste wie in `tests/ui-checklist.md`.
   - Für die Nacht wird die Testanmeldung auf dem Webspace abgeschaltet (`test_auth` = `false`), solange der Passwortschutz fehlt.
 
+- MacBook eingerichtet am 25.11.2026: `main` auf Stand Pull-Request #16 gebracht, Entwicklungs-Image neu gebaut (mit `git` und Zip-Erweiterung), `check-env.php` meldet „Alles in Ordnung“ (PHP 8.4.28, MariaDB 10.11.19), `core.hooksPath` gesetzt. **227 Tests grün gegen `bvbb_test_mac`** (0 fehlgeschlagen, 0 übersprungen, etwa 8 Minuten). Die Verbindung vom Mac zum NAS ist langsamer als vom PC (etwa 11 ms je Abfrage, vermutlich WLAN). **Auf dem Mac fehlt noch `gh`** (Installation und `gh auth login` durch den Projektinhaber), bis dahin Pull-Requests im Browser öffnen.
+
 ## Nächster Schritt
 
 1. Testanmeldung auf dem Webspace wieder einschalten (`test_auth` = `true`), falls sie über Nacht abgeschaltet war.
@@ -125,4 +127,4 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
    - Gegenprobe: `env` = `production` mit `test_auth` = `true` muss bei `/api/health` 500 ergeben und darf keine Testanmeldung anbieten. Danach zurück auf `staging`.
    - Passwortschutz für `webseiten/` einrichten (Verzeichnisschutz im Kundenmenü).
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
-4. Entwicklungsablauf: Pull-Request für E2 (`dev-e2-package`) prüfen und freigeben. Danach auf `main` das Paket bauen, auf den Test-Webspace laden und `/api/health` prüfen (Plan E2, Step 8). Geklärt am 24.11.2026: In `HOCHLADEN.txt` kommen die Migrationen zuerst (Projektinhaber), der Entwurf ist angepasst.
+4. Entwicklungsablauf E2: Pull-Request #16 ist zusammengeführt. Auf `main` das Paket bauen, auf den Test-Webspace laden und `/api/health` prüfen (Plan E2, Step 8). Geklärt am 24.11.2026: In `HOCHLADEN.txt` kommen die Migrationen zuerst (Projektinhaber), der Entwurf ist angepasst.
