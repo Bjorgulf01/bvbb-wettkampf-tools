@@ -4,9 +4,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 24.11.2026, Windows-PC (Claude Code) |
-| Aktueller Zweig | docs-e2-webspace-check (Pull-Request #17) |
-| Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft |
+| Zuletzt bearbeitet | 25.11.2026, MacBook (Claude Code) |
+| Aktueller Zweig | docs-status-mac (Pull-Request #18) |
+| Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft; MacBook eingerichtet (227 Tests grün) |
 | In Arbeit | nichts |
 
 ## Aufgabenstand (Etappe 1)
@@ -118,6 +118,9 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
   - Erledigt: HTTPS-Umleitung (macht der Hoster selbst, die Umleitung in `.htaccess` bleibt auskommentiert), gesperrte Adressen (`.htaccess` und `.user.ini` ergeben 403, `src/`, `config.php` und `bvbb-app/config.php` 403 oder 404), Cookie `__Host-bvbb_session` mit `Secure`, `HttpOnly` und `SameSite=Lax`, Sicherheits-Kopfzeilen vollständig und ohne `X-Powered-By`, Anmeldung aller Testpersonen und Import der Testkaderliste wie in `tests/ui-checklist.md`.
   - Für die Nacht wird die Testanmeldung auf dem Webspace abgeschaltet (`test_auth` = `false`), solange der Passwortschutz fehlt.
 
+- MacBook eingerichtet am 25.11.2026: `main` auf Stand Pull-Request #16 gebracht, Entwicklungs-Image neu gebaut (mit `git` und Zip-Erweiterung), `check-env.php` meldet „Alles in Ordnung“ (PHP 8.4.28, MariaDB 10.11.19), `core.hooksPath` gesetzt. **227 Tests grün gegen `bvbb_test_mac`** (0 fehlgeschlagen, 0 übersprungen, etwa 8 Minuten). Die Verbindung vom Mac zum NAS ist langsamer als vom PC (etwa 11 ms je Abfrage, vermutlich WLAN). `gh` ist installiert und angemeldet (Homebrew, `/opt/homebrew/bin/gh`; Claudes Bash findet es nicht im Pfad, dort mit vollem Pfad aufrufen).
+- **Commit-Schutz lief auf dem Mac nie** (25.11.2026, behoben auf `docs-status-mac`): `tools/git-hooks/pre-commit` war ohne Ausführungsrecht gespeichert, macOS hat ihn still übergangen. Danach scheiterte er an der Bash 3.2 von macOS (`case` in `$( … )`). Jetzt ausführbar und mit POSIX-Klammern vor den Mustern. In einem Wegwerf-Repository geprüft: `.env`, `config.php`, Mitgliederliste und `.xlsx` außerhalb `testdata/` werden blockiert, `testdata/*.xlsx` und normale Dateien nicht. Auf dem PC beim nächsten Commit kurz prüfen, dass der Hook weiter läuft. Pull-Request #18.
+
 ## Nächster Schritt
 
 1. Testanmeldung auf dem Webspace wieder einschalten (`test_auth` = `true`), falls sie über Nacht abgeschaltet war.
@@ -125,4 +128,4 @@ Plan: `docs/superpowers/plans/2026-11-24-entwicklungsablauf.md`, Entwurf: `docs/
    - Gegenprobe: `env` = `production` mit `test_auth` = `true` muss bei `/api/health` 500 ergeben und darf keine Testanmeldung anbieten. Danach zurück auf `staging`.
    - Passwortschutz für `webseiten/` einrichten (Verzeichnisschutz im Kundenmenü).
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
-4. **Offen: Tests auf dem MacBook** (Image neu bauen, dann `tests/run.php` gegen `bvbb_test_mac`, erwartet 227 grün). Entwicklungsablauf E1 und E2 sind abgeschlossen. Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Auf dem MacBook einmal `docker compose -f tools/dev-env/docker-compose.dev.yml build php`. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer.
+4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Auf dem PC einmal prüfen, dass der reparierte Commit-Schutz weiter greift (Pull-Request #18). Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer.
