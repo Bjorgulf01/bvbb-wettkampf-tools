@@ -1,6 +1,5 @@
 {
   "enabledPlugins": {
-    "superpowers@anthropic-plugin-directory": true,
-    "codex@openai-codex": true
+    "superpowers@anthropic-plugin-directory": true
   }
 }
