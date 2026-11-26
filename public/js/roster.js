@@ -5,6 +5,9 @@
 import { api, query, errorText, ApiError } from './api.js';
 import { el, clear, formatDate, flash, loadXlsx } from './dom.js';
 import { renderClubs } from './clubs.js';
+import {
+  ROSTER_STATUS_ORDER, defaultFilters, filterOptions, filterRows, sortRows, visibleFilterKeys,
+} from './roster-view.js';
 
 /**
  * Die 22 Spalten der Excel-Kaderliste in ihrer Reihenfolge; null: Spalte wird nicht übernommen
@@ -53,8 +56,11 @@ const HEALTH_NOTES = ['sportmed_note', 'antidoping_note'];
 const HEALTH_HINT = 'Nur Datum und Status eintragen, keine Befunde oder medizinischen Angaben.';
 const BIRTH_YEAR_HINT = 'wird aus dem Geburtstag übernommen';
 
-/** Kaderstatus in fachlicher Reihenfolge (Auswahl und Sortierung). */
-export const ROSTER_STATUS_ORDER = ['NK1', 'NK2', 'LK', 'SK'];
+/** Kaderstatus in fachlicher Reihenfolge; steht in roster-view.js (ohne Ringabhängigkeit) und wird hier weitergegeben. */
+export { ROSTER_STATUS_ORDER };
+
+/** Beschriftungen der Filterleiste. */
+const FILTER_LABELS = { ak: 'AK', birth_year: 'Jahrgang', roster_status: 'Kaderstatus', club_name: 'Verein', gender: 'm/w', active: 'Status' };
 
 export const ISSUE_TEXT = {
   missing_birth_year: 'Jahrgang fehlt', bad_birth_year: 'Jahrgang ungültig', missing_club: 'Verein fehlt',
@@ -87,8 +93,10 @@ class PlayersView {
     this.sess = sess;
     this.year = new Date().getFullYear();
     this.rows = [];
-    this.filter = '';
-    this.activeOnly = false;
+    // Ansicht bleibt erhalten, solange die Seite offen ist (auch nach dem Speichern); nicht dauerhaft gespeichert.
+    this.filters = defaultFilters();
+    this.sortKey = 'last_name';
+    this.sortDir = 'asc';
     this.highlight = null;
     this.writable = new Set(sess.me.write_fields || []);
   }
@@ -112,46 +120,84 @@ class PlayersView {
     return keys.sort((a, b) => rank(a) - rank(b));
   }
 
+  /** Angezeigte Zeilen: gefiltert, dann sortiert (Tabelle und Export). */
   visibleRows() {
-    const f = this.filter.trim().toLocaleLowerCase('de-DE');
-    return this.rows.filter((r) => {
-      if (this.activeOnly && r.active === false) return false;
-      if (!f) return true;
-      return ['last_name', 'first_name', 'club_name', 'training_site']
-        .some((k) => typeof r[k] === 'string' && r[k].toLocaleLowerCase('de-DE').includes(f));
-    });
+    return sortRows(filterRows(this.rows, this.filters), this.sortKey, this.sortDir);
+  }
+
+  /** Filterleiste: Suche (Name, Vorname) und je lesbarer Spalte eine Auswahl mit den vorkommenden Werten. */
+  filterBar() {
+    this.controls = {};
+    const changed = () => this.renderTable();
+    const search = el('input', { type: 'search', placeholder: 'Name oder Vorname', value: this.filters.search,
+      oninput: (e) => { this.filters.search = e.target.value; changed(); } });
+    this.controls.search = search;
+    const bar = el('div', { class: 'filters', role: 'search' },
+      el('label', { dataset: { filter: 'search' } }, 'Suche', search));
+    for (const key of visibleFilterKeys(this.rows)) {
+      const opts = filterOptions(this.rows, key);
+      const current = this.filters[key];
+      if (current !== '' && !opts.some((o) => o.value === current)) {
+        opts.push({ value: current, label: key === 'active' ? (current === 'true' ? 'aktiv' : 'passiv') : current });
+      }
+      const sel = el('select', { onchange: (e) => { this.filters[key] = e.target.value; changed(); } },
+        el('option', { value: '' }, 'alle'),
+        opts.map((o) => el('option', { value: o.value }, o.label)));
+      sel.value = current;
+      this.controls[key] = sel;
+      bar.append(el('label', { dataset: { filter: key } }, FILTER_LABELS[key], sel));
+    }
+    bar.append(el('button', { type: 'button', onclick: () => { this.setFilters(defaultFilters()); } }, 'Filter zurücksetzen'));
+    return bar;
+  }
+
+  /** Filter setzen und die Bedienelemente nachziehen (ohne den Bereich darüber neu aufzubauen). */
+  setFilters(filters) {
+    this.filters = filters;
+    for (const [k, c] of Object.entries(this.controls || {})) c.value = filters[k] ?? '';
+    this.renderTable();
+  }
+
+  sortBy(key) {
+    if (this.sortKey === key) this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    else { this.sortKey = key; this.sortDir = 'asc'; }
+    this.renderTable();
   }
 
   render() {
     clear(this.root);
     const cols = this.columns();
-    const rows = this.visibleRows();
     const canEdit = this.writable.size > 0;
     const yearSel = el('select', { 'aria-label': 'Jahr', onchange: (e) => { this.year = Number(e.target.value); this.load(); } },
       [-1, 0, 1, 2].map((d) => {
         const y = new Date().getFullYear() + d;
         return el('option', { value: String(y), selected: y === this.year }, String(y));
       }));
-    const search = el('input', { type: 'search', placeholder: 'Suche Name, Verein, Trainingsort', value: this.filter,
-      oninput: (e) => { this.filter = e.target.value; this.renderTable(); } });
-    this.countNode = el('span', { class: 'count' });
+    this.countNode = el('span', { class: 'count', 'aria-live': 'polite' });
     this.root.append(el('div', { class: 'toolbar' },
       el('label', {}, 'Jahr', yearSel),
-      search,
-      'active' in (this.rows[0] || {}) ? el('label', {}, el('input', { type: 'checkbox', checked: this.activeOnly,
-        onchange: (e) => { this.activeOnly = e.target.checked; this.renderTable(); } }), 'nur aktive') : null,
       this.countNode,
       canEdit && this.writable.has('last_name') && this.writable.has('first_name')
         ? el('button', { type: 'button', onclick: () => this.edit(null, cols) }, 'Neuer Spieler') : null,
       this.sess.canImport() ? el('button', { type: 'button', onclick: () => this.pickImport() }, 'Import') : null,
       this.sess.canImport() ? el('button', { type: 'button', onclick: () => this.showIssues() }, 'Datenprüfung') : null,
-      el('button', { type: 'button', onclick: () => this.export(cols) }, 'Export'),
+      el('button', { type: 'button', onclick: () => this.export() }, 'Export'),
     ));
+    if (this.rows.length) this.root.append(this.filterBar());
     this.panel = el('div');
     this.root.append(this.panel);
     this.tableBox = el('div', { class: 'sc' });
     this.root.append(this.tableBox);
-    this.renderTable(cols, rows);
+    this.renderTable(cols);
+  }
+
+  /** Spaltenkopf als Schaltfläche; ▲ ▼ und aria-sort zeigen die Sortierung. */
+  head(c) {
+    const active = this.sortKey === c;
+    const asc = this.sortDir === 'asc';
+    return el('th', { scope: 'col', 'aria-sort': active ? (asc ? 'ascending' : 'descending') : null },
+      el('button', { type: 'button', class: 'sort', onclick: () => this.sortBy(c) },
+        LABELS[c] || c, active ? el('span', { class: 'arrow', 'aria-hidden': 'true' }, asc ? ' ▲' : ' ▼') : null));
   }
 
   renderTable(cols = this.columns(), rows = this.visibleRows()) {
@@ -163,7 +209,7 @@ class PlayersView {
     }
     const canEdit = this.writable.size > 0;
     const table = el('table', {},
-      el('thead', {}, el('tr', {}, canEdit ? el('th', {}, '') : null, cols.map((c) => el('th', { scope: 'col' }, LABELS[c] || c)))),
+      el('thead', {}, el('tr', {}, canEdit ? el('th', {}, '') : null, cols.map((c) => this.head(c)))),
       el('tbody', {}, rows.map((r) => el('tr', {
         id: 'p' + r.id,
         class: [r.id === this.highlight ? 'hl' : '', r.active === false ? 'passive' : ''].join(' ').trim() || null,
@@ -341,20 +387,16 @@ class PlayersView {
       el('div', { class: 'actions' }, el('button', { type: 'button', onclick: () => clear(this.panel) }, 'Schließen'))));
   }
 
+  /** Springt zum Spieler eines Befunds: alle Filter auf „alle“ (auch passive), damit er sichtbar ist. */
   jumpTo(id) {
-    this.filter = '';
-    this.activeOnly = false;
     this.highlight = id;
-    const search = this.root.querySelector('input[type=search]');
-    if (search) search.value = '';
-    const box = this.root.querySelector('.toolbar input[type=checkbox]');
-    if (box) box.checked = false;
-    this.renderTable();
+    this.setFilters({ ...defaultFilters(), active: '' });
   }
 
   // ---------- Export ----------
 
-  async export(cols) {
+  /** Export der aktuellen Ansicht: sichtbare Spalten, gefilterte Zeilen, aktuelle Sortierung. */
+  async export(cols = this.columns()) {
     try {
       const XLSX = await loadXlsx();
       const aoa = [cols.map((c) => LABELS[c] || c)];
