@@ -32,20 +32,16 @@ return [
     'leere Liste ergibt keine Meldung' => function () use ($clubs): void {
         assertSame([], PlayerValidator::issues([], 2026, $clubs()));
     },
-    'ak_mismatch: Jahrgang 2015, Liste U11, Jahr 2026' => function () use ($clubs, $player): void {
-        $issues = PlayerValidator::issues([$player(['last_name' => 'Jäckel', 'first_name' => 'Gustav',
-            'birth_year' => 2015, 'list_ak' => 'U11'])], 2026, $clubs());
-        assertSame([['code' => 'ak_mismatch', 'id' => null, 'player' => 'Jäckel, Gustav',
-            'detail' => 'Liste U11, berechnet U13']], $issues);
+    'Befund-Codes ohne ak_mismatch und bad_list_ak, in fester Reihenfolge' => function (): void {
+        assertSame(['missing_birth_year', 'bad_birth_year', 'missing_club', 'unknown_club', 'bad_gender',
+            'missing_roster_status', 'training_site_looks_like_ak', 'duplicate_name'], PlayerValidator::CODES);
     },
-    'ak_mismatch: U22 in der Liste und berechnet O19 passen zusammen' => function () use ($clubs, $player): void {
-        assertSame([], PlayerValidator::issues([$player(['birth_year' => 2004, 'list_ak' => 'U22'])], 2026, $clubs()));
+    'kein ak_mismatch mehr: Jahrgang 2015, Liste U11, Jahr 2026' => function () use ($clubs, $player): void {
+        assertSame([], PlayerValidator::issues([$player(['last_name' => 'Jäckel', 'first_name' => 'Gustav',
+            'birth_year' => 2015, 'list_ak' => 'U11'])], 2026, $clubs()));
     },
-    'ak_mismatch: leere Listen-AK wird nicht verglichen' => function () use ($clubs, $player): void {
-        assertSame([], PlayerValidator::issues([$player(['list_ak' => null])], 2026, $clubs()));
-    },
-    'ak_mismatch: „U 09“ in der Liste gilt als U09' => function () use ($clubs, $player): void {
-        assertSame([], PlayerValidator::issues([$player(['birth_year' => 2018, 'list_ak' => 'U 09'])], 2026, $clubs()));
+    'kein bad_list_ak mehr: U10 in der Liste' => function () use ($clubs, $player): void {
+        assertSame([], PlayerValidator::issues([$player(['list_ak' => 'U10'])], 2026, $clubs()));
     },
     'missing_birth_year' => function () use ($clubs, $player, $codes): void {
         $issues = PlayerValidator::issues([$player(['birth_year' => null])], 2026, $clubs());
@@ -54,13 +50,8 @@ return [
     },
     'bad_birth_year: Jahrgang nach dem Jahr der Prüfung' => function () use ($clubs, $player, $codes): void {
         $issues = PlayerValidator::issues([$player(['birth_year' => 2027])], 2026, $clubs());
-        assertSame(['bad_birth_year'], $codes($issues), 'kein ak_mismatch, die AK kommt aus der Liste');
+        assertSame(['bad_birth_year'], $codes($issues));
         assertSame('Jahrgang 2027', $issues[0]['detail']);
-    },
-    'bad_list_ak: ungültige AK in der Liste' => function () use ($clubs, $player, $codes): void {
-        $issues = PlayerValidator::issues([$player(['list_ak' => 'U10'])], 2026, $clubs());
-        assertSame(['bad_list_ak'], $codes($issues));
-        assertSame('Liste U10', $issues[0]['detail']);
     },
     'missing_club: leerer Vereinstext' => function () use ($clubs, $player, $codes): void {
         assertSame(['missing_club'], $codes(PlayerValidator::issues([$player(['club_name' => ''])], 2026, $clubs())));

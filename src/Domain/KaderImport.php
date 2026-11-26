@@ -14,6 +14,9 @@ final class KaderImport
     /** Größte Excel-Seriennummer, die als Geburtsdatum gedeutet wird (31.12.2099). */
     private const MAX_SERIAL = 73050;
 
+    /** Felder, die der Import nicht mehr übernimmt (AK aus der Liste: Spalte bleibt in der Datenbank). */
+    private const NOT_IMPORTED = ['list_ak'];
+
     /**
      * @param array<string, mixed> $row
      * @return array<string, mixed>
@@ -37,9 +40,6 @@ final class KaderImport
             $out[$field] = $value;
         }
 
-        if (is_string($out['list_ak'] ?? null)) {
-            $out['list_ak'] = strtoupper(preg_replace('/\s+/u', '', $out['list_ak']) ?? $out['list_ak']);
-        }
         foreach (['list_no', 'birth_year'] as $f) {
             if (is_string($out[$f] ?? null) && preg_match('/^\d{1,9}$/', $out[$f]) === 1) {
                 $out[$f] = (int) $out[$f];
@@ -73,7 +73,7 @@ final class KaderImport
         }
         $plan = ['create' => [], 'update' => [], 'skipped' => []];
         $seen = [];
-        $order = array_flip(array_keys(PlayerInput::RULES));
+        $order = array_flip(array_values(array_diff(array_keys(PlayerInput::RULES), self::NOT_IMPORTED)));
 
         foreach (array_values($rows) as $i => $raw) {
             $no = $i + 1;

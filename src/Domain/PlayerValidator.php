@@ -5,14 +5,15 @@ namespace App\Domain;
 
 /**
  * Datenprüfung der Kaderliste (Regeln aus dem Prototyp, Version 1.5.0, ergänzt um ungültige
- * Jahrgänge und Listen-AK aus Task 3). Meldet Auffälligkeiten, ändert nichts.
+ * Jahrgänge aus Task 3). Die Listen-AK wird nicht mehr geprüft, die AK kommt nur aus dem Jahrgang.
+ * Meldet Auffälligkeiten, ändert nichts.
  * Passive Spieler werden mitgeprüft. Gesundheitsinhalte kommen in den Befunden nie vor.
  */
 final class PlayerValidator
 {
     /** Reihenfolge der Befunde in der Ausgabe. */
     public const CODES = ['missing_birth_year', 'bad_birth_year', 'missing_club', 'unknown_club', 'bad_gender',
-        'missing_roster_status', 'ak_mismatch', 'bad_list_ak', 'training_site_looks_like_ak', 'duplicate_name'];
+        'missing_roster_status', 'training_site_looks_like_ak', 'duplicate_name'];
 
     private const GENDERS = ['m', 'w'];
 
@@ -44,14 +45,11 @@ final class PlayerValidator
 
             $by = $p['birth_year'] ?? null;
             $by = is_int($by) || (is_string($by) && preg_match('/^\d{4}$/', $by) === 1) ? (int) $by : null;
-            $listAk = self::text($p['list_ak'] ?? null);
-            $listClass = AgeClass::for(null, $listAk, $year);
 
             if ($by === null) {
                 $add('missing_birth_year');
             } elseif ($by > $year || $by < 1900) {
                 $add('bad_birth_year', 'Jahrgang ' . $by);
-                $by = null;
             }
 
             $club = self::text($p['club_name'] ?? null);
@@ -68,15 +66,6 @@ final class PlayerValidator
 
             if (self::text($p['roster_status'] ?? null) === '') {
                 $add('missing_roster_status');
-            }
-
-            if ($listAk !== '' && $listClass === '') {
-                $add('bad_list_ak', 'Liste ' . $listAk);
-            } elseif ($by !== null && $listClass !== '') {
-                $computed = AgeClass::for((string) $by, '', $year);
-                if ($computed !== $listClass) {
-                    $add('ak_mismatch', 'Liste ' . $listAk . ', berechnet ' . $computed);
-                }
             }
 
             $site = self::text($p['training_site'] ?? null);

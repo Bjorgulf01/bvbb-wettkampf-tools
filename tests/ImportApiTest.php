@@ -95,11 +95,11 @@ $get = static fn(Router $router, string $path, array $query = []): Response =>
 
 /** Datei mit Leerzeichen am Rand, doppeltem Namen, unbekanntem Verein, Platzhalterzeile (Review-Fokus 4). */
 $file = static fn(): array => [
-    ['last_name' => 'Marx ', 'first_name' => 'Jannick ', 'club_name' => 'SV Berl. Brauereien', 'list_ak' => 'U 09',
+    ['last_name' => 'Marx ', 'first_name' => 'Jannick ', 'club_name' => 'SV Berl. Brauereien',
         'gender' => 'm', 'birth_date' => '14.09.2018', 'roster_status' => 'LK', 'active' => 'aktiv', 'email1' => 'marx@example.org'],
-    ['last_name' => 'köppen', 'first_name' => 'Arvid', 'club_name' => 'BC Potsdam', 'list_ak' => 'U13',
+    ['last_name' => 'köppen', 'first_name' => 'Arvid', 'club_name' => 'BC Potsdam',
         'gender' => 'm', 'birth_date' => '2015', 'roster_status' => 'LK', 'active' => 'aktiv'],
-    ['last_name' => 'Lindemann', 'first_name' => 'Yara', 'club_name' => 'Neuer Verein e.V.', 'list_ak' => 'U15',
+    ['last_name' => 'Lindemann', 'first_name' => 'Yara', 'club_name' => 'Neuer Verein e.V.',
         'gender' => 'w', 'birth_date' => '03.05.2012', 'roster_status' => 'SK', 'active' => 'passiv'],
     ['last_name' => 'Marx', 'first_name' => 'jannick', 'club_name' => 'BC Potsdam', 'gender' => 'm'],
     ['last_name' => 'Musterfrau', 'first_name' => 'Platzhalter', 'gender' => 'O22'],
@@ -119,7 +119,7 @@ return [
         assertSame(1, $res->body['update'], 'Köppen');
         assertSame([['row' => 4, 'reason' => 'duplicate_in_file'], ['row' => 5, 'reason' => 'placeholder']], $res->body['skipped']);
         assertSame(['unknown_club'], $codesFor($res->body['issues'], 'Lindemann, Yara'));
-        assertSame([], $codesFor($res->body['issues'], 'Marx, Jannick'), 'getrimmt, U09 passt zu 2018');
+        assertSame([], $codesFor($res->body['issues'], 'Marx, Jannick'), 'getrimmt, ohne Befund');
     },
     'dry_run verändert die Datenbank nicht' => function () use ($setup, $send, $file): void {
         $env = $setup();
@@ -127,6 +127,28 @@ return [
         $before = $env->snapshot();
         $send($router, $token, 'POST', '/api/players/import', ['rows' => $file(), 'dry_run' => true]);
         assertSame($before, $env->snapshot());
+    },
+    'Zeile mit list_ak ergibt 403 wie jedes nicht schreibbare Feld, nichts gespeichert' => function () use ($setup, $send, $file): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $before = $env->snapshot();
+        $rows = $file();
+        $rows[1]['list_ak'] = 'U13';
+        foreach ([true, false] as $dryRun) {
+            $res = $send($router, $token, 'POST', '/api/players/import', ['rows' => $rows, 'dry_run' => $dryRun]);
+            assertSame(403, $res->status);
+            assertSame(['error' => 'forbidden', 'fields' => ['list_ak']], $res->body);
+        }
+        assertSame($before, $env->snapshot());
+    },
+    'Import ohne list_ak lässt die gespeicherte Listen-AK unverändert' => function () use ($setup, $send, $file): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'POST', '/api/players/import', ['rows' => $file(), 'dry_run' => false]);
+        assertSame(200, $res->status);
+        assertSame(1, $res->body['update'], 'Köppen geändert');
+        assertSame('U13', $env->pdo->query('SELECT list_ak FROM players WHERE id = 2')->fetchColumn());
+        assertSame('LK', $env->pdo->query('SELECT roster_status FROM players WHERE id = 2')->fetchColumn(), 'Änderung kam an');
     },
     'apply: neue Spieler danach im GET, Verein über Alias zugeordnet, unbekannter Verein ohne club_id' => function () use ($setup, $send, $get, $file): void {
         $env = $setup();
@@ -137,7 +159,8 @@ return [
         $byName = array_column($rows, null, 'last_name');
         assertSame(5, count($rows));
         assertSame('Jannick', $byName['Marx']['first_name']);
-        assertSame('U09', $byName['Marx']['list_ak']);
+        assertSame('U09', $byName['Marx']['ak'], 'AK aus dem Jahrgang 2018');
+        assertTrue(!array_key_exists('list_ak', $byName['Marx']), 'keine Listen-AK in der Antwort');
         assertSame(2018, $byName['Marx']['birth_year']);
         assertSame('2018-09-14', $byName['Marx']['birth_date']);
         assertSame('SVBB', $byName['Marx']['club_short']);

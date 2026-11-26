@@ -20,7 +20,7 @@ final class Permissions
     /** Felder je Gruppe. Die Reihenfolge hier bestimmt die Reihenfolge der Ausgabe. */
     public const FIELD_GROUPS = [
         'player.basic' => ['last_name', 'first_name', 'club_name', 'club_short'],
-        'player.roster' => ['list_no', 'list_ak', 'gender', 'birth_year', 'roster_status', 'active', 'training_site', 'state'],
+        'player.roster' => ['list_no', 'gender', 'birth_year', 'roster_status', 'active', 'training_site', 'state'],
         'player.health_light' => ['sportmed_status', 'antidoping_status'],
         'player.private' => ['birth_date', 'trainer_info', 'school', 'school_contact', 'sportmed_note', 'antidoping_note',
             'email1', 'email2', 'phone_player', 'phone_mother', 'phone_father', 'shirt_size'],

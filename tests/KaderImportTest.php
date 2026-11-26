@@ -8,17 +8,20 @@ $row = static fn(array $over = []): array => array_merge([
     'last_name' => 'Köppen',
     'first_name' => 'Arvid',
     'club_name' => 'BC Potsdam',
-    'list_ak' => 'U13',
     'gender' => 'm',
     'roster_status' => 'SK',
 ], $over);
 
 return [
-    'normalizeRow trimmt und macht aus „U 09“ U09' => function (): void {
-        $n = KaderImport::normalizeRow(['last_name' => 'Marx ', 'first_name' => 'Jannick ', 'list_ak' => 'U 09']);
+    'normalizeRow trimmt' => function (): void {
+        $n = KaderImport::normalizeRow(['last_name' => 'Marx ', 'first_name' => 'Jannick ']);
         assertSame('Marx', $n['last_name']);
         assertSame('Jannick', $n['first_name']);
-        assertSame('U09', $n['list_ak']);
+    },
+    'plan: list_ak wird nicht mehr übernommen, die Zeile gilt als ungültig' => function () use ($row): void {
+        $p = KaderImport::plan([$row(['list_ak' => 'U13'])], []);
+        assertSame([['row' => 1, 'reason' => 'invalid']], $p['skipped']);
+        assertSame([], $p['create']);
     },
     'normalizeRow: geschützte Leerzeichen am Rand, leere Felder werden null' => function (): void {
         $n = KaderImport::normalizeRow(['last_name' => "\u{00A0}Möllendorf\u{00A0}", 'school' => '  ', 'email2' => '']);
@@ -64,7 +67,7 @@ return [
         assertSame(12, KaderImport::normalizeRow(['list_no' => ' 12 '])['list_no']);
     },
     'normalizeRow: Zahlen in Textfeldern werden Text (Telefon, T-Shirt-Größe aus Excel)' => function (): void {
-        $n = KaderImport::normalizeRow(['shirt_size' => 164, 'phone_player' => 5550123.0, 'list_ak' => 'U13']);
+        $n = KaderImport::normalizeRow(['shirt_size' => 164, 'phone_player' => 5550123.0]);
         assertSame('164', $n['shirt_size']);
         assertSame('5550123', $n['phone_player']);
     },
