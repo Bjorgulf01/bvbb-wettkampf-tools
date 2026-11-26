@@ -63,7 +63,7 @@ docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/pa
 2. Paket bauen und `webseiten/` und `bvbb-app/` aus dem Paket auf die gleichnamigen Ordner hochladen. `bvbb-app/src/` dabei vollständig ersetzen (alten Ordner vorher löschen), damit keine alten Dateien liegen bleiben. `config.php` und `sessions/` bleiben.
 3. `GET /api/health` aufrufen.
 
-**Von 1.0.0 auf 1.1.0:** neu ist `migrations/003_birth_year_from_date.sql`. Sie ändert kein Schema, sondern setzt bei jedem Spieler mit Geburtstag den Jahrgang auf das Jahr des Geburtstags (ohne Eintrag im Änderungsprotokoll). Danach steht `003_birth_year_from_date.sql` in `schema_migrations`. Sie läuft auch mit dem alten Code und kann deshalb wie üblich zuerst eingespielt werden. `/api/health` meldet danach `"version":"1.1.0"`.
+**Von 1.0.0 auf 1.1.0:** neu ist `migrations/003_birth_year_from_date.sql`. Sie ändert kein Schema, sondern setzt bei jedem Spieler mit Geburtstag den Jahrgang auf das Jahr des Geburtstags (ohne Eintrag im Änderungsprotokoll). Danach steht `003_birth_year_from_date.sql` in `schema_migrations`. Sie läuft auch mit dem alten Code und kann deshalb wie üblich zuerst eingespielt werden. Zwischen dem Import der Migration und dem Hochladen niemanden Spieler bearbeiten lassen: 1.0.0 könnte sonst noch einen abweichenden Jahrgang speichern. Ist das doch passiert, das `UPDATE` aus der Datei nach dem Hochladen im Reiter „SQL“ noch einmal ausführen (ohne die letzte Zeile mit `schema_migrations`); es ändert nur abweichende Zeilen. `/api/health` meldet danach `"version":"1.1.0"`.
 
 Gibt es später SSH, ersetzt `php bvbb-app/bin/migrate.php` Schritt 1.
 
