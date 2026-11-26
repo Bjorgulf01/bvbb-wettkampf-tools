@@ -405,6 +405,21 @@ def run(p, bname, first):
     check(f"{bname} F12: „Filter zurücksetzen“ stellt den Standard her",
           flt.locator('label[data-filter="ak"] select').input_value() == "" and flt.locator('label[data-filter="active"] select').input_value() == "true"
           and flt.locator('input[type="search"]').input_value() == "")
+    # Ansicht ändern springt nicht zur zuletzt bearbeiteten Zeile (Review Task 4, Befund 2)
+    flt.locator('label[data-filter="active"] select').select_option("")
+    pg.evaluate("() => { window.scrollTo(0, 0); document.querySelector('.sc').scrollTop = 0; }")
+    pg.locator(".sc thead th", has_text="Vorname").locator("button").click()
+    pos = pg.evaluate("() => [window.scrollY, document.querySelector('.sc').scrollTop]")
+    check(f"{bname} F13: Sortieren nach dem Speichern springt nicht zur bearbeiteten Zeile", pos == [0, 0], pos)
+    # Tastatur: Fokus bleibt auf dem Spaltenkopf, Enter dreht die Richtung (Review Task 4, Befund 1)
+    btn = lambda: pg.locator(".sc thead th", has_text="Jahrgang").locator("button")
+    btn().focus()
+    pg.keyboard.press("Enter")
+    focused = pg.evaluate("() => document.activeElement?.closest('th')?.innerText || ''")
+    pg.keyboard.press("Enter")
+    jg = pg.locator(".sc thead th", has_text="Jahrgang")
+    check(f"{bname} F14: Sortieren per Tastatur – Fokus bleibt, zweites Enter zeigt ▼",
+          "Jahrgang" in focused and "▼" in jg.inner_text() and jg.get_attribute("aria-sort") == "descending", (focused, jg.inner_text()))
     s.close("kaderpflege")
 
     # ---- Prüfer: nur Protokoll

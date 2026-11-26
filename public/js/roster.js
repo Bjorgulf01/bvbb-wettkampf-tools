@@ -98,6 +98,7 @@ class PlayersView {
     this.sortKey = 'last_name';
     this.sortDir = 'asc';
     this.highlight = null;
+    this.scrollToId = null; // einmal zu dieser Zeile scrollen (nach Speichern oder Sprung), danach nicht mehr
     this.writable = new Set(sess.me.write_fields || []);
   }
 
@@ -162,6 +163,8 @@ class PlayersView {
     if (this.sortKey === key) this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
     else { this.sortKey = key; this.sortDir = 'asc'; }
     this.renderTable();
+    // Der Kopf wird neu aufgebaut: Fokus zurück auf die Schaltfläche, damit Enter die Richtung dreht.
+    this.tableBox.querySelector('th[aria-sort] button.sort')?.focus();
   }
 
   render() {
@@ -218,7 +221,10 @@ class PlayersView {
       cols.map((c) => this.cell(c, r[c]))))),
     );
     this.tableBox.append(table);
-    if (this.highlight) document.getElementById('p' + this.highlight)?.scrollIntoView({ block: 'center' });
+    if (this.scrollToId) {
+      document.getElementById('p' + this.scrollToId)?.scrollIntoView({ block: 'center' });
+      this.scrollToId = null;
+    }
   }
 
   cell(key, v) {
@@ -292,6 +298,7 @@ class PlayersView {
       dlg.close();
       flash(isNew ? 'Spieler angelegt.' : 'Gespeichert.');
       this.highlight = isNew ? null : row.id;
+      this.scrollToId = this.highlight;
       this.load();
     };
     dlg.addEventListener('close', () => dlg.remove());
@@ -390,6 +397,7 @@ class PlayersView {
   /** Springt zum Spieler eines Befunds: alle Filter auf „alle“ (auch passive), damit er sichtbar ist. */
   jumpTo(id) {
     this.highlight = id;
+    this.scrollToId = id;
     this.setFilters({ ...defaultFilters(), active: '' });
   }
 
