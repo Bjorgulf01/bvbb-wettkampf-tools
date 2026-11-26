@@ -5,9 +5,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig kader-task-5-release |
-| Aktueller Zweig | kader-task-5-release (Pull-Request folgt) |
+| Aktueller Zweig | kader-task-5-release (Pull-Request #24) |
 | Letzte fertige Aufgabe | Plan „Kaderliste rund machen“, Task 4 (Sortieren, Filter, Export; Pull-Request #23, zusammengeführt) |
-| In Arbeit | Plan „Kaderliste rund machen“: Task 5 fertig (Version 1.1.0, Pull-Request folgt), wartet auf die Prüfung auf dem Test-Webspace |
+| In Arbeit | Plan „Kaderliste rund machen“: Task 5 fertig (Version 1.1.0, Pull-Request #24), wartet auf die Prüfung auf dem Test-Webspace |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -131,7 +131,7 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 | 2 Server: Jahrgang aus dem Geburtstag | fertig, 253 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-2-birth-year` | Pull-Request #21, zusammengeführt |
 | 3 Oberfläche: Schrift, Spalten, Bearbeiten | fertig, Rauchtest 165 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-3-roster-ui` | Pull-Request #22, zusammengeführt |
 | 4 Oberfläche: Sortieren, Filter, Export | fertig, Rauchtest 261 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-4-sort-filter` | Pull-Request #23, zusammengeführt |
-| 5 Auslieferung 1.1.0 | fertig bis auf die Prüfung auf dem Test-Webspace (Step 4, Projektinhaber); 253 PHP-Tests grün gegen `bvbb_test_pc`, Rauchtest 261 Prüfungen grün, `/api/health` lokal `{"ok":true,"version":"1.1.0"}` (26.11.2026) | `kader-task-5-release` | Pull-Request folgt |
+| 5 Auslieferung 1.1.0 | fertig bis auf die Prüfung auf dem Test-Webspace (Step 4, Projektinhaber); 253 PHP-Tests grün gegen `bvbb_test_pc`, Rauchtest 261 Prüfungen grün, `/api/health` lokal `{"ok":true,"version":"1.1.0"}` (26.11.2026) | `kader-task-5-release` | Pull-Request #24 |
 
 **Stand mit Version 1.1.0, Festlegungen aus dem Entwurf:**
 
@@ -169,4 +169,4 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer.
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
-6. Plan „Kaderliste rund machen“: Task 1 bis 4 zusammengeführt (Pull-Requests #20 bis #23). Task 5 fertig (Zweig `kader-task-5-release`, Version 1.1.0). Nach dem Zusammenführen Paket bauen (`tools/package.php`), auf dem Test-Webspace zuerst Migration 003 einspielen, dann hochladen und `/api/health` sowie die neuen Punkte der Checkliste prüfen (Abschnitt „Kaderliste rund machen“). Danach ist der Plan abgeschlossen.
+6. Plan „Kaderliste rund machen“: Task 1 bis 4 zusammengeführt (Pull-Requests #20 bis #23). Task 5 fertig (Zweig `kader-task-5-release`, Pull-Request #24, Version 1.1.0). Nach dem Zusammenführen Paket bauen (`tools/package.php`), auf dem Test-Webspace zuerst Migration 003 einspielen, dann hochladen und `/api/health` sowie die neuen Punkte der Checkliste prüfen (Abschnitt „Kaderliste rund machen“). Danach ist der Plan abgeschlossen.
