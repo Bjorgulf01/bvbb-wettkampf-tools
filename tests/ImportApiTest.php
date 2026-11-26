@@ -141,6 +141,50 @@ return [
         }
         assertSame($before, $env->snapshot());
     },
+    'JG als Datum überschreibt einen abweichenden Jahrgang in der Datenbank' => function () use ($setup, $send): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'POST', '/api/players/import', ['rows' => [
+            ['last_name' => 'Köppen', 'first_name' => 'Arvid', 'birth_date' => '14.09.2014'],
+        ], 'dry_run' => false]);
+        assertSame(200, $res->status);
+        assertSame([], $res->body['skipped']);
+        assertSame(2014, (int) $env->pdo->query('SELECT birth_year FROM players WHERE id = 2')->fetchColumn(), 'vorher 2015');
+        assertSame('2014-09-14', $env->pdo->query('SELECT birth_date FROM player_private WHERE player_id = 2')->fetchColumn());
+    },
+    'JG nur als Jahr speichert den Jahrgang ohne Geburtstag' => function () use ($setup, $send): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'POST', '/api/players/import', ['rows' => [
+            ['last_name' => 'Köppen', 'first_name' => 'Arvid', 'birth_date' => '2016'],
+        ], 'dry_run' => false]);
+        assertSame(200, $res->status);
+        assertSame(2016, (int) $env->pdo->query('SELECT birth_year FROM players WHERE id = 2')->fetchColumn());
+        assertSame(null, $env->pdo->query('SELECT birth_date FROM player_private WHERE player_id = 2')->fetchColumn());
+    },
+    'Jahrgang, der dem gespeicherten Geburtstag widerspricht: Zeile ungültig, nichts gespeichert' => function () use ($setup, $send): void {
+        $env = $setup();
+        $env->pdo->exec("UPDATE player_private SET birth_date = '2014-09-14' WHERE player_id = 2");
+        $env->pdo->exec('UPDATE players SET birth_year = 2014 WHERE id = 2');
+        [$router, $token] = $env->as('kaderpflege');
+        $before = $env->snapshot();
+        $res = $send($router, $token, 'POST', '/api/players/import', ['rows' => [
+            ['last_name' => 'Müßig', 'first_name' => 'Lotta', 'roster_status' => 'SK'],
+            ['last_name' => 'Köppen', 'first_name' => 'Arvid', 'birth_year' => 2015],
+            ['last_name' => 'Neu', 'first_name' => 'Nora', 'birth_date' => '03.05.2012', 'birth_year' => 2013],
+        ], 'dry_run' => true]);
+        assertSame(200, $res->status);
+        assertSame([
+            ['row' => 2, 'reason' => 'invalid', 'fields' => ['birth_year']],
+            ['row' => 3, 'reason' => 'invalid', 'fields' => ['birth_year']],
+        ], $res->body['skipped']);
+        assertSame(1, $res->body['update'], 'nur Müßig');
+        assertSame(0, $res->body['create']);
+        $send($router, $token, 'POST', '/api/players/import', ['rows' => [
+            ['last_name' => 'Köppen', 'first_name' => 'Arvid', 'birth_year' => 2015],
+        ], 'dry_run' => false]);
+        assertSame($before, $env->snapshot());
+    },
     'Import ohne list_ak lässt die gespeicherte Listen-AK unverändert' => function () use ($setup, $send, $file): void {
         $env = $setup();
         [$router, $token] = $env->as('kaderpflege');

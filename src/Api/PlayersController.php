@@ -5,6 +5,7 @@ namespace App\Api;
 
 use App\Auth\AuthGuard;
 use App\Domain\AgeClass;
+use App\Domain\BirthYear;
 use App\Domain\HealthStatus;
 use App\Domain\KaderImport;
 use App\Domain\PlayerInput;
@@ -123,6 +124,11 @@ final class PlayersController
         if ($invalid !== []) {
             return Response::json(['error' => 'invalid', 'fields' => $invalid], 422);
         }
+        // Jahrgang aus dem Geburtstag; beim Anlegen gibt es keinen gespeicherten.
+        ['changes' => $data, 'invalid' => $invalid] = BirthYear::reconcile($data, null);
+        if ($invalid !== []) {
+            return Response::json(['error' => 'invalid', 'fields' => $invalid], 422);
+        }
         $data['club_name'] ??= '';
         $user = $this->guard->currentUser();
 
@@ -154,7 +160,13 @@ final class PlayersController
         }
         $user = $this->guard->currentUser();
 
-        $changed = $this->transaction(function () use ($id, $data, $user): array {
+        $result = $this->transaction(function () use ($id, $data, $user): array {
+            // Jahrgang und Geburtstag abgleichen, mit dem gespeicherten Geburtstag als Grundlage.
+            $stored = $this->players->find($id, ['birth_date'])['birth_date'] ?? null;
+            ['changes' => $data, 'invalid' => $invalid] = BirthYear::reconcile($data, $stored);
+            if ($invalid !== []) {
+                return ['invalid' => $invalid];
+            }
             if (array_key_exists('club_name', $data)) {
                 $data['club_name'] ??= '';
                 $data['club_id'] = $this->clubs->directory()->lookup($data['club_name'])['club_id'];
@@ -163,9 +175,12 @@ final class PlayersController
             if ($changed !== []) {
                 $this->audit->log($user?->id, 'update', 'player', $id, 'fields: ' . implode(', ', $changed));
             }
-            return $changed;
+            return ['changed' => $changed];
         });
-        return Response::json(['id' => $id, 'changed' => $changed]);
+        if (isset($result['invalid'])) {
+            return Response::json(['error' => 'invalid', 'fields' => $result['invalid']], 422);
+        }
+        return Response::json(['id' => $id, 'changed' => $result['changed']]);
     }
 
     private function issues(Request $r, array $params): Response
@@ -213,7 +228,7 @@ final class PlayersController
         $user = $this->guard->currentUser();
 
         $run = function () use ($rows, $year, $dryRun, $user): array {
-            $plan = KaderImport::plan($rows, $this->players->list(['last_name', 'first_name']));
+            $plan = KaderImport::plan($rows, $this->players->list(['last_name', 'first_name', 'birth_date']));
             $directory = $this->clubs->directory();
             $checked = [];
             foreach ($plan['update'] as &$u) {

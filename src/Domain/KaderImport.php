@@ -61,15 +61,18 @@ final class KaderImport
 
     /**
      * @param list<mixed> $rows Zeilen aus der Datei (Nummer in skipped: Position ab 1)
-     * @param list<array{id:int, last_name:string, first_name:string}> $existing
+     * @param list<array{id:int, last_name:string, first_name:string, birth_date?:?string}> $existing
+     *     birth_date: gespeicherter Geburtstag, für den Abgleich des Jahrgangs (BirthYear)
      * @return array{create: list<array<string, mixed>>, update: list<array{id:int, data:array<string, mixed>}>,
      *     skipped: list<array{row:int, reason:string, fields?:list<string>}>}
      */
     public static function plan(array $rows, array $existing): array
     {
         $byName = [];
+        $storedDates = [];
         foreach ($existing as $e) {
             $byName[PlayerValidator::nameKey($e['last_name'], $e['first_name'])][] = (int) $e['id'];
+            $storedDates[(int) $e['id']] = $e['birth_date'] ?? null;
         }
         $plan = ['create' => [], 'update' => [], 'skipped' => []];
         $seen = [];
@@ -105,13 +108,22 @@ final class KaderImport
                 $plan['skipped'][] = ['row' => $no, 'reason' => 'invalid', 'fields' => $invalid];
                 continue;
             }
+            $ids = $byName[$key] ?? [];
+            if (count($ids) <= 1) {
+                // Jahrgang und Geburtstag abgleichen, mit dem gespeicherten Datum des gefundenen Spielers.
+                $r = BirthYear::reconcile($data, count($ids) === 1 ? $storedDates[$ids[0]] : null);
+                if ($r['invalid'] !== []) {
+                    $plan['skipped'][] = ['row' => $no, 'reason' => 'invalid', 'fields' => $r['invalid']];
+                    continue;
+                }
+                $data = $r['changes'];
+            }
             // Erst nach der Prüfung vermerken: Ist die erste Zeile ungültig, zählt die nächste gültige.
             if (isset($seen[$key])) {
                 $plan['skipped'][] = ['row' => $no, 'reason' => 'duplicate_in_file'];
                 continue;
             }
             $seen[$key] = true;
-            $ids = $byName[$key] ?? [];
             if (count($ids) > 1) {
                 $plan['skipped'][] = ['row' => $no, 'reason' => 'ambiguous_match'];
             } elseif (count($ids) === 1) {
