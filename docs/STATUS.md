@@ -1,10 +1,10 @@
-﻿# Projektstatus
+# Projektstatus
 
 Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claude Code liest sie zu Beginn jeder Sitzung und aktualisiert sie am Ende. Sie wird mit committet.
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig docs-vereinsimport |
+| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig docs-offene-fragen |
 | Aktueller Zweig | docs-offene-fragen (Pull-Request #29) |
 | Letzte fertige Aufgabe | Etappe 1 Task 12 (Webspace-Prüfung abgeschlossen, 26.11.2026); Plan „Kaderliste rund machen“ (Pull-Requests #20 bis #24) |
 | In Arbeit | Planungsdokumente Vereinsimport (Task 9b) ins Repository; danach Umsetzung Task 9b; offen: Checkliste 1.1.0 von Hand |
