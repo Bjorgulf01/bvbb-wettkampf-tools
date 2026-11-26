@@ -5,9 +5,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig ageclass-cleanup |
-| Aktueller Zweig | ageclass-cleanup (Pull-Request folgt) |
+| Aktueller Zweig | ageclass-cleanup (Pull-Request #27) |
 | Letzte fertige Aufgabe | Etappe 1 Task 12 (Webspace-Prüfung abgeschlossen, 26.11.2026); Plan „Kaderliste rund machen“ (Pull-Requests #20 bis #24) |
-| In Arbeit | Aufräumen `AgeClass` (Zweig `ageclass-cleanup`); offen: Checkliste 1.1.0 von Hand |
+| In Arbeit | Aufräumen `AgeClass` (Zweig `ageclass-cleanup`, Pull-Request #27); offen: Checkliste 1.1.0 von Hand |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -151,7 +151,7 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 - **Erledigt mit Task 3 (Import wieder ohne 403):** Bis Task 3 nicht ausliefern: Die Oberfläche schickt beim Import noch die Spalte AK als `list_ak` (`COLUMN_KEYS` in `public/js/roster.js`). Zwischen Task 1 und Task 3 scheitert der Import in der Oberfläche deshalb mit 403. Bearbeiten ist nicht betroffen. Task 3 behebt das laut Plan.
 - **Geklärt am 26.11.2026 (Projektinhaber):** Die AK darf ohne Jahrgang leer bleiben. Der Satz in `CLAUDE.md` unter „Begriffe → Altersklasse“ ist an den Entwurf angepasst (Zweig `docs-ak-ohne-jahrgang`, Pull-Request #26).
 - **Offen für den Projektinhaber (Review 26.11.2026):** `docs/entwurf.md:106` und `docs/umsetzungsplan-etappe-1.md:21` (dazu die Testfälle in `:121`) sagen noch „Fehlt der Jahrgang, gilt die AK aus der Liste“. Nicht geändert, weil beide aus dem Planungsprojekt kommen. Frage: Ersetzt der Entwurf „Kaderliste rund machen“ diese Stellen, und wird `entwurf.md` im Planungsprojekt nachgezogen?
-- **Umgesetzt am 26.11.2026 (Zweig `ageclass-cleanup`, Pull-Request folgt):** `AgeClass::for(?string $birthYearOrDate, int $year)` hat keinen Parameter `$listAk` mehr, der Rückfallweg `fromList()` ist entfernt. Ohne brauchbaren Jahrgang (fehlt, Excel-Seriennummer, nach dem Turnierjahr) ergibt sie `''`. Verhalten in Produktion unverändert, `PlayersController` übergab schon `''`. Abweichung von der Schnittstelle im Plan Etappe 1 (Task 3: `for($birthYearOrDate, $listAk, $year)`); der Plan ist nicht geändert.
+- **Umgesetzt am 26.11.2026 (Zweig `ageclass-cleanup`, Pull-Request #27):** `AgeClass::for(?string $birthYearOrDate, int $year)` hat keinen Parameter `$listAk` mehr, der Rückfallweg `fromList()` ist entfernt. Ohne brauchbaren Jahrgang (fehlt, Excel-Seriennummer, nach dem Turnierjahr) ergibt sie `''`. Verhalten in Produktion unverändert, `PlayersController` übergab schon `''`. Abweichung von der Schnittstelle im Plan Etappe 1 (Task 3: `for($birthYearOrDate, $listAk, $year)`); der Plan ist nicht geändert.
 - Task 2: Neue reine Klasse `App\Domain\BirthYear::reconcile`. Ist nach dem Speichern ein Geburtstag gesetzt, setzt der Server den Jahrgang auf dessen Jahr (POST, PUT, Import). Ein mitgeschickter Jahrgang, der davon abweicht, ergibt 422 `fields: ["birth_year"]` und es wird nichts gespeichert; im Import wird die Zeile mit Grund `invalid` und `fields: ["birth_year"]` übersprungen. Ein mitgeschicktes leeres `birth_year` bei gesetztem Geburtstag gilt ebenfalls als abweichend. Wird der Geburtstag geleert, bleibt der Jahrgang stehen und ist danach frei. Das Protokoll nennt `birth_year`, wenn der Server es ableitet und der Wert sich ändert.
 - Task 2: Die Ableitung setzt voraus, dass jede Rolle mit Schreibrecht auf `player.private` auch Schreibrecht auf `player.roster` hat (heute: nur `admin` und `roster_editor`). Bei einer späteren Änderung der Felder je Rolle darauf achten.
 - **Migration `003_birth_year_from_date.sql` (Task 2):** Beim nächsten Hochladen per phpMyAdmin einspielen. Sie gleicht `birth_year` einmal an das Jahr von `birth_date` an, wo ein Datum gesetzt ist und der Jahrgang fehlt oder abweicht. **Sie schreibt keinen Eintrag ins Änderungsprotokoll** und setzt bei den geänderten Zeilen `players.updated_at` neu. Ein zweiter Import bricht beim Selbsteintrag in `schema_migrations` ab und ändert nichts.
