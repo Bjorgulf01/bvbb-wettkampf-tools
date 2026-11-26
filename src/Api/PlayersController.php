@@ -45,7 +45,7 @@ final class PlayersController
     private const MAX_IMPORT_ROWS = 3000;
 
     /** Felder, die die Datenprüfung braucht. */
-    private const CHECK_FIELDS = ['last_name', 'first_name', 'club_name', 'list_ak', 'gender', 'birth_year',
+    private const CHECK_FIELDS = ['last_name', 'first_name', 'club_name', 'gender', 'birth_year',
         'roster_status', 'training_site'];
 
     private PlayerRepo $players;
@@ -273,7 +273,8 @@ final class PlayersController
 
     /**
      * Gespeicherte Felder, die für die Ausgabe gebraucht werden: die lesbaren, für die Ampel die
-     * Textspalten und für die AK Jahrgang und Listen-AK. Hilfsfelder werden vor der Ausgabe entfernt.
+     * Textspalten und für die AK der Jahrgang. Hilfsfelder werden vor der Ausgabe entfernt.
+     * Die Spalte list_ak bleibt in der Datenbank, wird aber nie mehr gelesen.
      * @param list<string> $read
      * @return list<string>
      */
@@ -286,7 +287,6 @@ final class PlayersController
         }
         if ($this->permissions->can($this->roles(), 'player.roster', Permissions::READ)) {
             $fields[] = 'birth_year';
-            $fields[] = 'list_ak';
         }
         return array_values(array_unique($fields));
     }
@@ -310,7 +310,8 @@ final class PlayersController
         }
         if ($this->permissions->can($this->roles(), 'player.roster', Permissions::READ)) {
             $by = $row['birth_year'] ?? null;
-            $out['ak'] = AgeClass::for($by !== null ? (string) $by : null, (string) ($row['list_ak'] ?? ''), $year);
+            // Nur aus dem Jahrgang; ohne Jahrgang bleibt die AK leer (keine AK aus der Liste mehr).
+            $out['ak'] = AgeClass::for($by !== null ? (string) $by : null, '', $year);
         }
         return $out;
     }

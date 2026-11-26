@@ -78,7 +78,7 @@ $get = static fn(Router $router, string $path, array $query = []): Response =>
     $router->dispatch(new Request('GET', $path, $query));
 
 $basicKeys = ['id', 'last_name', 'first_name', 'club_name', 'club_short'];
-$rosterKeys = ['list_no', 'list_ak', 'gender', 'birth_year', 'roster_status', 'active', 'training_site', 'state'];
+$rosterKeys = ['list_no', 'gender', 'birth_year', 'roster_status', 'active', 'training_site', 'state'];
 $lightKeys = ['sportmed_status', 'antidoping_status'];
 $privateKeys = ['birth_date', 'trainer_info', 'school', 'school_contact', 'sportmed_note', 'antidoping_note',
     'email1', 'email2', 'phone_player', 'phone_mother', 'phone_father', 'shirt_size'];
@@ -111,6 +111,37 @@ return [
             assertTrue(array_key_exists($k, $row), $k);
         }
     },
+    'roster_editor bekommt keinen Schlüssel list_ak, weder in der Liste noch einzeln' => function () use ($setup, $get): void {
+        [$router] = $setup()->as('kaderpflege');
+        foreach ($get($router, '/api/players')->body['players'] as $row) {
+            assertTrue(!array_key_exists('list_ak', $row), 'list_ak in Zeile ' . $row['id']);
+        }
+        assertTrue(!array_key_exists('list_ak', $get($router, '/api/players/2')->body['player']));
+    },
+    'PUT mit list_ak ergibt 403 mit dem Feldnamen, nichts gespeichert' => function () use ($setup, $send): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'PUT', '/api/players/2', ['list_ak' => 'U11']);
+        assertSame(403, $res->status);
+        assertSame(['error' => 'forbidden', 'fields' => ['list_ak']], $res->body);
+        assertSame('U13', $env->pdo->query('SELECT list_ak FROM players WHERE id = 2')->fetchColumn());
+    },
+    'ohne Jahrgang ist die AK leer, auch wenn die Datenbank eine Listen-AK hat' => function () use ($setup, $get): void {
+        $env = $setup();
+        $env->pdo->exec("UPDATE players SET list_ak = 'U13' WHERE id = 3");
+        [$router] = $env->as('trainer');
+        $byId = array_column($get($router, '/api/players', ['year' => '2026'])->body['players'], null, 'id');
+        assertSame(null, $byId[3]['birth_year']);
+        assertSame('', $byId[3]['ak']);
+    },
+    'Kaderstatus NK1 wird angenommen und geliefert' => function () use ($setup, $send, $get): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'PUT', '/api/players/1', ['roster_status' => 'NK1']);
+        assertSame(200, $res->status);
+        assertSame(['roster_status'], $res->body['changed']);
+        assertSame('NK1', $get($router, '/api/players/1')->body['player']['roster_status']);
+    },
     'Person ohne Rolle: 200 und leere Liste' => function () use ($setup, $get): void {
         [$router] = $setup()->as('ohne-rolle');
         $res = $get($router, '/api/players');
@@ -132,7 +163,7 @@ return [
         assertSame(false, $byId[3]['active'], 'passive Spieler bleiben in der Liste');
         assertSame('U19', $byId[1]['ak']);
         assertSame('U13', $byId[2]['ak']);
-        assertSame('U09', $byId[3]['ak'], 'ohne Jahrgang die AK aus der Liste');
+        assertSame('', $byId[3]['ak'], 'ohne Jahrgang keine AK, auch nicht aus der Liste');
         $next = array_column($get($router, '/api/players', ['year' => '2027'])->body['players'], null, 'id');
         assertSame('O19', $next[1]['ak']);
     },

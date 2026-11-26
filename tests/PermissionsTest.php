@@ -28,12 +28,19 @@ $grants = static function (): array {
 $p = static fn(): Permissions => new Permissions($grants());
 
 $basic = ['last_name', 'first_name', 'club_name', 'club_short'];
-$roster = ['list_no', 'list_ak', 'gender', 'birth_year', 'roster_status', 'active', 'training_site', 'state'];
+$roster = ['list_no', 'gender', 'birth_year', 'roster_status', 'active', 'training_site', 'state'];
 $light = ['sportmed_status', 'antidoping_status'];
 $private = ['birth_date', 'trainer_info', 'school', 'school_contact', 'sportmed_note', 'antidoping_note',
     'email1', 'email2', 'phone_player', 'phone_mother', 'phone_father', 'shirt_size'];
 
 return [
+    'list_ak ist für keine Rolle lesbar oder schreibbar' => function () use ($p): void {
+        foreach (['admin', 'roster_editor', 'health_staff', 'reviewer', 'coach', 'basic'] as $role) {
+            assertTrue(!in_array('list_ak', $p()->fieldsFor([$role], 'read'), true), $role . ' liest list_ak');
+            assertTrue(!in_array('list_ak', $p()->fieldsFor([$role], 'write'), true), $role . ' schreibt list_ak');
+        }
+        assertSame(['list_ak'], $p()->deniedFields(['admin'], ['list_ak'], 'write'));
+    },
     'coach liest einfache und erweiterte Daten und die Ampel, nichts Privates' => function () use ($p, $basic, $roster, $light, $private): void {
         $read = $p()->fieldsFor(['coach'], 'read');
         assertSame(array_merge($basic, $roster, $light), $read);
