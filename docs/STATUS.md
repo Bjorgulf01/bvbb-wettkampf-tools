@@ -5,7 +5,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig docs-projektdokumente |
-| Aktueller Zweig | docs-projektdokumente (Pull-Request folgt) |
+| Aktueller Zweig | docs-projektdokumente (Pull-Request #19) |
 | Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft; MacBook eingerichtet (227 Tests grün) |
 | In Arbeit | nichts |
 
