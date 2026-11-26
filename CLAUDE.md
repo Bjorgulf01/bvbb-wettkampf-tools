@@ -106,7 +106,7 @@ Datenbanktests lesen `TEST_DB_DSN`, `TEST_DB_USER`, `TEST_DB_PASS` (aus `tools/d
 ## Begriffe
 
 - **Verband** = der BVBB insgesamt. **Bundesland** (`BER` oder `BRA`) steht im Feld `state` am **Verein** und entscheidet, welches Amt fördert. Ein Spieler hat kein eigenes Bundesland-Feld.
-- **Kaderstatus:** `LK` Landeskader, `SK` Sparringkader, `NK2` Bundeskader.
+- **Kaderstatus:** `LK` Landeskader, `SK` Sparringkader, `NK1` Nachwuchskader 1 und `NK2` Nachwuchskader 2 (Bundeskader).
 - **Altersklasse:** Alter = Kalenderjahr minus Jahrgang. `U09`, `U11`, `U13`, `U15`, `U17`, `U19` gelten bis unter 9, 11, 13, 15, 17 und 19 Jahren, danach `O19`. Das Jahr kommt aus dem Turniertermin. Ohne Jahrgang bleibt die AK leer, die Datenprüfung meldet dann `missing_birth_year`. Die AK aus der Liste wird nicht mehr übernommen.
 - **Ampel:** Stand von NADA-Schulung und sportmedizinischer Untersuchung (`done`, `scheduled`, `open`, `unclear`; der Eintrag „/“ bedeutet „noch nichts gepflegt“ und ergibt `open`), abgeleitet aus den Textspalten SpoMed und Anti Doping (Task 4b). Trainer sehen nur die Ampel, nie den Rohtext.
 - **Einfrieren:** Spielerdaten werden beim Wechsel eines Turniers auf „zur Prüfung“ in das Turnier kopiert und ändern sich danach nicht mehr (ab Etappe 2).
