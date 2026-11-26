@@ -128,6 +128,34 @@ return [
         assertSame('002_seed_roles.sql', $applied[0]);
         assertTrue(!in_array('001_core.sql', $applied, true), '001 nicht erneut angewendet');
     },
+    '003: Jahrgang wird einmal an den Geburtstag angeglichen, ohne Protokoll' => function (): void {
+        $pdo = testPdo();
+        $dir = sys_get_temp_dir() . '/bvbb_mig_' . bin2hex(random_bytes(4));
+        mkdir($dir);
+        try {
+            foreach (['001_core.sql', '002_seed_roles.sql'] as $f) {
+                copy(MIGRATIONS_DIR . '/' . $f, $dir . '/' . $f);
+            }
+            (new Migrator($pdo, $dir))->migrate();
+            $pdo->exec("INSERT INTO players (id, last_name, first_name, club_name, birth_year, active) VALUES
+                (1, 'Köppen', 'Arvid', '', 2015, 1),
+                (2, 'Müßig', 'Lotta', '', 2008, 1),
+                (3, 'Weißkopf', 'Ivo', '', NULL, 1),
+                (4, 'Özdemir', 'Mira', '', 2011, 1)");
+            $pdo->exec("INSERT INTO player_private (player_id, birth_date) VALUES
+                (1, '2014-09-14'), (2, NULL), (3, '2016-03-01')");
+            copy(MIGRATIONS_DIR . '/003_birth_year_from_date.sql', $dir . '/003_birth_year_from_date.sql');
+            assertSame(['003_birth_year_from_date.sql'], (new Migrator($pdo, $dir))->migrate());
+            $years = $pdo->query('SELECT id, birth_year FROM players ORDER BY id')->fetchAll(PDO::FETCH_KEY_PAIR);
+            assertSame([1 => 2014, 2 => 2008, 3 => 2016, 4 => 2011], array_map('intval', $years),
+                'abweichend angeglichen, ohne Datum unverändert, ohne Jahrgang gesetzt, ohne private Zeile unverändert');
+            assertSame(0, (int) $pdo->query('SELECT COUNT(*) FROM audit_log')->fetchColumn(), 'kein Protokolleintrag');
+            assertSame(1, (int) $pdo->query("SELECT COUNT(*) FROM schema_migrations WHERE filename = '003_birth_year_from_date.sql'")->fetchColumn());
+        } finally {
+            array_map('unlink', glob($dir . '/*.sql'));
+            rmdir($dir);
+        }
+    },
     'fehlerhafte Migration wird nicht als angewendet vermerkt' => function (): void {
         $pdo = testPdo();
         $dir = sys_get_temp_dir() . '/bvbb_mig_' . bin2hex(random_bytes(4));

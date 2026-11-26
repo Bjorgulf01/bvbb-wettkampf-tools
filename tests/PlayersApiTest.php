@@ -134,6 +134,63 @@ return [
         assertSame(null, $byId[3]['birth_year']);
         assertSame('', $byId[3]['ak']);
     },
+    'POST mit Geburtstag ohne Jahrgang legt den Jahrgang aus dem Datum an' => function () use ($setup, $send): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'POST', '/api/players', ['last_name' => 'Özdemir', 'first_name' => 'Mira', 'birth_date' => '2014-09-14']);
+        assertSame(201, $res->status);
+        $id = (int) $res->body['id'];
+        assertSame(2014, (int) $env->pdo->query('SELECT birth_year FROM players WHERE id = ' . $id)->fetchColumn());
+        $summary = (string) $env->pdo->query("SELECT summary FROM audit_log WHERE object_type = 'player' AND object_id = " . $id)->fetchColumn();
+        assertTrue(str_contains($summary, 'birth_year'), 'Protokoll nennt den abgeleiteten Jahrgang: ' . $summary);
+    },
+    'PUT mit neuem Geburtstag setzt den Jahrgang, Protokoll nennt beide Felder' => function () use ($setup, $send, $get): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'PUT', '/api/players/1', ['birth_date' => '2013-01-02']);
+        assertSame(200, $res->status);
+        assertSame(['birth_date', 'birth_year'], $res->body['changed']);
+        $player = $get($router, '/api/players/1')->body['player'];
+        assertSame(2013, $player['birth_year']);
+        assertSame('2013-01-02', $player['birth_date']);
+        $summary = (string) $env->pdo->query("SELECT summary FROM audit_log WHERE object_type = 'player' AND object_id = 1 ORDER BY id DESC LIMIT 1")->fetchColumn();
+        assertTrue(str_contains($summary, 'birth_date') && str_contains($summary, 'birth_year'), $summary);
+    },
+    'PUT mit Geburtstag und abweichendem Jahrgang: 422, nichts gespeichert (Review Focus 5)' => function () use ($setup, $send, $get): void {
+        $env = $setup();
+        [$router, $token] = $env->as('kaderpflege');
+        $audit = (int) $env->pdo->query('SELECT COUNT(*) FROM audit_log')->fetchColumn();
+        $res = $send($router, $token, 'PUT', '/api/players/1', ['birth_date' => '2014-09-14', 'birth_year' => 2015]);
+        assertSame(422, $res->status);
+        assertSame(['error' => 'invalid', 'fields' => ['birth_year']], $res->body);
+        $player = $get($router, '/api/players/1')->body['player'];
+        assertSame(2008, $player['birth_year']);
+        assertSame(null, $player['birth_date']);
+        assertSame($audit, (int) $env->pdo->query('SELECT COUNT(*) FROM audit_log')->fetchColumn(), 'kein Protokolleintrag');
+    },
+    'PUT nur mit Jahrgang, der dem gespeicherten Geburtstag widerspricht: 422' => function () use ($setup, $send): void {
+        $env = $setup();
+        $env->pdo->exec("UPDATE player_private SET birth_date = '2014-09-14' WHERE player_id = 2");
+        $env->pdo->exec('UPDATE players SET birth_year = 2014 WHERE id = 2');
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'PUT', '/api/players/2', ['birth_year' => 2015]);
+        assertSame(422, $res->status);
+        assertSame(['birth_year'], $res->body['fields']);
+        assertSame(2014, (int) $env->pdo->query('SELECT birth_year FROM players WHERE id = 2')->fetchColumn());
+        assertSame(200, $send($router, $token, 'PUT', '/api/players/2', ['birth_year' => 2014])->status, 'passender Jahrgang geht');
+    },
+    'PUT mit geleertem Geburtstag lässt den Jahrgang stehen, danach frei änderbar' => function () use ($setup, $send): void {
+        $env = $setup();
+        $env->pdo->exec("UPDATE player_private SET birth_date = '2014-09-14' WHERE player_id = 2");
+        $env->pdo->exec('UPDATE players SET birth_year = 2014 WHERE id = 2');
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, 'PUT', '/api/players/2', ['birth_date' => null]);
+        assertSame(200, $res->status);
+        assertSame(['birth_date'], $res->body['changed']);
+        assertSame(2014, (int) $env->pdo->query('SELECT birth_year FROM players WHERE id = 2')->fetchColumn());
+        assertSame(200, $send($router, $token, 'PUT', '/api/players/2', ['birth_year' => 2015])->status);
+        assertSame(2015, (int) $env->pdo->query('SELECT birth_year FROM players WHERE id = 2')->fetchColumn());
+    },
     'Kaderstatus NK1 wird angenommen und geliefert' => function () use ($setup, $send, $get): void {
         $env = $setup();
         [$router, $token] = $env->as('kaderpflege');
