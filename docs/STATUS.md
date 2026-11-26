@@ -5,7 +5,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig docs-vereinsimport |
-| Aktueller Zweig | docs-vereinsimport (Pull-Request folgt) |
+| Aktueller Zweig | docs-vereinsimport (Pull-Request #28) |
 | Letzte fertige Aufgabe | Etappe 1 Task 12 (Webspace-Prüfung abgeschlossen, 26.11.2026); Plan „Kaderliste rund machen“ (Pull-Requests #20 bis #24) |
 | In Arbeit | Planungsdokumente Vereinsimport (Task 9b) ins Repository; danach Umsetzung Task 9b; offen: Checkliste 1.1.0 von Hand |
 
@@ -166,7 +166,7 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 ## Nächster Schritt
 
 1. **Task 12 abgeschlossen (26.11.2026, Projektinhaber):** Die restliche Webspace-Prüfung (Gegenprobe `production` mit `test_auth` und Passwortschutz für `webseiten/`) ist erledigt.
-2. Damit ist Etappe 1 fertig bis auf Task 9b. **Task 9b ist jetzt der Vereinsimport aus nuLiga** (Projektinhaber, 26.11.2026): Plan `docs/superpowers/plans/2026-11-26-vereinsimport.md`, Entwurf `docs/superpowers/specs/2026-11-26-vereinsimport-design.md` (Zweig `docs-vereinsimport`). Der Plan ersetzt den Abschnitt „Task 9b“ im Plan Etappe 1. Die Festlegungen werden beim Start der Umsetzung hier übernommen. Die echte Exportdatei kommt nicht ins Repository.
+2. Damit ist Etappe 1 fertig bis auf Task 9b. **Task 9b ist jetzt der Vereinsimport aus nuLiga** (Projektinhaber, 26.11.2026): Plan `docs/superpowers/plans/2026-11-26-vereinsimport.md`, Entwurf `docs/superpowers/specs/2026-11-26-vereinsimport-design.md` (Zweig `docs-vereinsimport`, Pull-Request #28). Der Plan ersetzt den Abschnitt „Task 9b“ im Plan Etappe 1. Die Festlegungen werden beim Start der Umsetzung hier übernommen. Die echte Exportdatei kommt nicht ins Repository.
 3. Offen: die neuen Punkte der Checkliste für 1.1.0 von Hand (I1, I7, D1, K6, K13 bis K22, E1) und die Frage zu `docs/entwurf.md:106` (siehe offener Punkt im Abschnitt „Kaderliste rund machen“ oben).
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer. Seit 26.11.2026 (nach dem fehlenden Ordner `sessions/` beim Hochladen von 1.1.0) weist `HOCHLADEN.txt` darauf hin, `bvbb-app/sessions/` nicht zu löschen und bei `{"ok":false}` zuerst diesen Ordner zu prüfen (Zweig `dev-hochladen-sessions-hint`, Pull-Request #25).
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
