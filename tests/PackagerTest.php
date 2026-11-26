@@ -189,6 +189,9 @@ return [
                 assertTrue(stripos($text, $step) !== false, "Schritt fehlt: $step");
             }
             assertTrue(!str_contains($text, '\\'), 'HOCHLADEN.txt enthält einen Backslash');
+            // Fehlt der Sitzungsordner nach dem Hochladen, meldet /api/health {"ok":false} (26.11.2026).
+            assertTrue(str_contains($text, 'bvbb-app/sessions/ nicht löschen'), 'Hinweis zum Sitzungsordner fehlt');
+            assertTrue(str_contains($text, '{"ok":false}'), 'Hinweis auf {"ok":false} fehlt');
         });
     },
 
