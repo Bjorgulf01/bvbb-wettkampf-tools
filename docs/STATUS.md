@@ -4,9 +4,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig docs-ak-ohne-jahrgang |
-| Aktueller Zweig | docs-ak-ohne-jahrgang (Pull-Request #26) |
-| Letzte fertige Aufgabe | Plan „Kaderliste rund machen“, Task 4 (Sortieren, Filter, Export; Pull-Request #23, zusammengeführt) |
+| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig ageclass-cleanup |
+| Aktueller Zweig | ageclass-cleanup (Pull-Request folgt) |
+| Letzte fertige Aufgabe | Etappe 1 Task 12 (Webspace-Prüfung abgeschlossen, 26.11.2026); Plan „Kaderliste rund machen“ (Pull-Requests #20 bis #24) |
 | In Arbeit | Plan „Kaderliste rund machen“ zusammengeführt (#20 bis #24), 1.1.0 auf dem Test-Webspace (`/api/health` in Ordnung), offen: Checkliste von Hand |
 
 ## Aufgabenstand (Etappe 1)
@@ -27,7 +27,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 9b Vereinsimport | zurückgestellt | | wartet auf Mitgliederliste |
 | 10 Benutzer, Rollen, Protokoll | fertig | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #11) |
 | 11 Oberfläche | fertig | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` am 22.11.2026 vom Projektinhaber in Firefox und Safari durchgegangen, alle Punkte erfüllt; Review erledigt, zusammengeführt (Pull-Request #12) |
-| 12 Auslieferung | im Repository fertig (PR #14); Webspace-Prüfung am 22.11.2026 bis auf Gegenprobe und Passwortschutz erledigt | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; zusammengeführt (Pull-Request #14) |
+| 12 Auslieferung | fertig (PR #14); Webspace-Prüfung am 22.11.2026, Gegenprobe und Passwortschutz am 26.11.2026 erledigt | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; zusammengeführt (Pull-Request #14) |
 
 ## Entwicklungsablauf
 
@@ -150,7 +150,8 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 - Task 1, Abweichung: `KaderImport::plan()` übernimmt `list_ak` nicht mehr und behandelt es als unbekanntes Feld (Zeile `invalid`). Zusätzliche Absicherung, die Schnittstelle lehnt das Feld vorher schon mit 403 ab.
 - **Erledigt mit Task 3 (Import wieder ohne 403):** Bis Task 3 nicht ausliefern: Die Oberfläche schickt beim Import noch die Spalte AK als `list_ak` (`COLUMN_KEYS` in `public/js/roster.js`). Zwischen Task 1 und Task 3 scheitert der Import in der Oberfläche deshalb mit 403. Bearbeiten ist nicht betroffen. Task 3 behebt das laut Plan.
 - **Geklärt am 26.11.2026 (Projektinhaber):** Die AK darf ohne Jahrgang leer bleiben. Der Satz in `CLAUDE.md` unter „Begriffe → Altersklasse“ ist an den Entwurf angepasst (Zweig `docs-ak-ohne-jahrgang`, Pull-Request #26).
-- **Offen für den Projektinhaber (Review 26.11.2026):** `docs/entwurf.md:106` und `docs/umsetzungsplan-etappe-1.md:21` (dazu die Testfälle in `:121`) sagen noch „Fehlt der Jahrgang, gilt die AK aus der Liste“. Nicht geändert, weil beide aus dem Planungsprojekt kommen. Frage: Ersetzt der Entwurf „Kaderliste rund machen“ diese Stellen, und wird `entwurf.md` im Planungsprojekt nachgezogen? Ebenso veraltet, für eine spätere kleine Aufgabe: Docblock und Fallback `fromList()` in `src/Domain/AgeClass.php` (in Produktion ungenutzt).
+- **Offen für den Projektinhaber (Review 26.11.2026):** `docs/entwurf.md:106` und `docs/umsetzungsplan-etappe-1.md:21` (dazu die Testfälle in `:121`) sagen noch „Fehlt der Jahrgang, gilt die AK aus der Liste“. Nicht geändert, weil beide aus dem Planungsprojekt kommen. Frage: Ersetzt der Entwurf „Kaderliste rund machen“ diese Stellen, und wird `entwurf.md` im Planungsprojekt nachgezogen?
+- **Erledigt am 26.11.2026 (Zweig `ageclass-cleanup`):** `AgeClass::for(?string $birthYearOrDate, int $year)` hat keinen Parameter `$listAk` mehr, der Rückfallweg `fromList()` ist entfernt. Ohne brauchbaren Jahrgang (fehlt, Excel-Seriennummer, nach dem Turnierjahr) ergibt sie `''`. Verhalten in Produktion unverändert, `PlayersController` übergab schon `''`. Abweichung von der Schnittstelle im Plan Etappe 1 (Task 3: `for($birthYearOrDate, $listAk, $year)`); der Plan ist nicht geändert.
 - Task 2: Neue reine Klasse `App\Domain\BirthYear::reconcile`. Ist nach dem Speichern ein Geburtstag gesetzt, setzt der Server den Jahrgang auf dessen Jahr (POST, PUT, Import). Ein mitgeschickter Jahrgang, der davon abweicht, ergibt 422 `fields: ["birth_year"]` und es wird nichts gespeichert; im Import wird die Zeile mit Grund `invalid` und `fields: ["birth_year"]` übersprungen. Ein mitgeschicktes leeres `birth_year` bei gesetztem Geburtstag gilt ebenfalls als abweichend. Wird der Geburtstag geleert, bleibt der Jahrgang stehen und ist danach frei. Das Protokoll nennt `birth_year`, wenn der Server es ableitet und der Wert sich ändert.
 - Task 2: Die Ableitung setzt voraus, dass jede Rolle mit Schreibrecht auf `player.private` auch Schreibrecht auf `player.roster` hat (heute: nur `admin` und `roster_editor`). Bei einer späteren Änderung der Felder je Rolle darauf achten.
 - **Migration `003_birth_year_from_date.sql` (Task 2):** Beim nächsten Hochladen per phpMyAdmin einspielen. Sie gleicht `birth_year` einmal an das Jahr von `birth_date` an, wo ein Datum gesetzt ist und der Jahrgang fehlt oder abweicht. **Sie schreibt keinen Eintrag ins Änderungsprotokoll** und setzt bei den geänderten Zeilen `players.updated_at` neu. Ein zweiter Import bricht beim Selbsteintrag in `schema_migrations` ab und ändert nichts.
@@ -164,11 +165,9 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 
 ## Nächster Schritt
 
-1. Testanmeldung auf dem Webspace wieder einschalten (`test_auth` = `true`), falls sie über Nacht abgeschaltet war.
-2. Restliche Webspace-Prüfung (Projektinhaber):
-   - Gegenprobe: `env` = `production` mit `test_auth` = `true` muss bei `/api/health` 500 ergeben und darf keine Testanmeldung anbieten. Danach zurück auf `staging`.
-   - Passwortschutz für `webseiten/` einrichten (Verzeichnisschutz im Kundenmenü).
-3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
+1. **Task 12 abgeschlossen (26.11.2026, Projektinhaber):** Die restliche Webspace-Prüfung (Gegenprobe `production` mit `test_auth` und Passwortschutz für `webseiten/`) ist erledigt.
+2. Damit ist Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
+3. Offen: die neuen Punkte der Checkliste für 1.1.0 von Hand (I1, I7, D1, K6, K13 bis K22, E1) und die Frage zu `docs/entwurf.md:106` (Abschnitt „Kaderliste rund machen“).
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer. Seit 26.11.2026 (nach dem fehlenden Ordner `sessions/` beim Hochladen von 1.1.0) weist `HOCHLADEN.txt` darauf hin, `bvbb-app/sessions/` nicht zu löschen und bei `{"ok":false}` zuerst diesen Ordner zu prüfen (Zweig `dev-hochladen-sessions-hint`, Pull-Request #25).
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
 6. Plan „Kaderliste rund machen“: Alle fünf Tasks zusammengeführt (Pull-Requests #20 bis #24), Paket `dist/bvbb-wettkampf-1.1.0` gebaut (Commit 91b998f, drei Migrationen). Auf dem Test-Webspace zuerst Migration 003 einspielen, dann hochladen und `/api/health` sowie die neuen Punkte der Checkliste prüfen (Abschnitt „Kaderliste rund machen“). Danach ist der Plan abgeschlossen.

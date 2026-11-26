@@ -326,7 +326,7 @@ final class PlayersController
         if ($this->permissions->can($this->roles(), 'player.roster', Permissions::READ)) {
             $by = $row['birth_year'] ?? null;
             // Nur aus dem Jahrgang; ohne Jahrgang bleibt die AK leer (keine AK aus der Liste mehr).
-            $out['ak'] = AgeClass::for($by !== null ? (string) $by : null, '', $year);
+            $out['ak'] = AgeClass::for($by !== null ? (string) $by : null, $year);
         }
         return $out;
     }
