@@ -5,9 +5,9 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig kader-task-4-sort-filter |
-| Aktueller Zweig | kader-task-4-sort-filter (Pull-Request folgt) |
+| Aktueller Zweig | kader-task-4-sort-filter (Pull-Request #23) |
 | Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft; MacBook eingerichtet (227 Tests grün) |
-| In Arbeit | Plan „Kaderliste rund machen“: Task 4 fertig (Pull-Request folgt), danach Task 5 (Auslieferung) |
+| In Arbeit | Plan „Kaderliste rund machen“: Task 4 fertig (Pull-Request #23), danach Task 5 (Auslieferung) |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -130,7 +130,7 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 | 1 Server: AK (Liste) entfernen, NK1 | fertig, 233 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-1-list-ak-nk1` | Pull-Request #20, zusammengeführt |
 | 2 Server: Jahrgang aus dem Geburtstag | fertig, 253 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-2-birth-year` | Pull-Request #21, zusammengeführt |
 | 3 Oberfläche: Schrift, Spalten, Bearbeiten | fertig, Rauchtest 165 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-3-roster-ui` | Pull-Request #22, zusammengeführt |
-| 4 Oberfläche: Sortieren, Filter, Export | fertig, Rauchtest 261 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-4-sort-filter` | Pull-Request folgt |
+| 4 Oberfläche: Sortieren, Filter, Export | fertig, Rauchtest 261 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-4-sort-filter` | Pull-Request #23 |
 | 5 Auslieferung 1.1.0 | offen | | |
 
 - Task 1: `list_ak` ist aus `player.roster` entfernt. Keine Rolle liest oder schreibt es, `PUT` und Import mit `list_ak` ergeben 403 (getestet; `POST` läuft über dieselbe Prüfung). Die Spalte `players.list_ak` bleibt mit ihren Werten in der Datenbank. Die AK kommt nur noch aus dem Jahrgang, **ohne Jahrgang ist sie leer** (bisher: AK aus der Liste). Die Befunde `ak_mismatch` und `bad_list_ak` entfallen.
@@ -158,4 +158,4 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer.
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
-6. Plan „Kaderliste rund machen“: Task 1 bis 3 zusammengeführt (Pull-Requests #20 bis #22). Task 4 fertig (Zweig `kader-task-4-sort-filter`). Nach Freigabe und Zusammenführen weiter mit Task 5 (Auslieferung). Ausgeliefert wird mit Task 5 (Version 1.1.0, Migration 003).
+6. Plan „Kaderliste rund machen“: Task 1 bis 3 zusammengeführt (Pull-Requests #20 bis #22). Task 4 fertig (Zweig `kader-task-4-sort-filter`, Pull-Request #23). Nach Freigabe und Zusammenführen weiter mit Task 5 (Auslieferung). Ausgeliefert wird mit Task 5 (Version 1.1.0, Migration 003).
