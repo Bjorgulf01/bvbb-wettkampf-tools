@@ -4,10 +4,10 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig docs-offene-fragen |
-| Aktueller Zweig | docs-offene-fragen (Pull-Request #29) |
-| Letzte fertige Aufgabe | Etappe 1 Task 12 (Webspace-Prüfung abgeschlossen, 26.11.2026); Plan „Kaderliste rund machen“ (Pull-Requests #20 bis #24) |
-| In Arbeit | Planungsdokumente Vereinsimport (Task 9b) ins Repository; danach Umsetzung Task 9b; offen: Checkliste 1.1.0 von Hand |
+| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig task-9b-club-import |
+| Aktueller Zweig | task-9b-club-import |
+| Letzte fertige Aufgabe | Etappe 1 Task 12 (Webspace-Prüfung abgeschlossen, 26.11.2026); Plan „Kaderliste rund machen“ (Pull-Requests #20 bis #24, Checkliste 1.1.0 erledigt) |
+| In Arbeit | Task 9b Vereinsimport aus nuLiga: umgesetzt, Review und Pull-Request; danach Paket 1.2.0 und Prüfung auf dem Test-Webspace |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -24,7 +24,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 7 Anmeldung, Sitzung, CSRF | fertig | task-7-auth | 24 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #8) |
 | 8 Spieler-Schnittstelle | fertig | task-8-players-api | 23 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #9) |
 | 9 Datenprüfung, Import | fertig | task-9-import | 189 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #10) |
-| 9b Vereinsimport | geplant, Umsetzung noch nicht begonnen | | Plan `docs/superpowers/plans/2026-11-26-vereinsimport.md` (CSV-Export „Vereine (Stammdaten und Adressen)“ aus nuLiga statt Mitgliederliste), Entwurf `docs/superpowers/specs/2026-11-26-vereinsimport-design.md` |
+| 9b Vereinsimport | fertig bis auf die Prüfung auf dem Test-Webspace; 290 PHP-Tests grün gegen `bvbb_test_pc`, Rauchtest 332 Prüfungen grün (26.11.2026) | task-9b-club-import | Plan `docs/superpowers/plans/2026-11-26-vereinsimport.md` (CSV-Export „Vereine (Stammdaten und Adressen)“ aus nuLiga statt Mitgliederliste), Entwurf `docs/superpowers/specs/2026-11-26-vereinsimport-design.md` |
 | 10 Benutzer, Rollen, Protokoll | fertig | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #11) |
 | 11 Oberfläche | fertig | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` am 22.11.2026 vom Projektinhaber in Firefox und Safari durchgegangen, alle Punkte erfüllt; Review erledigt, zusammengeführt (Pull-Request #12) |
 | 12 Auslieferung | fertig (PR #14); Webspace-Prüfung am 22.11.2026, Gegenprobe und Passwortschutz am 26.11.2026 erledigt | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; zusammengeführt (Pull-Request #14) |
@@ -143,7 +143,7 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 - **Sortieren und Filter:** Sortieren im Browser, Standard Name, dann Vorname, Pfeile ▲ ▼ und `aria-sort`, mit der Tastatur bedienbar, Texte nach deutscher Schreibweise verglichen (`localeCompare` mit `de`). Filterleiste mit Suche (Name oder Vorname), AK, Jahrgang, Kaderstatus, Verein, m/w, Status (Standard „aktiv“, bestätigt am 24.11.2026). Filter nur für Spalten, die die Rolle sieht (Basis: nur Suche und Verein). Filter bleiben, solange die Seite offen ist, werden aber nicht dauerhaft gespeichert.
 - **Export:** genau die sichtbaren Spalten, die gefilterten Zeilen und die aktuelle Sortierung. Er ist nicht mehr als Vorlage für den Import gedacht.
 - **Auslieferung 1.1.0 (Step 4, Projektinhaber):** zuerst `migrations/003_birth_year_from_date.sql` per phpMyAdmin importieren (danach steht sie in `schema_migrations`), dann das Paket hochladen (`bvbb-app/src/` vollständig ersetzen). `/api/health` muss `{"ok":true,"version":"1.1.0"}` liefern. Danach die neuen Punkte der `tests/ui-checklist.md` durchgehen: I1, I7, D1, K6, K13 bis K22, E1.
-- **Test-Webspace am 26.11.2026 (Projektinhaber):** Migration 003 eingespielt, Paket 1.1.0 hochgeladen. `/api/health` meldete zuerst `{"ok":false}`: Der Ordner `bvbb-app/sessions/` fehlte nach dem Hochladen (das Paket enthält ihn nicht). Nach dem Anlegen liefert `/api/health` `{"ok":true,"version":"1.1.0"}`. Entscheidung des Projektinhabers: Hinweis in `HOCHLADEN.txt` genügt, kein leerer Ordner im Paket. Noch offen: die neuen Punkte der Checkliste (I1, I7, D1, K6, K13 bis K22, E1).
+- **Test-Webspace am 26.11.2026 (Projektinhaber):** Migration 003 eingespielt, Paket 1.1.0 hochgeladen. `/api/health` meldete zuerst `{"ok":false}`: Der Ordner `bvbb-app/sessions/` fehlte nach dem Hochladen (das Paket enthält ihn nicht). Nach dem Anlegen liefert `/api/health` `{"ok":true,"version":"1.1.0"}`. Entscheidung des Projektinhabers: Hinweis in `HOCHLADEN.txt` genügt, kein leerer Ordner im Paket. Die neuen Punkte der Checkliste (I1, I7, D1, K6, K13 bis K22, E1) hat der Projektinhaber am 26.11.2026 erledigt.
 
 - Task 1: `list_ak` ist aus `player.roster` entfernt. Keine Rolle liest oder schreibt es, `PUT` und Import mit `list_ak` ergeben 403 (getestet; `POST` läuft über dieselbe Prüfung). Die Spalte `players.list_ak` bleibt mit ihren Werten in der Datenbank. Die AK kommt nur noch aus dem Jahrgang, **ohne Jahrgang ist sie leer** (bisher: AK aus der Liste). Die Befunde `ak_mismatch` und `bad_list_ak` entfallen.
 - Task 1: **Kaderstatus ist auf dem Server frei, die Auswahl begrenzt nur die Oberfläche.** (`PlayerInput` hat für `roster_status` keine Liste erlaubter Werte, NK1 wird angenommen.)
@@ -163,15 +163,37 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 - Task 4: Der Sprung aus der Datenprüfung setzt alle Filter auf „alle“, auch den Status, damit passive Spieler erreichbar sind. Nach dem Review behoben: Der Fokus bleibt nach dem Sortieren per Tastatur auf dem Spaltenkopf, und die Seite scrollt nur einmal zur bearbeiteten Zeile statt bei jeder Ansichtsänderung.
 - Task 4, von Hand prüfen (Checkliste K17 bis K22): Filterleiste auf dem iPad, Sortieren mit der Tastatur.
 
+## Vereinsimport aus nuLiga (Task 9b)
+
+Plan: `docs/superpowers/plans/2026-11-26-vereinsimport.md`, Entwurf: `docs/superpowers/specs/2026-11-26-vereinsimport-design.md`. Ersetzt den Abschnitt „Task 9b“ im Plan Etappe 1 (Mitgliederliste).
+
+| Task | Stand | Zweig | Notizen |
+|---|---|---|---|
+| 1 `ClubImport` (Planung ohne Datenbank) | fertig, 24 Tests grün (26.11.2026) | `task-9b-club-import` | `src/Domain/ClubImport.php` |
+| 2 Schnittstelle `POST /api/clubs/import` | fertig, 15 Tests grün gegen `bvbb_test_pc`, Gesamtlauf 290 grün (26.11.2026) | `task-9b-club-import` | keine Migration nötig (`member_no` VARCHAR(20)) |
+| 3 Oberfläche | fertig, Rauchtest 332 Prüfungen grün in Chromium, Firefox, WebKit (26.11.2026) | `task-9b-club-import` | `public/js/csv.js`, `clubs.js`, Checkliste N1 bis N8 |
+| 4 Auslieferung 1.2.0 | fertig bis auf die Prüfung auf dem Test-Webspace (Step 4, Projektinhaber) | `task-9b-club-import` | Paket nach dem Zusammenführen auf `main` bauen |
+
+**Festlegungen (Projektinhaber, 26.11.2026), Abweichungen vom Plan Etappe 1:** CSV-Export „Vereine (Stammdaten und Adressen)“ statt Excel-Mitgliederliste. Mitgliedsnummer ist die `DBVNr` (`08-NNNN`), fehlt sie, wird sie aus der `VereinNr` gebildet, eine abweichende `DBVNr` überspringt die Zeile. Kürzel (`short`) und Bundesland (`state`) setzt der Import nie. Archiv-Vereine werden inaktiv importiert, Verbände übersprungen, der „Test Verein CP“ kommt als Archiv mit. Kurz- und Druckname werden Aliasnamen. Vereine ohne Nummer werden über den Namen verknüpft. Schaltfläche „Vereine aus nuLiga importieren“, Verband bei `1` und „ja“.
+
+**Entscheidungen bei der Umsetzung (Claude, 26.11.2026):**
+- Ein Alias aus nuLiga entfällt (Warnung `alias_conflict`), wenn er Name, Kürzel oder Alias eines anderen Vereins ist. Kürzel zusätzlich zum Plan, weil die Zuordnung Kürzel vor Aliasnamen sucht. Gleich dem eigenen Kürzel oder Alias entfällt er ohne Warnung.
+- Die Datenbank vergleicht Aliasnamen nach `utf8mb4_unicode_ci` (ohne Akzente). Kollidiert ein Alias nur dort, wird er still übergangen (`INSERT IGNORE`), der Import läuft weiter. Die Vorschau kann dann einen Alias mehr nennen, als gespeichert wird.
+- Schnittstelle: leere `rows`, eine Zeile, die kein Objekt ist, und zusätzliche Schlüssel im Body ergeben 422 `invalid_body`. Ein fehlender Zeilenschlüssel ergibt 422 `invalid` mit Pfad. Pfade sind wie bei `PUT /api/clubs` nullbasiert (`rows.0.name`), `row` in der Antwort ist einsbasiert. Längen: Name, Kurz- und Druckname 190, Nummern und Status 20 Zeichen.
+- Protokoll: `club_import_create` mit `fields: member_no, name, active[, aliases]`, `club_import_update` mit den geänderten Feldern (`name`, `active`, `member_no` beim Verknüpfen, `aliases`). Ohne Änderung kein Eintrag und kein neues `imported_at`.
+- Meldungen nennen „Zeile n“ wie Excel beim Öffnen der CSV (Kopfzeile = 1, ein Zeilenumbruch in Anführungszeichen bleibt eine Zeile).
+- Hinweis „Bei n aktiven Vereinen fehlt das Bundesland“ mit Kästchen „nur ohne Bundesland“, nur mit Schreibrecht. „Übernehmen“ lädt die Liste neu, nicht gespeicherte Änderungen in der Tabelle gehen dabei verloren.
+- **Commit-Schutz geändert:** `tools/git-hooks/pre-commit` lässt genau `tests/fixtures/nuliga/vereine-test.csv` durch (sonst sind alle `*.csv` gesperrt). Die Datei ist erfunden und wird von `tests/fixtures/nuliga/make-vereine-test.php` erzeugt. In `.gitattributes` ist sie binär markiert, damit CRLF und Windows-1252 erhalten bleiben.
+- Rauchtest: Ein Lauf brach einmal in Firefox an der Datenprüfung (admin, vor dem Vereinsimport) ab. Die Wiederholung und der volle Lauf waren grün. Vermutlich Timing, nicht durch Task 9b.
+- Die Kopfzeile des Originalexports (48 Spalten) hat der Projektinhaber am 26.11.2026 im Chat geliefert. Sie steht in `make-vereine-test.php`.
+
+**Prüfung auf dem Test-Webspace (Task 4, Step 4, Projektinhaber):** Paket 1.2.0 hochladen (keine Migration), `/api/health` muss `{"ok":true,"version":"1.2.0"}` liefern. Dann den echten nuLiga-Export hochladen. Vorschau: 106 Vereine neu oder verknüpft, „SV Spielberechtigung“ übersprungen, 9 Warnungen „Nummer gebildet“, keine Zeile „DBV-Nummer passt nicht“. Doppelte vor dem Übernehmen von Hand bereinigen. Danach Bundesland aller aktiven Vereine pflegen und die Datenprüfung aufrufen (`unknown_club` sollte sinken). Dazu die Punkte N1 bis N8 der Checkliste.
+
 ## Nächster Schritt
 
 1. **Task 12 abgeschlossen (26.11.2026, Projektinhaber):** Die restliche Webspace-Prüfung (Gegenprobe `production` mit `test_auth` und Passwortschutz für `webseiten/`) ist erledigt.
-2. Damit ist Etappe 1 fertig bis auf Task 9b. **Task 9b ist jetzt der Vereinsimport aus nuLiga** (Projektinhaber, 26.11.2026): Plan `docs/superpowers/plans/2026-11-26-vereinsimport.md`, Entwurf `docs/superpowers/specs/2026-11-26-vereinsimport-design.md` (Zweig `docs-vereinsimport`, Pull-Request #28). Der Plan ersetzt den Abschnitt „Task 9b“ im Plan Etappe 1. Die Festlegungen werden beim Start der Umsetzung hier übernommen. Die echte Exportdatei kommt nicht ins Repository. Pull-Request #28 ist zusammengeführt.
-   **Geklärt am 26.11.2026 (Projektinhaber), Abweichungen vom Plan Task 9b:**
-   - Die Schaltfläche heißt „Vereine aus nuLiga importieren“ (Plan: „Mitgliederliste aus nuLiga importieren“).
-   - Die Spalte „Verein ist Verband, Bezirk oder Kreis bzw. Region“ ergibt `is_federation` bei `1` und bei „ja“ (ohne Beachtung der Großschreibung, getrimmt), sonst nicht (Plan: nur `1`).
-   - Offen vor Task 3 (Fixture): Die genauen Namen der 48 Spalten des Originalexports in Originalreihenfolge liegen im Repository nicht vor. Der Projektinhaber gibt die Kopfzeile (ohne Datenzeilen).
-3. Offen: die neuen Punkte der Checkliste für 1.1.0 von Hand (I1, I7, D1, K6, K13 bis K22, E1). Beim Projektinhaber: `entwurf.md` und Plan Etappe 1 zur AK ohne Jahrgang im Planungsprojekt nachziehen.
+2. **Task 9b (Vereinsimport aus nuLiga) umgesetzt** (Zweig `task-9b-club-import`, Abschnitt „Vereinsimport aus nuLiga“ oben). Nach Review und Freigabe zusammenführen, dann auf `main` das Paket 1.2.0 bauen (`tools/package.php`) und auf dem Test-Webspace prüfen (Step 4, Projektinhaber). Damit ist Etappe 1 fertig.
+3. Erledigt am 26.11.2026 (Projektinhaber): die neuen Punkte der Checkliste für 1.1.0 (I1, I7, D1, K6, K13 bis K22, E1). Beim Projektinhaber: `entwurf.md` und Plan Etappe 1 zur AK ohne Jahrgang im Planungsprojekt nachziehen.
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer. Seit 26.11.2026 (nach dem fehlenden Ordner `sessions/` beim Hochladen von 1.1.0) weist `HOCHLADEN.txt` darauf hin, `bvbb-app/sessions/` nicht zu löschen und bei `{"ok":false}` zuerst diesen Ordner zu prüfen (Zweig `dev-hochladen-sessions-hint`, Pull-Request #25).
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
 6. Plan „Kaderliste rund machen“: Alle fünf Tasks zusammengeführt (Pull-Requests #20 bis #24), Paket `dist/bvbb-wettkampf-1.1.0` gebaut (Commit 91b998f, drei Migrationen). Auf dem Test-Webspace zuerst Migration 003 einspielen, dann hochladen und `/api/health` sowie die neuen Punkte der Checkliste prüfen (Abschnitt „Kaderliste rund machen“). Danach ist der Plan abgeschlossen.

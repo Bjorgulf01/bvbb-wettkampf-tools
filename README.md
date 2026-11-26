@@ -65,13 +65,26 @@ docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/pa
 
 **Von 1.0.0 auf 1.1.0:** neu ist `migrations/003_birth_year_from_date.sql`. Sie ändert kein Schema, sondern setzt bei jedem Spieler mit Geburtstag den Jahrgang auf das Jahr des Geburtstags (ohne Eintrag im Änderungsprotokoll). Danach steht `003_birth_year_from_date.sql` in `schema_migrations`. Sie läuft auch mit dem alten Code und kann deshalb wie üblich zuerst eingespielt werden. Zwischen dem Import der Migration und dem Hochladen niemanden Spieler bearbeiten lassen: 1.0.0 könnte sonst noch einen abweichenden Jahrgang speichern. Ist das doch passiert, das `UPDATE` aus der Datei nach dem Hochladen im Reiter „SQL“ noch einmal ausführen (ohne die letzte Zeile mit `schema_migrations`); es ändert nur abweichende Zeilen. `/api/health` meldet danach `"version":"1.1.0"`.
 
+**Von 1.1.0 auf 1.2.0:** keine neue Migration. Neu ist der Vereinsimport aus nuLiga (Abschnitt „Vereine aus nuLiga importieren“). `/api/health` meldet danach `"version":"1.2.0"`.
+
 Gibt es später SSH, ersetzt `php bvbb-app/bin/migrate.php` Schritt 1.
+
+## Vereine aus nuLiga importieren
+
+Im Reiter „Vereine“ der Kaderliste (Rolle `kaderpflege` oder `admin`) über „Vereine aus nuLiga importieren“.
+
+- **Welcher Export:** In nuLiga der Export „Vereine (Stammdaten und Adressen)“ als CSV. Die Datei unverändert hochladen, nicht vorher in Excel öffnen und speichern. Die Spalten werden über ihren Namen in der Kopfzeile gefunden. Fehlt eine benötigte Spalte, bricht der Import ab und nennt sie.
+- **Zeichensatz:** nuLiga exportiert Windows-1252. Das wird erkannt, ebenso UTF-8 (mit oder ohne BOM). Umlaute und ß kommen richtig an.
+- **Was übertragen wird:** nur sieben Spalten (Vereinsnummer, DBV-Nummer, Name, Kurzname, Druckname, Status, „Verein ist Verband …“). **Bank-, Adress- und Kontaktdaten verlassen den Browser nicht.**
+- **Was passiert:** Die DBV-Nummer (`08-` plus vierstellige Vereinsnummer) wird Mitgliedsnummer. Fehlt sie, wird sie aus der Vereinsnummer gebildet. Archiv-Vereine kommen als inaktiv dazu, Verbände nicht. Kurz- und Druckname werden Aliasnamen. Kürzel und Bundesland ändert der Import nie. Von Hand angelegte Vereine ohne Mitgliedsnummer werden über den Namen verknüpft.
+- **Ablauf:** Zuerst zeigt eine Vorschau, was neu, geändert, unverändert und übersprungen ist, mit Hinweisen (zum Beispiel „umbenannt: alt → neu“). Erst „Übernehmen“ speichert. Danach bei allen aktiven Vereinen das Bundesland pflegen (Kästchen „nur ohne Bundesland“) und die Datenprüfung der Kaderliste aufrufen.
+- Die echte Exportdatei gehört nie ins Repository. Zum Ausprobieren gibt es die erfundene Datei `tests/fixtures/nuliga/vereine-test.csv`.
 
 ## Prüfen nach dem Hochladen
 
 | Prüfung | Erwartet |
 |---|---|
-| `https://…/api/health` | `{"ok":true,"version":"1.1.0"}`. Bei einem Datenbankfehler oder fehlendem Sitzungsordner `{"ok":false}` mit Status 503, ohne Details |
+| `https://…/api/health` | `{"ok":true,"version":"1.2.0"}`. Bei einem Datenbankfehler oder fehlendem Sitzungsordner `{"ok":false}` mit Status 503, ohne Details |
 | `http://…` (ohne s) | leitet auf `https://…` um, **bevor** nach einem Passwort gefragt wird (siehe unten) |
 | `https://…/.htaccess`, `https://…/.user.ini` | 403 |
 | `https://…/src/Config.php`, `https://…/migrations/001_core.sql`, `https://…/config.php`, `https://…/bvbb-app/config.php` | 403 oder 404 |

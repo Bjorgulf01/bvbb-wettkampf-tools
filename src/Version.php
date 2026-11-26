@@ -6,5 +6,5 @@ namespace App;
 /** Version der Anwendung (GET /api/health). */
 final class Version
 {
-    public const NUMBER = '1.1.0';
+    public const NUMBER = '1.2.0';
 }
