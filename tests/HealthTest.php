@@ -21,8 +21,8 @@ return [
         $pdo = testPdo();
         $res = $router(fn(): PDO => $pdo)->dispatch(new Request('GET', '/api/health'));
         assertSame(200, $res->status);
-        assertSame(['ok' => true, 'version' => '1.0.0'], $res->body);
-        assertSame('1.0.0', Version::NUMBER);
+        assertSame(['ok' => true, 'version' => '1.1.0'], $res->body);
+        assertSame('1.1.0', Version::NUMBER);
     },
     'Datenbankfehler: 503 mit {"ok":false}, keine Details' => function () use ($router): void {
         $res = $router(static function (): PDO {
