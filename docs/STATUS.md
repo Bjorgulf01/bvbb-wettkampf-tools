@@ -5,7 +5,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | Feld | Wert |
 |---|---|
 | Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig docs-ak-ohne-jahrgang |
-| Aktueller Zweig | docs-ak-ohne-jahrgang (Pull-Request folgt) |
+| Aktueller Zweig | docs-ak-ohne-jahrgang (Pull-Request #26) |
 | Letzte fertige Aufgabe | Plan „Kaderliste rund machen“, Task 4 (Sortieren, Filter, Export; Pull-Request #23, zusammengeführt) |
 | In Arbeit | Plan „Kaderliste rund machen“ zusammengeführt (#20 bis #24), 1.1.0 auf dem Test-Webspace (`/api/health` in Ordnung), offen: Checkliste von Hand |
 
@@ -149,7 +149,7 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 - Task 1: **Kaderstatus ist auf dem Server frei, die Auswahl begrenzt nur die Oberfläche.** (`PlayerInput` hat für `roster_status` keine Liste erlaubter Werte, NK1 wird angenommen.)
 - Task 1, Abweichung: `KaderImport::plan()` übernimmt `list_ak` nicht mehr und behandelt es als unbekanntes Feld (Zeile `invalid`). Zusätzliche Absicherung, die Schnittstelle lehnt das Feld vorher schon mit 403 ab.
 - **Erledigt mit Task 3 (Import wieder ohne 403):** Bis Task 3 nicht ausliefern: Die Oberfläche schickt beim Import noch die Spalte AK als `list_ak` (`COLUMN_KEYS` in `public/js/roster.js`). Zwischen Task 1 und Task 3 scheitert der Import in der Oberfläche deshalb mit 403. Bearbeiten ist nicht betroffen. Task 3 behebt das laut Plan.
-- **Geklärt am 26.11.2026 (Projektinhaber):** Die AK darf ohne Jahrgang leer bleiben. Der Satz in `CLAUDE.md` unter „Begriffe → Altersklasse“ ist an den Entwurf angepasst (Zweig `docs-ak-ohne-jahrgang`).
+- **Geklärt am 26.11.2026 (Projektinhaber):** Die AK darf ohne Jahrgang leer bleiben. Der Satz in `CLAUDE.md` unter „Begriffe → Altersklasse“ ist an den Entwurf angepasst (Zweig `docs-ak-ohne-jahrgang`, Pull-Request #26).
 - **Offen für den Projektinhaber (Review 26.11.2026):** `docs/entwurf.md:106` und `docs/umsetzungsplan-etappe-1.md:21` (dazu die Testfälle in `:121`) sagen noch „Fehlt der Jahrgang, gilt die AK aus der Liste“. Nicht geändert, weil beide aus dem Planungsprojekt kommen. Frage: Ersetzt der Entwurf „Kaderliste rund machen“ diese Stellen, und wird `entwurf.md` im Planungsprojekt nachgezogen? Ebenso veraltet, für eine spätere kleine Aufgabe: Docblock und Fallback `fromList()` in `src/Domain/AgeClass.php` (in Produktion ungenutzt).
 - Task 2: Neue reine Klasse `App\Domain\BirthYear::reconcile`. Ist nach dem Speichern ein Geburtstag gesetzt, setzt der Server den Jahrgang auf dessen Jahr (POST, PUT, Import). Ein mitgeschickter Jahrgang, der davon abweicht, ergibt 422 `fields: ["birth_year"]` und es wird nichts gespeichert; im Import wird die Zeile mit Grund `invalid` und `fields: ["birth_year"]` übersprungen. Ein mitgeschicktes leeres `birth_year` bei gesetztem Geburtstag gilt ebenfalls als abweichend. Wird der Geburtstag geleert, bleibt der Jahrgang stehen und ist danach frei. Das Protokoll nennt `birth_year`, wenn der Server es ableitet und der Wert sich ändert.
 - Task 2: Die Ableitung setzt voraus, dass jede Rolle mit Schreibrecht auf `player.private` auch Schreibrecht auf `player.roster` hat (heute: nur `admin` und `roster_editor`). Bei einer späteren Änderung der Felder je Rolle darauf achten.
