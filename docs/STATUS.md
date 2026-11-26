@@ -4,10 +4,10 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig kader-task-1-list-ak-nk1 |
-| Aktueller Zweig | kader-task-1-list-ak-nk1 (Pull-Request #20) |
+| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig kader-task-2-birth-year |
+| Aktueller Zweig | kader-task-2-birth-year (Pull-Request folgt) |
 | Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft; MacBook eingerichtet (227 Tests grün) |
-| In Arbeit | Plan „Kaderliste rund machen“: Task 1 fertig (Pull-Request #20), weiter mit Task 2 |
+| In Arbeit | Plan „Kaderliste rund machen“: Task 2 fertig (Pull-Request folgt), weiter mit Task 3 |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -127,8 +127,8 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 
 | Task | Stand | Zweig | Bemerkung |
 |---|---|---|---|
-| 1 Server: AK (Liste) entfernen, NK1 | fertig, 233 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-1-list-ak-nk1` | Pull-Request #20 |
-| 2 Server: Jahrgang aus dem Geburtstag | offen | | |
+| 1 Server: AK (Liste) entfernen, NK1 | fertig, 233 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-1-list-ak-nk1` | Pull-Request #20, zusammengeführt |
+| 2 Server: Jahrgang aus dem Geburtstag | fertig, 253 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-2-birth-year` | Pull-Request folgt |
 | 3 Oberfläche: Schrift, Spalten, Bearbeiten | offen | | |
 | 4 Oberfläche: Sortieren, Filter, Export | offen | | |
 | 5 Auslieferung 1.1.0 | offen | | |
@@ -137,7 +137,10 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 - Task 1: **Kaderstatus ist auf dem Server frei, die Auswahl begrenzt nur die Oberfläche.** (`PlayerInput` hat für `roster_status` keine Liste erlaubter Werte, NK1 wird angenommen.)
 - Task 1, Abweichung: `KaderImport::plan()` übernimmt `list_ak` nicht mehr und behandelt es als unbekanntes Feld (Zeile `invalid`). Zusätzliche Absicherung, die Schnittstelle lehnt das Feld vorher schon mit 403 ab.
 - **Bis Task 3 nicht ausliefern:** Die Oberfläche schickt beim Import noch die Spalte AK als `list_ak` (`COLUMN_KEYS` in `public/js/roster.js`). Zwischen Task 1 und Task 3 scheitert der Import in der Oberfläche deshalb mit 403. Bearbeiten ist nicht betroffen. Task 3 behebt das laut Plan.
-- Offen für den Projektinhaber: In `CLAUDE.md` unter „Begriffe → Altersklasse“ steht noch „Ohne Jahrgang gilt die AK aus der Liste“. Das widerspricht dem Entwurf (ohne Jahrgang leer). Vorschlag zur Änderung im Pull-Request #20.
+- Offen für den Projektinhaber: In `CLAUDE.md` unter „Begriffe → Altersklasse“ steht noch „Ohne Jahrgang gilt die AK aus der Liste“. Das widerspricht dem Entwurf (ohne Jahrgang leer). Vorschlag zur Änderung im Pull-Request #20, noch nicht entschieden.
+- Task 2: Neue reine Klasse `App\Domain\BirthYear::reconcile`. Ist nach dem Speichern ein Geburtstag gesetzt, setzt der Server den Jahrgang auf dessen Jahr (POST, PUT, Import). Ein mitgeschickter Jahrgang, der davon abweicht, ergibt 422 `fields: ["birth_year"]` und es wird nichts gespeichert; im Import wird die Zeile mit Grund `invalid` und `fields: ["birth_year"]` übersprungen. Ein mitgeschicktes leeres `birth_year` bei gesetztem Geburtstag gilt ebenfalls als abweichend. Wird der Geburtstag geleert, bleibt der Jahrgang stehen und ist danach frei. Das Protokoll nennt `birth_year`, wenn der Server es ableitet und der Wert sich ändert.
+- Task 2: Die Ableitung setzt voraus, dass jede Rolle mit Schreibrecht auf `player.private` auch Schreibrecht auf `player.roster` hat (heute: nur `admin` und `roster_editor`). Bei einer späteren Änderung der Felder je Rolle darauf achten.
+- **Migration `003_birth_year_from_date.sql` (Task 2):** Beim nächsten Hochladen per phpMyAdmin einspielen. Sie gleicht `birth_year` einmal an das Jahr von `birth_date` an, wo ein Datum gesetzt ist und der Jahrgang fehlt oder abweicht. **Sie schreibt keinen Eintrag ins Änderungsprotokoll** und setzt bei den geänderten Zeilen `players.updated_at` neu. Ein zweiter Import bricht beim Selbsteintrag in `schema_migrations` ab und ändert nichts.
 
 ## Nächster Schritt
 
@@ -148,4 +151,4 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer.
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
-6. Plan „Kaderliste rund machen“: Task 1 fertig (Zweig `kader-task-1-list-ak-nk1`, Pull-Request #20). Nach Freigabe und Zusammenführen weiter mit Task 2 (Jahrgang aus dem Geburtstag). `main` erst nach Task 3 ausliefern (Import in der Oberfläche).
+6. Plan „Kaderliste rund machen“: Task 1 zusammengeführt (Pull-Request #20). Task 2 fertig (Zweig `kader-task-2-birth-year`). Nach Freigabe und Zusammenführen weiter mit Task 3 (Oberfläche: Schrift, Spalten, Bearbeiten). `main` erst nach Task 3 ausliefern (Import in der Oberfläche), mit Migration 003.

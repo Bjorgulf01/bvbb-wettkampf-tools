@@ -111,6 +111,7 @@ final class KaderImport
             $ids = $byName[$key] ?? [];
             if (count($ids) <= 1) {
                 // Jahrgang und Geburtstag abgleichen, mit dem gespeicherten Datum des gefundenen Spielers.
+                // Mehrdeutige Treffer werden unten ohnehin übersprungen (ambiguous_match).
                 $r = BirthYear::reconcile($data, count($ids) === 1 ? $storedDates[$ids[0]] : null);
                 if ($r['invalid'] !== []) {
                     $plan['skipped'][] = ['row' => $no, 'reason' => 'invalid', 'fields' => $r['invalid']];
