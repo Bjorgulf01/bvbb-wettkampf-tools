@@ -4,10 +4,10 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig kader-task-3-roster-ui |
-| Aktueller Zweig | kader-task-3-roster-ui (Pull-Request #22) |
+| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig kader-task-4-sort-filter |
+| Aktueller Zweig | kader-task-4-sort-filter (Pull-Request #23) |
 | Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft; MacBook eingerichtet (227 Tests grün) |
-| In Arbeit | Plan „Kaderliste rund machen“: Task 3 fertig (Pull-Request #22), weiter mit Task 4 |
+| In Arbeit | Plan „Kaderliste rund machen“: Task 4 fertig (Pull-Request #23), danach Task 5 (Auslieferung) |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -129,8 +129,8 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 |---|---|---|---|
 | 1 Server: AK (Liste) entfernen, NK1 | fertig, 233 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-1-list-ak-nk1` | Pull-Request #20, zusammengeführt |
 | 2 Server: Jahrgang aus dem Geburtstag | fertig, 253 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-2-birth-year` | Pull-Request #21, zusammengeführt |
-| 3 Oberfläche: Schrift, Spalten, Bearbeiten | fertig, Rauchtest 165 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-3-roster-ui` | Pull-Request #22 |
-| 4 Oberfläche: Sortieren, Filter, Export | offen | | |
+| 3 Oberfläche: Schrift, Spalten, Bearbeiten | fertig, Rauchtest 165 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-3-roster-ui` | Pull-Request #22, zusammengeführt |
+| 4 Oberfläche: Sortieren, Filter, Export | fertig, Rauchtest 261 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-4-sort-filter` | Pull-Request #23 |
 | 5 Auslieferung 1.1.0 | offen | | |
 
 - Task 1: `list_ak` ist aus `player.roster` entfernt. Keine Rolle liest oder schreibt es, `PUT` und Import mit `list_ak` ergeben 403 (getestet; `POST` läuft über dieselbe Prüfung). Die Spalte `players.list_ak` bleibt mit ihren Werten in der Datenbank. Die AK kommt nur noch aus dem Jahrgang, **ohne Jahrgang ist sie leer** (bisher: AK aus der Liste). Die Befunde `ak_mismatch` und `bad_list_ak` entfallen.
@@ -145,6 +145,9 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 - Task 3: Der Rauchtest (`tools/ui-smoke/`) läuft auf dem PC: Image `bvbb-ui-smoke` vorhanden, 165 Prüfungen grün in Chromium, Firefox und WebKit. Unter Git Bash `MSYS_NO_PATHCONV=1` voranstellen. Docker Desktop muss laufen.
 - Task 3, offen: Das Blatt „Hinweise“ in `testdata/Testkaderliste_fiktiv.xlsx` nennt noch `ak_mismatch` (Jäckel, Gustav), „AK kommt aus der Liste“ (Fuchsberger, Henri) und „normalisiert zu U09“ (Müßig, Jonte). Nicht geändert; die Checkliste (I1) weist darauf hin.
 - Task 3, von Hand auf dem iPad prüfen (Checkliste K14, K16): Tabelle quer, Geburtstag über „Zurücksetzen“ im Datumswähler leeren.
+- Task 4: Neues Modul `public/js/roster-view.js` (reine Funktionen: sortieren, filtern, Auswahlwerte). Spaltenköpfe sind Schaltflächen mit ▲ ▼ und `aria-sort`, Standard Name, dann Vorname. Leere Werte stehen in beiden Richtungen am Ende. Filterleiste mit Suche (nur Name und Vorname, bisher auch Verein und Trainingsort), AK, Jahrgang, Kaderstatus, Verein, m/w, Status (Standard „aktiv“, ersetzt das Kästchen „nur aktive“) und „Filter zurücksetzen“. Filter gibt es nur für Spalten, die die Rolle sieht. Filter und Sortierung bleiben nach dem Speichern erhalten, solange die Seite offen ist. Der Export enthält genau die angezeigten Zeilen in der angezeigten Reihenfolge.
+- Task 4: Der Sprung aus der Datenprüfung setzt alle Filter auf „alle“, auch den Status, damit passive Spieler erreichbar sind. Nach dem Review behoben: Der Fokus bleibt nach dem Sortieren per Tastatur auf dem Spaltenkopf, und die Seite scrollt nur einmal zur bearbeiteten Zeile statt bei jeder Ansichtsänderung.
+- Task 4, von Hand prüfen (Checkliste K17 bis K22): Filterleiste auf dem iPad, Sortieren mit der Tastatur.
 
 ## Nächster Schritt
 
@@ -155,4 +158,4 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer.
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
-6. Plan „Kaderliste rund machen“: Task 1 und 2 zusammengeführt (Pull-Requests #20, #21). Task 3 fertig (Zweig `kader-task-3-roster-ui`, Pull-Request #22). Nach Freigabe und Zusammenführen weiter mit Task 4 (Sortieren, Filterleiste, Export). Ausgeliefert wird mit Task 5 (Version 1.1.0, Migration 003).
+6. Plan „Kaderliste rund machen“: Task 1 bis 3 zusammengeführt (Pull-Requests #20 bis #22). Task 4 fertig (Zweig `kader-task-4-sort-filter`, Pull-Request #23). Nach Freigabe und Zusammenführen weiter mit Task 5 (Auslieferung). Ausgeliefert wird mit Task 5 (Version 1.1.0, Migration 003).

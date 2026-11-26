@@ -91,3 +91,9 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 .roles label { font-size: 13.5px; display: inline-flex; gap: 3px; align-items: center; }
 .clubs input[type=text] { width: 100%; min-width: 120px; }
 input.bad, select.bad { border-color: var(--err); }
+.filters { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: flex-end; padding: 0 12px 8px; }
+.filters label { font-size: 13.5px; display: inline-flex; flex-direction: column; gap: 2px; }
+.filters input[type=search] { min-width: 170px; }
+.filters button { align-self: flex-end; }
+th button.sort { border: none; background: none; padding: 0; font: inherit; font-weight: bold; color: inherit; cursor: pointer; white-space: nowrap; }
+th button.sort:focus-visible { outline: 2px solid var(--ac); outline-offset: 1px; }

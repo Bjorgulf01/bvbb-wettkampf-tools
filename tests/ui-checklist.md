@@ -35,7 +35,7 @@ Jeder Punkt in Firefox und Safari. Für „Netzwerk“ die Entwicklerwerkzeuge �
 | K3 | `basis` | nur Name, Vorname, Verein, Vereinskürzel; keine AK, keine Ampel | | |
 | K4 | `trainer-kaderpflege` (zwei Rollen) | wie Kaderpflege | | |
 | K5 | Spalten | Reihenfolge wie in der Kaderliste; Spalten entstehen aus der Antwort, nicht aus einer festen Liste | | |
-| K6 | Suche und Filter „nur aktive“ | Liste filtert ohne neue Anfrage; Zahl der angezeigten Spieler stimmt | | |
+| K6 | Filterleiste: Suche (Name oder Vorname, Teiltext), AK, Jahrgang, Kaderstatus, Verein, m/w, Status | Liste filtert ohne neue Anfrage; Filter wirken zusammen; Zählung „{n} von {m} Spielern“ stimmt; Standard für Status ist „aktiv“; jede Auswahl zeigt nur vorkommende Werte, dazu „alle“ und, falls vorhanden, „(leer)“ | | |
 | K7 | Jahr ändern (zum Beispiel 2028) | AK wird neu berechnet (Jahrgang 2015: 2026 U13, 2028 U15) | | |
 | K8 | Bearbeiten: Feld ändern, speichern | Wert bleibt nach dem Neuladen; im Protokoll steht nur der Feldname | | |
 | K9 | Bearbeiten: SpoMed oder Anti Doping | deutlicher Hinweis „Nur Datum und Status eintragen, keine Befunde oder medizinischen Angaben.“ | | |
@@ -46,6 +46,12 @@ Jeder Punkt in Firefox und Safari. Für „Netzwerk“ die Entwicklerwerkzeuge �
 | K14 | Schrift | Inhalt und Überschriften eine Stufe größer als bisher (Tabelle 13,5 statt 12 px); auf dem iPad quer scrollt die Tabelle weiter waagerecht, nichts überlappt | | |
 | K15 | Bearbeiten: Kaderstatus | Auswahl leer, NK1, NK2, LK, SK in dieser Reihenfolge; ein anderer gespeicherter Wert bleibt als zusätzliche Option erhalten | | |
 | K16 | Bearbeiten: Geburtstag eintragen, dann leeren | mit Geburtstag ist der Jahrgang gesperrt, zeigt dessen Jahr und den Hinweis „wird aus dem Geburtstag übernommen“; geleert sofort wieder bearbeitbar; Speichern schickt den gesperrten Jahrgang nicht mit | | |
+| K17 | Klick auf eine Spaltenüberschrift, zweiter Klick | sortiert aufsteigend (▲), dann absteigend (▼); Standard Name, dann Vorname; mit der Tastatur bedienbar; Umlaute richtig (Müßig vor Özdemir vor Weißkopf); AK U09 bis O19, Kaderstatus NK1, NK2, LK, SK; leere Werte in beiden Richtungen am Ende | | |
+| K18 | „(leer)“ bei Jahrgang | zeigt die Spieler ohne Jahrgang (Datenprüfung: `missing_birth_year`) | | |
+| K19 | Filter gesetzt, Spieler bearbeiten und speichern (zum Beispiel bei Status „aktiv“ auf passiv setzen) | Filter und Sortierung bleiben; der Spieler verschwindet, Zählung sinkt um 1 | | |
+| K20 | „Filter zurücksetzen“ | alle Filter auf „alle“, Status auf „aktiv“, Suche leer | | |
+| K21 | `trainer` und `basis` | Filter nur für sichtbare Spalten: `trainer` alle außer privaten (es gibt keinen Filter für Geburtstag), `basis` nur Suche und Verein | | |
+| K22 | iPad | Filterleiste bricht um und bleibt bedienbar | | |
 
 ## Import
 
@@ -65,7 +71,7 @@ Jeder Punkt in Firefox und Safari. Für „Netzwerk“ die Entwicklerwerkzeuge �
 |---|---|---|---|---|
 | D1 | Datenprüfung öffnen | Befunde mit deutschem Text, Name und Detail (zum Beispiel „Verein nicht in der Vereinsliste (Neuer Verein e.V.)“); kein Befund zur AK aus der Liste | | |
 | D2 | Klick auf einen Befund | springt zum Spieler und hebt die Zeile hervor | | |
-| E1 | Export | `.xlsx` mit den angezeigten Spalten und deutschen Überschriften; coach-Export enthält keine Kontaktfelder | | |
+| E1 | Export (auch mit gesetztem Filter und anderer Sortierung) | `.xlsx` mit genau den angezeigten Zeilen in der angezeigten Reihenfolge und den sichtbaren Spalten mit deutschen Überschriften; coach-Export enthält keine Kontaktfelder und keinen Geburtstag | | |
 
 ## Vereine
 
