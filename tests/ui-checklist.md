@@ -57,7 +57,7 @@ Jeder Punkt in Firefox und Safari. Für „Netzwerk“ die Entwicklerwerkzeuge �
 
 | # | Schritt | Erwartet | Firefox | Safari |
 |---|---|---|---|---|
-| I1 | `Testkaderliste_fiktiv.xlsx` wählen | Vorschau ohne Speichern: 59 neu, 0 geändert, übersprungen „Lübbe, Arvid“ (doppelt in der Datei) und die Platzhalterzeile; Befunde wie im Blatt „Hinweise“ (ohne `health_note_unclear`; `ak_mismatch` für Jäckel, Gustav entfällt seit „Kaderliste rund machen“, das Blatt ist noch nicht angepasst) | | |
+| I1 | `Testkaderliste_fiktiv.xlsx` wählen | Vorschau ohne Speichern: 59 neu, 0 geändert, übersprungen „Lübbe, Arvid“ (doppelt in der Datei) und die Platzhalterzeile; Befunde wie im Blatt „Hinweise“ (ohne `health_note_unclear`; seit „Kaderliste rund machen“ kein `ak_mismatch` mehr, Fuchsberger, Henri und Dreher, Nils mit leerer AK) | | |
 | I2 | Hinweis im Import | „Nur Datum und Status eintragen, keine Befunde oder medizinischen Angaben.“ | | |
 | I3 | „Übernehmen“ | Liste zeigt 59 Spieler; Jahrgänge aus der Spalte JG stimmen (Aberle, Britta: 2005) | | |
 | I4 | dieselbe Datei erneut, Vorschau | 0 neu, 59 geändert, nichts doppelt angelegt | | |
