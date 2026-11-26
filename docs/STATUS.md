@@ -4,10 +4,10 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig kader-task-4-sort-filter |
-| Aktueller Zweig | kader-task-4-sort-filter (Pull-Request #23) |
+| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig kader-task-5-release |
+| Aktueller Zweig | kader-task-5-release (Pull-Request folgt) |
 | Letzte fertige Aufgabe | Entwicklungsablauf E2 (Webspace-Paket, Pull-Request #16), auf dem Test-Webspace geprüft; MacBook eingerichtet (227 Tests grün) |
-| In Arbeit | Plan „Kaderliste rund machen“: Task 4 fertig (Pull-Request #23), danach Task 5 (Auslieferung) |
+| In Arbeit | Plan „Kaderliste rund machen“: Task 5 fertig (Version 1.1.0, Pull-Request folgt), wartet auf die Prüfung auf dem Test-Webspace |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -130,8 +130,19 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 | 1 Server: AK (Liste) entfernen, NK1 | fertig, 233 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-1-list-ak-nk1` | Pull-Request #20, zusammengeführt |
 | 2 Server: Jahrgang aus dem Geburtstag | fertig, 253 Tests grün gegen `bvbb_test_pc` (26.11.2026) | `kader-task-2-birth-year` | Pull-Request #21, zusammengeführt |
 | 3 Oberfläche: Schrift, Spalten, Bearbeiten | fertig, Rauchtest 165 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-3-roster-ui` | Pull-Request #22, zusammengeführt |
-| 4 Oberfläche: Sortieren, Filter, Export | fertig, Rauchtest 261 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-4-sort-filter` | Pull-Request #23 |
-| 5 Auslieferung 1.1.0 | offen | | |
+| 4 Oberfläche: Sortieren, Filter, Export | fertig, Rauchtest 261 Prüfungen grün in Chromium, Firefox, WebKit; 253 PHP-Tests grün (26.11.2026) | `kader-task-4-sort-filter` | Pull-Request #23, zusammengeführt |
+| 5 Auslieferung 1.1.0 | fertig bis auf die Prüfung auf dem Test-Webspace (Step 4, Projektinhaber); 253 PHP-Tests grün gegen `bvbb_test_pc`, Rauchtest 261 Prüfungen grün, `/api/health` lokal `{"ok":true,"version":"1.1.0"}` (26.11.2026) | `kader-task-5-release` | Pull-Request folgt |
+
+**Stand mit Version 1.1.0, Festlegungen aus dem Entwurf:**
+
+- **AK:** Sie kommt nur noch aus dem Jahrgang. **Ohne Jahrgang ist die AK jetzt leer** (bisher: AK aus der Liste). Die Datenprüfung meldet dann `missing_birth_year`, im Filter steht der Spieler unter „(leer)“. `list_ak` ist aus Schnittstelle, Oberfläche, Bearbeiten und Export entfernt, die Spalte in der Datenbank bleibt mit ihren Werten. `ak_mismatch` und `bad_list_ak` entfallen, `training_site_looks_like_ak` bleibt. Der Import liest die Spalte AK weiter ein (Prüfung der Spalten A bis V), speichert sie aber nicht.
+- **Kaderstatus (Ergebnis Task 1, Step 3):** Auf dem Server gibt es keine Liste erlaubter Werte (`PlayerInput`), NK1 wird ohne Änderung angenommen. Die Auswahl NK1, NK2, LK, SK begrenzt nur die Oberfläche. Sortiert wird fachlich NK1, NK2, LK, SK, leer am Ende. Offen (blockiert nichts): die ausgeschriebene Bezeichnung von NK1 für die Begriffsliste.
+- **Jahrgang und Geburtstag:** Ist ein Geburtstag gesetzt, setzt der Server den Jahrgang auf dessen Jahr. Ein abweichender Jahrgang ergibt 422 `fields: ["birth_year"]`. Geburtstag leeren lässt den Jahrgang stehen. Im Dialog ist der Jahrgang gesperrt, solange ein Geburtstag eingetragen ist („wird aus dem Geburtstag übernommen“). Die Migration `003_birth_year_from_date.sql` gleicht die vorhandenen Daten einmal an, **ohne Eintrag im Änderungsprotokoll**. Rechte unverändert: Trainer sehen den Jahrgang, nie den Geburtstag.
+- **Spaltenname:** „Geburtstag“ statt „JG (Datum)“, angezeigt als `TT.MM.JJJJ`. Der Spaltenkopf „JG“ im Import bleibt.
+- **Schrift:** etwa 12,5 % größer.
+- **Sortieren und Filter:** Sortieren im Browser, Standard Name, dann Vorname, Pfeile ▲ ▼ und `aria-sort`, mit der Tastatur bedienbar. Filterleiste mit Suche (Name oder Vorname), AK, Jahrgang, Kaderstatus, Verein, m/w, Status (Standard „aktiv“, bestätigt am 24.11.2026). Filter nur für Spalten, die die Rolle sieht. Filter bleiben, solange die Seite offen ist, werden aber nicht dauerhaft gespeichert.
+- **Export:** genau die sichtbaren Spalten, die gefilterten Zeilen und die aktuelle Sortierung. Er ist nicht mehr als Vorlage für den Import gedacht.
+- **Auslieferung 1.1.0 (Step 4, Projektinhaber):** zuerst `migrations/003_birth_year_from_date.sql` per phpMyAdmin importieren (danach steht sie in `schema_migrations`), dann das Paket hochladen (`bvbb-app/src/` vollständig ersetzen). `/api/health` muss `{"ok":true,"version":"1.1.0"}` liefern. Danach die neuen Punkte der `tests/ui-checklist.md` durchgehen: I1, I7, D1, K6, K13 bis K22, E1.
 
 - Task 1: `list_ak` ist aus `player.roster` entfernt. Keine Rolle liest oder schreibt es, `PUT` und Import mit `list_ak` ergeben 403 (getestet; `POST` läuft über dieselbe Prüfung). Die Spalte `players.list_ak` bleibt mit ihren Werten in der Datenbank. Die AK kommt nur noch aus dem Jahrgang, **ohne Jahrgang ist sie leer** (bisher: AK aus der Liste). Die Befunde `ak_mismatch` und `bad_list_ak` entfallen.
 - Task 1: **Kaderstatus ist auf dem Server frei, die Auswahl begrenzt nur die Oberfläche.** (`PlayerInput` hat für `roster_status` keine Liste erlaubter Werte, NK1 wird angenommen.)
@@ -158,4 +169,4 @@ Plan: `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`, Entwurf: `d
 3. Ergebnis hier eintragen. Dann ist Task 12 abgeschlossen und Etappe 1 fertig bis auf Task 9b (zurückgestellt, wartet auf die Spalten der Mitgliederliste).
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer.
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
-6. Plan „Kaderliste rund machen“: Task 1 bis 3 zusammengeführt (Pull-Requests #20 bis #22). Task 4 fertig (Zweig `kader-task-4-sort-filter`, Pull-Request #23). Nach Freigabe und Zusammenführen weiter mit Task 5 (Auslieferung). Ausgeliefert wird mit Task 5 (Version 1.1.0, Migration 003).
+6. Plan „Kaderliste rund machen“: Task 1 bis 4 zusammengeführt (Pull-Requests #20 bis #23). Task 5 fertig (Zweig `kader-task-5-release`, Version 1.1.0). Nach dem Zusammenführen Paket bauen (`tools/package.php`), auf dem Test-Webspace zuerst Migration 003 einspielen, dann hochladen und `/api/health` sowie die neuen Punkte der Checkliste prüfen (Abschnitt „Kaderliste rund machen“). Danach ist der Plan abgeschlossen.

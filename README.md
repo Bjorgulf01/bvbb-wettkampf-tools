@@ -45,7 +45,7 @@ docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/pa
 ## Erstes Einrichten
 
 1. **Datenbank anlegen** im Kundenmenü des Hosters (MariaDB 10.11, Zeichensatz utf8mb4). Name, Benutzer, Passwort und Host notieren.
-2. **Migrationen einspielen**: in phpMyAdmin die Datenbank wählen, „Importieren“, nacheinander `migrations/001_core.sql`, dann `migrations/002_seed_roles.sql`, in der Reihenfolge der Nummern. Jede Datei trägt sich am Ende selbst in die Tabelle `schema_migrations` ein. Danach müssen dort beide Dateinamen stehen. Ein versehentlicher zweiter Import derselben Datei bricht mit einem Fehler (doppelter Eintrag) ab und ändert nichts.
+2. **Migrationen einspielen**: in phpMyAdmin die Datenbank wählen, „Importieren“, nacheinander `migrations/001_core.sql`, `migrations/002_seed_roles.sql` und `migrations/003_birth_year_from_date.sql`, in der Reihenfolge der Nummern. Jede Datei trägt sich am Ende selbst in die Tabelle `schema_migrations` ein. Danach müssen dort alle drei Dateinamen stehen. Ein versehentlicher zweiter Import derselben Datei bricht mit einem Fehler (doppelter Eintrag) ab und ändert nichts.
    - phpMyAdmin führt jede Anweisung einzeln aus, nicht als Ganzes. Bricht der Import von `002_seed_roles.sql` mittendrin ab (zum Beispiel Verbindung weg), im Reiter „SQL“ `DELETE FROM role_permissions; DELETE FROM roles;` ausführen (nur beim ersten Einrichten, solange es noch keine Benutzer gibt) und die Datei neu importieren. Bricht `001_core.sql` ab, die Datei einfach noch einmal importieren.
 3. **Konfiguration**: `config.example.php` lokal nach `config.php` kopieren und ausfüllen:
    - `env`: `staging` auf dem Test-Webspace, `production` im Echtbetrieb.
@@ -63,13 +63,15 @@ docker compose -f tools/dev-env/docker-compose.dev.yml run --rm php php tools/pa
 2. Paket bauen und `webseiten/` und `bvbb-app/` aus dem Paket auf die gleichnamigen Ordner hochladen. `bvbb-app/src/` dabei vollständig ersetzen (alten Ordner vorher löschen), damit keine alten Dateien liegen bleiben. `config.php` und `sessions/` bleiben.
 3. `GET /api/health` aufrufen.
 
+**Von 1.0.0 auf 1.1.0:** neu ist `migrations/003_birth_year_from_date.sql`. Sie ändert kein Schema, sondern setzt bei jedem Spieler mit Geburtstag den Jahrgang auf das Jahr des Geburtstags (ohne Eintrag im Änderungsprotokoll). Danach steht `003_birth_year_from_date.sql` in `schema_migrations`. Sie läuft auch mit dem alten Code und kann deshalb wie üblich zuerst eingespielt werden. `/api/health` meldet danach `"version":"1.1.0"`.
+
 Gibt es später SSH, ersetzt `php bvbb-app/bin/migrate.php` Schritt 1.
 
 ## Prüfen nach dem Hochladen
 
 | Prüfung | Erwartet |
 |---|---|
-| `https://…/api/health` | `{"ok":true,"version":"1.0.0"}`. Bei einem Datenbankfehler oder fehlendem Sitzungsordner `{"ok":false}` mit Status 503, ohne Details |
+| `https://…/api/health` | `{"ok":true,"version":"1.1.0"}`. Bei einem Datenbankfehler oder fehlendem Sitzungsordner `{"ok":false}` mit Status 503, ohne Details |
 | `http://…` (ohne s) | leitet auf `https://…` um, **bevor** nach einem Passwort gefragt wird (siehe unten) |
 | `https://…/.htaccess`, `https://…/.user.ini` | 403 |
 | `https://…/src/Config.php`, `https://…/migrations/001_core.sql`, `https://…/config.php`, `https://…/bvbb-app/config.php` | 403 oder 404 |
