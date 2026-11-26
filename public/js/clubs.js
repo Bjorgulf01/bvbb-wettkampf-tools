@@ -23,7 +23,25 @@ const WARN_TEXT = {
   member_no_derived: (d) => `DBV-Nummer aus Vereinsnummer gebildet: ${d}`,
   alias_conflict: (d) => `Alias „${d}“ gehört schon einem anderen Verein, nicht übernommen`,
   linked_by_name: (d) => `über den Namen mit „${d}“ verknüpft`,
+  name_matches_alias: (d) => `der Name ist Kürzel oder Alias von „${d}“; Spieler mit diesem Vereinstext wechseln zu diesem Verein`,
 };
+
+/** Spieler, deren Zuordnung sich durch den Import ändert (vom Server berechnet), als Warnung. */
+function playersNote(p, applied) {
+  if (!p || (!p.unlinked && !p.moved)) return null;
+  const parts = [];
+  if (p.unlinked) {
+    parts.push(applied
+      ? `${p.unlinked} Spieler haben durch den Import ihren Verein verloren (Datenprüfung: „Verein nicht in der Vereinsliste“).`
+      : `${p.unlinked} Spieler verlieren durch den Import ihren Verein (Datenprüfung: „Verein nicht in der Vereinsliste“).`);
+  }
+  if (p.moved) {
+    parts.push(applied
+      ? `${p.moved} Spieler sind zu einem anderen Verein gewechselt.`
+      : `${p.moved} Spieler wechseln durch den Import zu einem anderen Verein.`);
+  }
+  return el('p', { class: 'warn' }, parts.join(' '));
+}
 
 /** imported: nach dem Übernehmen {file, parsed, res}, damit das Ergebnis über der neuen Liste stehen bleibt. */
 export async function renderClubs(root, sess, imported = null) {
@@ -90,6 +108,7 @@ export async function renderClubs(root, sess, imported = null) {
         el('span', {}, el('b', {}, String(res.update)), ' geändert'),
         el('span', {}, el('b', {}, String(res.unchanged)), ' unverändert'),
         el('span', {}, el('b', {}, String(res.skipped.length)), ' übersprungen')),
+      playersNote(res.players, applied),
       res.skipped.length ? [el('h3', {}, 'Übersprungene Zeilen'),
         el('ul', {}, res.skipped.map((s) => el('li', {}, at(s.row) + (SKIP_TEXT[s.reason] || s.reason))))] : null,
       res.warnings.length ? [el('h3', {}, 'Hinweise'),

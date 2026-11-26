@@ -43,9 +43,11 @@ final class ClubImport
         /** @var array<string, list<string>> Schlüssel → Besitzer, für Kürzel und Aliasnamen */
         $others = [];
         $clubs = [];
+        $ownerNames = []; // Besitzer => Name (für Meldungen)
         foreach ($existing as $c) {
             $id = (int) $c['id'];
             $clubs[$id] = $c;
+            $ownerNames['c' . $id] = (string) $c['name'];
             $mn = trim((string) ($c['member_no'] ?? ''));
             if ($mn !== '') {
                 $byMemberNo[$mn] = $id;
@@ -129,6 +131,15 @@ final class ClubImport
                     $data['name'] = $name;
                     $warnings[] = ['row' => $n, 'code' => 'renamed', 'detail' => $c['name'] . ' → ' . $name];
                 }
+            }
+            // Ein Name, der Kürzel oder Alias eines anderen Vereins ist, zieht dessen Spieler mit diesem Text
+            // an sich (die Zuordnung sucht den Namen vor Kürzel und Alias): in der Vorschau melden.
+            foreach (array_unique($others[$key] ?? []) as $o) {
+                if ($o !== $owner) {
+                    $warnings[] = ['row' => $n, 'code' => 'name_matches_alias', 'detail' => $ownerNames[$o] ?? ''];
+                }
+            }
+            if ($id !== null) {
                 if ($active !== (bool) $c['active']) {
                     $data['active'] = $active;
                 }
@@ -168,6 +179,7 @@ final class ClubImport
 
             // Ab hier gilt die Zeile: Namen und Aliasnamen für die folgenden Zeilen vormerken.
             self::own($names, $name, $owner);
+            $ownerNames[$owner] = $name;
             foreach ($aliases as $a) {
                 self::own($others, $a, $owner);
             }

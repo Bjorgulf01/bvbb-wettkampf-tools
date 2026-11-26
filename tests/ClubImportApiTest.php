@@ -276,6 +276,39 @@ return [
             return $l;
         }, $log));
     },
+    'Vorschau nennt Spieler, die durch eine Umbenennung ihren Verein verlieren' => function () use ($setup, $send, $row): void {
+        $env = $setup();
+        $env->pdo->exec("INSERT INTO players (id, last_name, first_name, club_id, club_name, gender, roster_status, active) VALUES (3, 'Weißkopf', 'Ivo', 1, 'SV Sankt Altdorf', 'm', 'LK', 1)");
+        [$router, $token] = $env->as('kaderpflege');
+        $before = $env->snapshot();
+        $res = $send($router, $token, ['rows' => [$row(['verein_nr' => '40', 'dbv_nr' => '08-0040', 'name' => 'SV Sankt Neudorf'])], 'dry_run' => true]);
+        assertSame(['unlinked' => 1, 'moved' => 0], $res->body['players']);
+        assertSame(1, $res->body['update']);
+        assertSame($before, $env->snapshot(), 'Vorschau ändert nichts');
+        $done = $send($router, $token, ['rows' => [$row(['verein_nr' => '40', 'dbv_nr' => '08-0040', 'name' => 'SV Sankt Neudorf'])], 'dry_run' => false]);
+        assertSame(['unlinked' => 1, 'moved' => 0], $done->body['players']);
+        assertSame(null, $env->pdo->query('SELECT club_id FROM players WHERE id = 3')->fetchColumn());
+    },
+    'Vorschau nennt Spieler, die zu einem neuen Verein wechseln, mit Warnung' => function () use ($setup, $send, $row): void {
+        $env = $setup();
+        $env->pdo->exec("INSERT INTO players (id, last_name, first_name, club_id, club_name, gender, roster_status, active) VALUES (3, 'Weißkopf', 'Ivo', 1, 'Sankt A', 'm', 'LK', 1)");
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, ['rows' => [$row(['name' => 'Sankt A'])], 'dry_run' => true]);
+        assertSame(['unlinked' => 0, 'moved' => 1], $res->body['players']);
+        assertSame([['row' => 1, 'code' => 'name_matches_alias', 'detail' => 'SV Sankt Altdorf']], $res->body['warnings']);
+    },
+    'Alias, der nur nach der Sortierung der Datenbank doppelt ist, zählt als unverändert' => function () use ($setup, $send, $row): void {
+        $env = $setup();
+        $env->pdo->exec("INSERT INTO club_aliases (club_id, alias) VALUES (2, 'Handgepflegt A')");
+        [$router, $token] = $env->as('kaderpflege');
+        $r = $row(['verein_nr' => '40', 'dbv_nr' => '08-0040', 'name' => 'SV Sankt Altdorf', 'short_name' => 'Handgepflegt Ä']);
+        foreach ([true, false, false] as $dryRun) {
+            $res = $send($router, $token, ['rows' => [$r], 'dry_run' => $dryRun]);
+            assertSame(0, $res->body['update'], 'dry_run ' . var_export($dryRun, true));
+            assertSame(1, $res->body['unchanged']);
+        }
+        assertSame(0, $env->count("SELECT COUNT(*) FROM audit_log WHERE action LIKE 'club_import%'"));
+    },
     'CSRF: ohne Token 403' => function () use ($setup, $three): void {
         $env = $setup();
         [$router] = $env->as('kaderpflege');

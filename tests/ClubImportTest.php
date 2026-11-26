@@ -185,6 +185,23 @@ return [
         assertSame('08-0501', $p['create'][0]['member_no']);
         assertSame([['row' => 1, 'code' => 'member_no_derived', 'detail' => '08-0501']], $p['warnings']);
     },
+    'plan: Name gleich Alias oder Kürzel eines anderen Vereins ergibt eine Warnung' => function () use ($row, $club): void {
+        $p = ClubImport::plan([
+            $row(['verein_nr' => '60', 'dbv_nr' => null, 'name' => 'altname']),
+            $row(['verein_nr' => '61', 'dbv_nr' => null, 'name' => 'sva']),
+        ], [$club()]);
+        assertSame(2, count($p['create']));
+        assertSame([
+            ['row' => 1, 'code' => 'name_matches_alias', 'detail' => 'SV Altname'],
+            ['row' => 1, 'code' => 'member_no_derived', 'detail' => '08-0060'],
+            ['row' => 2, 'code' => 'name_matches_alias', 'detail' => 'SV Altname'],
+            ['row' => 2, 'code' => 'member_no_derived', 'detail' => '08-0061'],
+        ], $p['warnings']);
+    },
+    'plan: Umbenennung auf einen eigenen Alias ergibt keine Alias-Warnung' => function () use ($row, $club, $codes): void {
+        $p = ClubImport::plan([$row(['name' => 'Altname'])], [$club()]);
+        assertSame(['renamed'], $codes($p['warnings']));
+    },
     'plan: Vereine, die nicht in der Datei stehen, bleiben außen vor' => function () use ($row, $club): void {
         $p = ClubImport::plan([$row(['verein_nr' => '41', 'dbv_nr' => null, 'name' => 'BC Neu'])], [$club()]);
         assertSame([], $p['update']);

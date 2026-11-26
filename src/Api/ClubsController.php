@@ -106,43 +106,87 @@ final class ClubsController
             return Response::json(['error' => 'invalid', 'fields' => $invalid], 422);
         }
 
+        // Vorschau und Übernehmen laufen gleich: Der Import wird in einer Transaktion ausgeführt, gezählt wird,
+        // was die Datenbank wirklich ändert (auch Spieler, die ihren Verein verlieren oder wechseln).
+        // Bei dry_run wird danach alles zurückgerollt.
         $user = $this->guard->currentUser();
-        $result = $this->transaction(function () use ($clean, $body, $user): array {
-            $plan = ClubImport::plan($clean, $this->clubs->all());
-            $summary = [
-                'create' => count($plan['create']), 'update' => count($plan['update']),
-                'unchanged' => $plan['unchanged'], 'skipped' => $plan['skipped'], 'warnings' => $plan['warnings'],
-            ];
-            if ($body['dry_run']) {
-                return $summary;
+        $this->pdo->beginTransaction();
+        try {
+            $result = $this->applyImport($clean, $user?->id);
+            $body['dry_run'] ? $this->pdo->rollBack() : $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
             }
-            foreach ($plan['create'] as $c) {
-                $id = $this->clubs->create(['name' => $c['name'], 'active' => $c['active']]);
-                $this->clubs->markImported($id, $c['member_no']);
-                $fields = ['member_no', 'name', 'active'];
-                if ($this->clubs->addAliases($id, $c['aliases']) !== []) {
-                    $fields[] = 'aliases';
-                }
-                $this->audit->log($user?->id, 'club_import_create', 'club', $id, 'fields: ' . implode(', ', $fields));
-            }
-            foreach ($plan['update'] as $u) {
-                $memberNo = $u['data']['member_no'] ?? null;
-                $fields = $this->clubs->update($u['id'], array_diff_key($u['data'], ['member_no' => true]));
-                if ($memberNo !== null) {
-                    $fields[] = 'member_no';
-                }
-                if ($this->clubs->addAliases($u['id'], $u['add_aliases']) !== []) {
-                    $fields[] = 'aliases';
-                }
-                if ($fields !== []) {
-                    $this->clubs->markImported($u['id'], $memberNo);
-                    $this->audit->log($user?->id, 'club_import_update', 'club', $u['id'], 'fields: ' . implode(', ', $fields));
-                }
-            }
-            $this->players->reassignClubs($this->clubs->directory());
-            return $summary;
-        });
+            throw $e;
+        }
         return Response::json($result);
+    }
+
+    /**
+     * Führt den Import innerhalb einer offenen Transaktion aus.
+     * @param list<array<string, mixed>> $clean geprüfte Zeilen
+     * @return array{create:int, update:int, unchanged:int, skipped:list<array>, warnings:list<array>, players:array{unlinked:int, moved:int}}
+     */
+    private function applyImport(array $clean, ?int $userId): array
+    {
+        $plan = ClubImport::plan($clean, $this->clubs->all());
+        $before = $this->clubIdsOfPlayers();
+        $updated = 0;
+        $unchanged = $plan['unchanged'];
+        foreach ($plan['create'] as $c) {
+            $id = $this->clubs->create(['name' => $c['name'], 'active' => $c['active']]);
+            $this->clubs->markImported($id, $c['member_no']);
+            $fields = ['member_no', 'name', 'active'];
+            if ($this->clubs->addAliases($id, $c['aliases']) !== []) {
+                $fields[] = 'aliases';
+            }
+            $this->audit->log($userId, 'club_import_create', 'club', $id, 'fields: ' . implode(', ', $fields));
+        }
+        foreach ($plan['update'] as $u) {
+            $memberNo = $u['data']['member_no'] ?? null;
+            $fields = $this->clubs->update($u['id'], array_diff_key($u['data'], ['member_no' => true]));
+            if ($memberNo !== null) {
+                $fields[] = 'member_no';
+            }
+            // Ein Alias, den die Datenbank als doppelt ansieht (ohne Akzente verglichen), wird übergangen.
+            if ($this->clubs->addAliases($u['id'], $u['add_aliases']) !== []) {
+                $fields[] = 'aliases';
+            }
+            if ($fields === []) {
+                $unchanged++;
+                continue;
+            }
+            $updated++;
+            $this->clubs->markImported($u['id'], $memberNo);
+            $this->audit->log($userId, 'club_import_update', 'club', $u['id'], 'fields: ' . implode(', ', $fields));
+        }
+        $this->players->reassignClubs($this->clubs->directory());
+        $unlinked = 0;
+        $moved = 0;
+        foreach ($this->clubIdsOfPlayers() as $id => $clubId) {
+            $old = $before[$id] ?? null;
+            if ($old !== null && $clubId === null) {
+                $unlinked++;
+            } elseif ($old !== null && $clubId !== $old) {
+                $moved++;
+            }
+        }
+        return [
+            'create' => count($plan['create']), 'update' => $updated, 'unchanged' => $unchanged,
+            'skipped' => $plan['skipped'], 'warnings' => $plan['warnings'],
+            'players' => ['unlinked' => $unlinked, 'moved' => $moved],
+        ];
+    }
+
+    /** @return array<int, ?int> Spieler-id => club_id */
+    private function clubIdsOfPlayers(): array
+    {
+        $out = [];
+        foreach ($this->pdo->query('SELECT id, club_id FROM players')->fetchAll(PDO::FETCH_ASSOC) as $p) {
+            $out[(int) $p['id']] = $p['club_id'] !== null ? (int) $p['club_id'] : null;
+        }
+        return $out;
     }
 
     /**
