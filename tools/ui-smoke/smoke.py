@@ -115,14 +115,18 @@ def run(p, bname, first):
     s.open_roster()
     with pg.expect_file_chooser() as fc:
         pg.get_by_role("button", name="Import").click()
-    fc.value.set_files(ROSTER)
+    with pg.expect_response(lambda r: "/api/players/import" in r.url, timeout=20000) as imp:
+        fc.value.set_files(ROSTER)
+    sent = imp.value.request.post_data_json["rows"]
+    check(f"{bname} I6: Import ohne 403", imp.value.status == 200, imp.value.status)
+    check(f"{bname} I6: Import sendet kein list_ak", not any("list_ak" in r for r in sent), sorted({k for r in sent for k in r}))
     panel = pg.locator(".panel")
     expect(panel).to_contain_text("Vorschau Import", timeout=20000)
     stats = panel.locator(".stats").inner_text()
     expected = "59 neu" if first else "0 neu"
     check(f"{bname} I1: Vorschau „{expected}“", expected.replace(" ", "") in stats.replace("\n", "").replace(" ", ""), stats)
     check(f"{bname} I1: Lübbe übersprungen (doppelt)", "Lübbe, Arvid" in panel.inner_text() and "doppelt in der Datei" in panel.inner_text())
-    check(f"{bname} I1: Befund AK", "Liste U11, berechnet U13" in panel.inner_text())
+    check(f"{bname} I1: kein Befund zur Listen-AK mehr", "berechnet U13" not in panel.inner_text())
     check(f"{bname} I2: Hinweis Gesundheitsdaten im Import", "keine Befunde oder medizinischen Angaben" in panel.inner_text())
     if first:
         pg.get_by_role("button", name="Übernehmen").click()
@@ -144,6 +148,33 @@ def run(p, bname, first):
     hdr = s.headers()
     check(f"{bname} K1: alle Spalten für admin", all(h in hdr for h in ["Name", "AK", "E-Mail 1", "SpoMed", "SpoMed (Ampel)", "Telefon Mutter"]), hdr)
     check(f"{bname} K12: Umlaute", pg.locator("tbody").get_by_text("Müßig").count() >= 1)
+    check(f"{bname} K13: Spalte „Geburtstag“, keine „AK (Liste)“ und kein „JG (Datum)“",
+          "Geburtstag" in hdr and "AK (Liste)" not in hdr and "JG (Datum)" not in hdr, hdr)
+    # Vergleichswert: bis Task 3 hatte der Tabelleninhalt 12px (app.css, th/td).
+    size = pg.locator("tbody td").nth(1).evaluate("e => parseFloat(getComputedStyle(e).fontSize)")
+    check(f"{bname} K14: Tabellenschrift größer als vorher (12px)", size > 12, size)
+
+    # K15/K16: Kaderstatus-Auswahl und gesperrter Jahrgang im Bearbeiten-Dialog
+    pg.locator("tbody button.link", has_text="Bearbeiten").first.click()
+    dlg = pg.locator("dialog[open]")
+    opts = dlg.locator('label[data-field="roster_status"] select option').evaluate_all("os => os.map((o) => o.value)")
+    check(f"{bname} K15: Kaderstatus leer, NK1, NK2, LK, SK", opts == ["", "NK1", "NK2", "LK", "SK"], opts)
+    by = dlg.locator('label[data-field="birth_year"] input')
+    bd = dlg.locator('label[data-field="birth_date"] input')
+    bd.fill("2014-09-14")
+    check(f"{bname} K16: Jahrgang gesperrt mit Geburtstag", by.is_disabled() and by.input_value() == "2014", by.input_value())
+    check(f"{bname} K16: Hinweis am Jahrgang", dlg.get_by_text("wird aus dem Geburtstag übernommen").is_visible())
+    bd.fill("")
+    check(f"{bname} K16: Geburtstag geleert, Jahrgang wieder bearbeitbar", by.is_enabled()
+          and not dlg.get_by_text("wird aus dem Geburtstag übernommen").is_visible())
+    day = "2013-01-0" + str(2 + ["chromium", "firefox", "webkit"].index(bname))  # je Browser ein anderes Datum
+    bd.fill(day)
+    with pg.expect_response(lambda r: "/api/players/" in r.url and r.request.method == "PUT") as put:
+        dlg.get_by_role("button", name="Speichern").click()
+    body = put.value.request.post_data_json
+    check(f"{bname} K16: gesperrter Jahrgang wird nicht mitgeschickt", put.value.status == 200 and "birth_year" not in body
+          and body.get("birth_date") == day, (put.value.status, body))
+    expect(pg.locator("dialog[open]")).to_have_count(0)
 
     pg.get_by_role("button", name="Datenprüfung").click()
     expect(panel).to_contain_text("Datenprüfung")

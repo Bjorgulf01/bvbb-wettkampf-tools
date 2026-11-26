@@ -6,9 +6,12 @@ import { api, query, errorText, ApiError } from './api.js';
 import { el, clear, formatDate, flash, loadXlsx } from './dom.js';
 import { renderClubs } from './clubs.js';
 
-/** Die 22 Spalten der Excel-Kaderliste in ihrer Reihenfolge; null: Spalte wird nicht übernommen (Alter). */
+/**
+ * Die 22 Spalten der Excel-Kaderliste in ihrer Reihenfolge; null: Spalte wird nicht übernommen
+ * (AK und Alter: die AK berechnet der Server aus dem Jahrgang).
+ */
 export const COLUMN_KEYS = [
-  'list_no', 'last_name', 'first_name', 'list_ak', 'gender', 'roster_status', 'active', 'club_name',
+  'list_no', 'last_name', 'first_name', null, 'gender', 'roster_status', 'active', 'club_name',
   'birth_date', 'trainer_info', 'school', 'school_contact', 'training_site', null, 'sportmed_note',
   'antidoping_note', 'email1', 'email2', 'phone_player', 'phone_mother', 'phone_father', 'shirt_size',
 ];
@@ -29,9 +32,9 @@ const HEADERS = [
 ];
 
 const LABELS = {
-  list_no: 'Nummer', last_name: 'Name', first_name: 'Vorname', ak: 'AK', list_ak: 'AK (Liste)', gender: 'm/w',
+  list_no: 'Nummer', last_name: 'Name', first_name: 'Vorname', ak: 'AK', gender: 'm/w',
   roster_status: 'Kaderstatus', active: 'Status', club_name: 'Verein', club_short: 'Kürzel', state: 'Bundesland',
-  birth_year: 'Jahrgang', birth_date: 'JG (Datum)', trainer_info: 'Trainer Mail/Verein', school: 'Schule/Klasse/Lehrer',
+  birth_year: 'Jahrgang', birth_date: 'Geburtstag', trainer_info: 'Trainer Mail/Verein', school: 'Schule/Klasse/Lehrer',
   school_contact: 'Kontakt Schulbefreiungen', training_site: 'Trainingsort', sportmed_status: 'SpoMed (Ampel)',
   sportmed_note: 'SpoMed', antidoping_status: 'Anti Doping (Ampel)', antidoping_note: 'Anti Doping',
   email1: 'E-Mail 1', email2: 'E-Mail 2', phone_player: 'Telefon Spieler', phone_mother: 'Telefon Mutter',
@@ -39,7 +42,7 @@ const LABELS = {
 };
 
 /** Anzeigereihenfolge wie in der Kaderliste. Felder, die hier fehlen, kommen ans Ende. */
-const ORDER = ['list_no', 'last_name', 'first_name', 'ak', 'list_ak', 'gender', 'roster_status', 'active',
+const ORDER = ['list_no', 'last_name', 'first_name', 'ak', 'gender', 'roster_status', 'active',
   'club_name', 'club_short', 'state', 'birth_year', 'birth_date', 'trainer_info', 'school', 'school_contact',
   'training_site', 'sportmed_status', 'sportmed_note', 'antidoping_status', 'antidoping_note', 'email1', 'email2',
   'phone_player', 'phone_mother', 'phone_father', 'shirt_size'];
@@ -48,13 +51,15 @@ const LIGHT = { done: ['●', 'erledigt'], scheduled: ['●', 'terminiert'], ope
 const LONG = ['trainer_info', 'school_contact', 'sportmed_note', 'antidoping_note'];
 const HEALTH_NOTES = ['sportmed_note', 'antidoping_note'];
 const HEALTH_HINT = 'Nur Datum und Status eintragen, keine Befunde oder medizinischen Angaben.';
-const AK_VALUES = ['U09', 'U11', 'U13', 'U15', 'U17', 'U19', 'U22', 'O19', 'O22'];
+const BIRTH_YEAR_HINT = 'wird aus dem Geburtstag übernommen';
+
+/** Kaderstatus in fachlicher Reihenfolge (Auswahl und Sortierung). */
+export const ROSTER_STATUS_ORDER = ['NK1', 'NK2', 'LK', 'SK'];
 
 export const ISSUE_TEXT = {
   missing_birth_year: 'Jahrgang fehlt', bad_birth_year: 'Jahrgang ungültig', missing_club: 'Verein fehlt',
   unknown_club: 'Verein nicht in der Vereinsliste', bad_gender: 'm/w fehlt oder ungültig',
-  missing_roster_status: 'Kaderstatus fehlt', ak_mismatch: 'AK passt nicht zum Jahrgang',
-  bad_list_ak: 'AK in der Liste ungültig', training_site_looks_like_ak: 'Trainingsort enthält eine AK',
+  missing_roster_status: 'Kaderstatus fehlt', training_site_looks_like_ak: 'Trainingsort enthält eine AK',
   duplicate_name: 'Name doppelt',
 };
 
@@ -194,6 +199,21 @@ class PlayersView {
       if (HEALTH_NOTES.includes(k)) label.append(el('span', { class: 'warn' }, HEALTH_HINT));
       form.append(label);
     }
+    // Jahrgang gesperrt, solange ein Geburtstag eingetragen ist (der Server übernimmt das Jahr).
+    const yearLocked = () => Boolean(inputs.birth_date && inputs.birth_year && inputs.birth_date.value !== '');
+    if (inputs.birth_date && inputs.birth_year) {
+      const hint = el('span', { class: 'hint', hidden: true }, BIRTH_YEAR_HINT);
+      form.querySelector('label[data-field="birth_year"]').append(hint);
+      const sync = () => {
+        const locked = yearLocked();
+        inputs.birth_year.disabled = locked;
+        hint.hidden = !locked;
+        if (locked) inputs.birth_year.value = inputs.birth_date.value.slice(0, 4);
+      };
+      inputs.birth_date.addEventListener('input', sync);
+      inputs.birth_date.addEventListener('change', sync);
+      sync();
+    }
     const msg = el('p', { class: 'msg err', hidden: true });
     const dlg = el('dialog', {},
       el('h2', {}, isNew ? 'Neuer Spieler' : `${row.last_name || ''}, ${row.first_name || ''}`),
@@ -206,6 +226,7 @@ class PlayersView {
       msg.hidden = true;
       const body = {};
       for (const k of fields) {
+        if (k === 'birth_year' && yearLocked()) continue; // gesperrt: nicht mitschicken
         const v = readInput(k, inputs[k]);
         if (isNew ? v !== null : !same(v, row[k])) body[k] = v;
       }
@@ -442,8 +463,7 @@ function inputFor(key, v) {
   if (key === 'active') return el('select', {}, el('option', { value: '1', selected: v !== false }, 'aktiv'),
     el('option', { value: '0', selected: v === false }, 'passiv'));
   if (key === 'gender') return select(['', 'm', 'w'], v);
-  if (key === 'roster_status') return select(['', 'LK', 'SK', 'NK2'], v);
-  if (key === 'list_ak') return select(['', ...AK_VALUES], v);
+  if (key === 'roster_status') return select(['', ...ROSTER_STATUS_ORDER], v);
   if (key === 'birth_date') return el('input', { type: 'date', value: v || '' });
   if (key === 'list_no' || key === 'birth_year') return el('input', { type: 'text', inputmode: 'numeric', value: v ?? '' });
   if (LONG.includes(key)) return el('textarea', { rows: '3', maxlength: HEALTH_NOTES.includes(key) ? '200' : null, value: v ?? '' });

@@ -1,4 +1,4 @@
-# Checkliste Oberfläche (Task 11)
+# Checkliste Oberfläche (Task 11, ergänzt um „Kaderliste rund machen“)
 
 Durchführung mit der lokalen Vorschau und erfundenen Daten:
 
@@ -42,23 +42,28 @@ Jeder Punkt in Firefox und Safari. Für „Netzwerk“ die Entwicklerwerkzeuge �
 | K10 | Bearbeiten: ungültiger Wert (Nummer „abc“) | Meldung am Feld, nichts gespeichert | | |
 | K11 | Neuer Spieler ohne Nachname | Meldung, nichts gespeichert | | |
 | K12 | Umlaute und ß (Müßig, Grünwald) | korrekt in Tabelle, Bearbeiten und Export | | |
+| K13 | Spaltenköpfe | „Geburtstag“ (Anzeige `TT.MM.JJJJ`) statt „JG (Datum)“; keine Spalte „AK (Liste)“; Spieler ohne Jahrgang haben keine AK | | |
+| K14 | Schrift | Inhalt und Überschriften eine Stufe größer als bisher (Tabelle 13,5 statt 12 px); auf dem iPad quer scrollt die Tabelle weiter waagerecht, nichts überlappt | | |
+| K15 | Bearbeiten: Kaderstatus | Auswahl leer, NK1, NK2, LK, SK in dieser Reihenfolge; ein anderer gespeicherter Wert bleibt als zusätzliche Option erhalten | | |
+| K16 | Bearbeiten: Geburtstag eintragen, dann leeren | mit Geburtstag ist der Jahrgang gesperrt, zeigt dessen Jahr und den Hinweis „wird aus dem Geburtstag übernommen“; geleert sofort wieder bearbeitbar; Speichern schickt den gesperrten Jahrgang nicht mit | | |
 
 ## Import
 
 | # | Schritt | Erwartet | Firefox | Safari |
 |---|---|---|---|---|
-| I1 | `Testkaderliste_fiktiv.xlsx` wählen | Vorschau ohne Speichern: 59 neu, 0 geändert, übersprungen „Lübbe, Arvid“ (doppelt in der Datei) und die Platzhalterzeile; Befunde wie im Blatt „Hinweise“ (ohne `health_note_unclear`) | | |
+| I1 | `Testkaderliste_fiktiv.xlsx` wählen | Vorschau ohne Speichern: 59 neu, 0 geändert, übersprungen „Lübbe, Arvid“ (doppelt in der Datei) und die Platzhalterzeile; Befunde wie im Blatt „Hinweise“ (ohne `health_note_unclear`; `ak_mismatch` für Jäckel, Gustav entfällt seit „Kaderliste rund machen“, das Blatt ist noch nicht angepasst) | | |
 | I2 | Hinweis im Import | „Nur Datum und Status eintragen, keine Befunde oder medizinischen Angaben.“ | | |
 | I3 | „Übernehmen“ | Liste zeigt 59 Spieler; Jahrgänge aus der Spalte JG stimmen (Aberle, Britta: 2005) | | |
 | I4 | dieselbe Datei erneut, Vorschau | 0 neu, 59 geändert, nichts doppelt angelegt | | |
 | I5 | Datei ohne Kopfzeile „Name“/„Vorname“, mit fehlender oder zusätzlicher Spalte (A bis V), oder keine Excel-Datei | verständliche Meldung mit der abweichenden Spalte, keine Anfrage an den Server | | |
 | I6 | Vorschau abbrechen | nichts gespeichert | | |
+| I7 | Import der Testkaderliste (Netzwerk: `POST /api/players/import`) | Antwort 200, keine 403; die Zeilen enthalten kein `list_ak` (die Spalte AK wird wie „Alter“ nicht übernommen) | | |
 
 ## Datenprüfung und Export
 
 | # | Schritt | Erwartet | Firefox | Safari |
 |---|---|---|---|---|
-| D1 | Datenprüfung öffnen | Befunde mit deutschem Text, Name und Detail (zum Beispiel „Liste U11, berechnet U13“) | | |
+| D1 | Datenprüfung öffnen | Befunde mit deutschem Text, Name und Detail (zum Beispiel „Verein nicht in der Vereinsliste (Neuer Verein e.V.)“); kein Befund zur AK aus der Liste | | |
 | D2 | Klick auf einen Befund | springt zum Spieler und hebt die Zeile hervor | | |
 | E1 | Export | `.xlsx` mit den angezeigten Spalten und deutschen Überschriften; coach-Export enthält keine Kontaktfelder | | |
 
