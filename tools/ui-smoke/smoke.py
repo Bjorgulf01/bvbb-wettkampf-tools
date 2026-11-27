@@ -171,6 +171,140 @@ def check_view_module(page, bname):
     check(f"{bname} F6: sortRows ändert die Liste nicht", v["unchanged"])
 
 
+CLUBS_CSV = os.environ.get("CLUBS_FILE", "/app/tests/fixtures/nuliga/vereine-test.csv")
+
+# Reine Funktionen aus public/js/csv.js, im Seitenkontext geprüft (erfundene Vereine, Task 9b).
+CSV_JS = """async ([b64, b64bom]) => {
+  const m = await import('/js/csv.js');
+  const buf = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0)).buffer;
+  const text = m.decodeText(buf(b64));
+  const table = m.parseCsv(text);
+  const head = table[0];
+  const mapped = m.mapClubRows(table);
+  const dbv = head.indexOf('DBVNr');
+  const noDbv = m.mapClubRows(table.map((r) => r.filter((_, i) => i !== dbv)));
+  const extra = m.mapClubRows(table.map((r, i) => [...r, i ? 'x' : 'Neue Spalte']));
+  const cols = Object.values(m.NULIGA_CLUB_COLUMNS);
+  const ja = m.mapClubRows([cols, ['1', '', 'X', '', '', 'aktiv', ' Ja '], ['2', '', 'Y', '', '', 'aktiv', 'Nein']]);
+  return {
+    sameBom: m.decodeText(buf(b64bom)) === text,
+    hasKoep: text.includes('Köpenicker Testclub'), hasWeiss: text.includes('BSV Weißensee Test'),
+    cols: head.length, records: table.length,
+    semi: mapped.rows[6].name,
+    remark: table[8][head.indexOf('Bemerkungen')],
+    quoted: m.parseCsv('a;"b ""c"" d";e\\n\\n1;2;3').map((r) => r.join('|')),
+    keys: Object.keys(mapped.rows[0]),
+    nr07: mapped.rows[2].verein_nr, printNull: mapped.rows[3].print_name, nameEmpty: m.mapClubRows([cols, ['1']]).rows[0].name,
+    fed: mapped.rows.map((r) => r.is_federation),
+    lines: mapped.lines,
+    noDbv: noDbv.missing, noDbvRows: noDbv.rows.length,
+    extra: [extra.missing.length, extra.rows.length],
+    ja: ja.rows.map((r) => r.is_federation),
+  };
+}"""
+
+
+def check_csv_module(page, bname):
+    import base64
+    raw = open(CLUBS_CSV, "rb").read()
+    bom = raw.decode("cp1252").encode("utf-8-sig")
+    try:
+        v = page.evaluate(CSV_JS, [base64.b64encode(raw).decode(), base64.b64encode(bom).decode()])
+    except Exception as e:
+        check(f"{bname} C0: Modul csv.js ladbar", False, str(e).splitlines()[0])
+        return
+    check(f"{bname} C1: Windows-1252 mit Umlauten und ß (Review Focus 1)", v["hasKoep"] and v["hasWeiss"])
+    check(f"{bname} C1: UTF-8 mit BOM ergibt denselben Text (Review Focus 1)", v["sameBom"])
+    check(f"{bname} C2: 48 Spalten, 13 Vereine plus Kopfzeile, Leerzeile übergangen", v["cols"] == 48 and v["records"] == 14, (v["cols"], v["records"]))
+    check(f"{bname} C2: ; in Anführungszeichen", v["semi"] == "Verein; mit Semikolon Test", v["semi"])
+    check(f"{bname} C2: Zeilenumbruch in Anführungszeichen", "\n" in v["remark"] and v["remark"].endswith("Registergericht Musterstadt"), v["remark"])
+    check(f"{bname} C2: \"\" in Anführungszeichen, leere Zeile übergangen", v["quoted"] == ['a|b "c" d|e', "1|2|3"], v["quoted"])
+    check(f"{bname} C3: nur die sieben Spalten", v["keys"] == ["verein_nr", "dbv_nr", "name", "short_name", "print_name", "status", "is_federation"], v["keys"])
+    check(f"{bname} C3: VereinNr bleibt Text (07), leere Werte null, Name leer als ''",
+          v["nr07"] == "07" and v["printNull"] is None and v["nameEmpty"] == "", (v["nr07"], v["printNull"], v["nameEmpty"]))
+    check(f"{bname} C3: Verband nur in der letzten Zeile", v["fed"] == [False] * 12 + [True], v["fed"])
+    check(f"{bname} C3: Verband auch bei „ja“", v["ja"] == [True, False], v["ja"])
+    check(f"{bname} C3: Zeilennummern wie in Excel (Kopfzeile 1)", v["lines"] == list(range(2, 15)), v["lines"])
+    check(f"{bname} C4: fehlende Spalte DBVNr wird gemeldet (Review Focus 5)", v["noDbv"] == ["DBVNr"] and v["noDbvRows"] == 0, v["noDbv"])
+    check(f"{bname} C4: zusätzliche Spalte stört nicht", v["extra"] == [0, 13], v["extra"])
+
+
+def csv_variant(bname, label, fn):
+    """Abgewandelte Kopie der Testdatei (Windows-1252), fn ändert den Text."""
+    text = open(CLUBS_CSV, "rb").read().decode("cp1252")
+    path = os.path.join(OUT, f"{bname}-clubs-{label}.csv")
+    with open(path, "wb") as f:
+        f.write(fn(text).encode("cp1252"))
+    return path
+
+
+def club_import(s, bname, first):
+    """Vereinsimport aus nuLiga als Kaderpflege (Task 9b)."""
+    pg = s.page
+    pg.get_by_role("button", name="Vereine").click()
+    expect(pg.locator("table.clubs")).to_be_visible()
+    button = pg.get_by_role("button", name="Vereine aus nuLiga importieren")
+    # Fehlende Spalte: Abbruch vor dem Senden (Review Focus 5)
+    calls = []
+    pg.on("request", lambda r: calls.append(r.url) if "/api/clubs/import" in r.url else None)
+    path = csv_variant(bname, "no-dbv", lambda t: t.replace(";DBVNr;", ";DBV-Nummer;", 1))
+    with pg.expect_file_chooser() as fc:
+        button.click()
+    fc.value.set_files(path)
+    expect(pg.locator(".clubs-import p.msg.err")).to_contain_text("Spalte DBVNr fehlt", timeout=10000)
+    check(f"{bname} N1: fehlende Spalte DBVNr – Meldung, nichts gesendet", not calls, calls)
+
+    with pg.expect_file_chooser() as fc:
+        button.click()
+    with pg.expect_response(lambda r: "/api/clubs/import" in r.url, timeout=20000) as imp:
+        fc.value.set_files(CLUBS_CSV)
+    body = imp.value.request.post_data or ""
+    check(f"{bname} N2: Anfrage ohne Bank- und Adressdaten (kein DE00, kein @)", "DE00" not in body and "@" not in body and "Musterstraße" not in body)
+    check(f"{bname} N2: Vorschau mit dry_run", imp.value.request.post_data_json["dry_run"] is True and imp.value.status == 200, imp.value.status)
+    panel = pg.locator(".clubs-import .panel")
+    expect(panel).to_contain_text("Vorschau Vereinsimport", timeout=20000)
+    stats = re.sub(r"\s+", " ", panel.locator(".stats").inner_text())
+    want = "9 neu 2 geändert 0 unverändert 2 übersprungen" if first else "0 neu 0 geändert 11 unverändert 2 übersprungen"
+    check(f"{bname} N3: Zahlen „{want}“", stats.strip() == want, stats)
+    text = panel.inner_text()
+    check(f"{bname} N3: übersprungen mit Zeile und Grund", "Zeile 7 (SC Abweichung Test): DBV-Nummer passt nicht zur Vereinsnummer" in text
+          and "Zeile 14 (SV Spielberechtigung Test e.V.): Verband, nicht importiert" in text, text)
+    check(f"{bname} N3: Warnungen Nummer gebildet und Alias-Konflikt",
+          "Zeile 11 (Hobbyliga Testverein): DBV-Nummer aus Vereinsnummer gebildet: 08-0501" in text
+          and "Zeile 10 (BC Konflikt Test): Alias „SVBB“ gehört schon einem anderen Verein, nicht übernommen" in text, text)
+    if first:
+        check(f"{bname} N3: Warnung über den Namen verknüpft", "Zeile 2 (SV Berliner Brauereien): über den Namen mit „SV Berliner Brauereien“ verknüpft" in text, text)
+        with pg.expect_response(lambda r: "/api/clubs/import" in r.url and r.request.post_data_json["dry_run"] is False):
+            panel.get_by_role("button", name="Übernehmen").click()
+        expect(panel).to_contain_text("Vereinsimport übernommen", timeout=20000)
+        expect(pg.locator("table.clubs")).to_contain_text("08-0007")
+        check(f"{bname} N4: Übernehmen aktualisiert die Vereinsliste", True)
+    else:
+        panel.get_by_role("button", name="Abbrechen").click()
+        expect(panel).to_have_count(0)
+    # Umbenennung erscheint als Warnung mit alt → neu (danach Abbrechen, nichts gespeichert)
+    path = csv_variant(bname, "renamed", lambda t: t.replace(";BC Bemerkung Test;", ";BC Bemerkung Neu Test;", 1)
+                       .replace(";SV Berliner Brauereien;SV Berliner Brauereien (Berlin);", ";SVBB Neu Test;SV Berliner Brauereien (Berlin);", 1))
+    with pg.expect_file_chooser() as fc:
+        button.click()
+    fc.value.set_files(path)
+    expect(panel).to_contain_text("Vorschau Vereinsimport", timeout=20000)
+    check(f"{bname} N5: Warnung umbenannt mit alt → neu", "umbenannt: BC Bemerkung Test → BC Bemerkung Neu Test" in panel.inner_text(), panel.inner_text())
+    check(f"{bname} N5: Umbenennung trennt keine Spieler, alter Name bleibt Alias (Entscheidung Projektinhaber)",
+          "verlieren durch den Import ihren Verein" not in panel.inner_text(), panel.inner_text())
+    panel.get_by_role("button", name="Abbrechen").click()
+    # Hinweis und Filter „ohne Bundesland“
+    hint = pg.locator(".clubs-state-hint")
+    check(f"{bname} N6: Hinweis „Bei 6 aktiven Vereinen fehlt das Bundesland“", hint.inner_text().startswith("Bei 6 aktiven Vereinen fehlt das Bundesland"), hint.inner_text())
+    pg.get_by_label("nur ohne Bundesland").check()
+    shown = pg.locator("table.clubs tbody tr:visible")
+    names = shown.evaluate_all("trs => trs.map((tr) => tr.querySelector('input').value)")
+    check(f"{bname} N6: Filter zeigt genau die aktiven Vereine ohne Bundesland",
+          sorted(names) == sorted(["Köpenicker Testclub", "SG Grünau Test", "BSV Weißensee Test", "Verein; mit Semikolon Test",
+                                   "BC Bemerkung Test", "BC Konflikt Test"]), names)
+    pg.get_by_label("nur ohne Bundesland").uncheck()
+
+
 HEAD = ["Nummer", "Name", "Vorname", "AK", "m/w", "Kaderstatus", "Status", "Verein", "JG", "Trainer Mail/Verein",
         "Schule /Klasse /Lehrer", "Kontakt Schulbefreiungen (Name&E-Mail)", "Trainingsort", "Alter", "SpoMed",
         "Anti Doping", "email 1 (Hauptadresse)", "email 2", "Spieler", "Mutter", "Vater", ""]
@@ -213,6 +347,7 @@ def run(p, bname, first):
     s = Session(browser, bname, "Ada Verwaltung")
     pg = s.page
     check_view_module(pg, bname)
+    check_csv_module(pg, bname)
     check(f"{bname} S1: Kaderliste aktiv", pg.locator(".tile", has_text="Kaderliste").is_enabled())
     check(f"{bname} S1: Verwaltung aktiv", pg.locator(".tile", has_text="Verwaltung").is_enabled())
     check(f"{bname} S1: Turniere gesperrt", pg.locator(".tile", has_text="Turniere").is_disabled())
@@ -344,6 +479,7 @@ def run(p, bname, first):
     pg.get_by_role("button", name="Vereine").click()
     expect(pg.locator("table.clubs")).to_be_visible()
     check(f"{bname} V1: Vereine für coach nur lesend", pg.locator("table.clubs input").count() == 0)
+    check(f"{bname} N7: coach ohne Vereinsimport", pg.get_by_role("button", name="Vereine aus nuLiga importieren").count() == 0)
     check(f"{bname} S2: coach ohne Verwaltung", pg.locator("#nav-home").count() == 1)
     pg.locator("#nav-home").click()
     check(f"{bname} S2: coach – Kachel Verwaltung gesperrt", pg.locator(".tile", has_text="Verwaltung").is_disabled())
@@ -420,6 +556,7 @@ def run(p, bname, first):
     jg = pg.locator(".sc thead th", has_text="Jahrgang")
     check(f"{bname} F14: Sortieren per Tastatur – Fokus bleibt, zweites Enter zeigt ▼",
           "Jahrgang" in focused and "▼" in jg.inner_text() and jg.get_attribute("aria-sort") == "descending", (focused, jg.inner_text()))
+    club_import(s, bname, first)
     s.close("kaderpflege")
 
     # ---- Prüfer: nur Protokoll

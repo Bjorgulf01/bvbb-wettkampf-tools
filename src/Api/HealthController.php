@@ -12,7 +12,7 @@ use PDO;
 use Throwable;
 
 /**
- * GET /api/health ohne Anmeldung: {"ok":true,"version":"1.1.0"}. Kann die Datenbank nicht erreicht
+ * GET /api/health ohne Anmeldung: {"ok":true,"version":"1.2.0"}. Kann die Datenbank nicht erreicht
  * werden, 503 mit {"ok":false}, nie mit Details (Fehlertexte können Zugangsdaten oder Hostnamen enthalten).
  * Die Verbindung wird erst hier aufgebaut, damit ein Datenbankfehler nicht schon vorher zu einer 500 führt.
  */

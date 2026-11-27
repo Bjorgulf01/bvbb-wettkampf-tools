@@ -70,6 +70,38 @@ final class ClubRepo
     }
 
     /**
+     * Markiert einen Verein als aus nuLiga importiert (imported_at jetzt) und setzt, falls angegeben,
+     * die Mitgliedsnummer. Nur für den Vereinsimport, von Hand ist die Nummer nicht schreibbar.
+     */
+    public function markImported(int $id, ?string $memberNo = null): void
+    {
+        if ($memberNo !== null) {
+            $this->pdo->prepare('UPDATE clubs SET member_no = ?, imported_at = NOW() WHERE id = ?')->execute([$memberNo, $id]);
+            return;
+        }
+        $this->pdo->prepare('UPDATE clubs SET imported_at = NOW() WHERE id = ?')->execute([$id]);
+    }
+
+    /**
+     * Ergänzt Aliasnamen, ohne vorhandene zu entfernen. Ein Alias, den der Verein schon hat oder den
+     * ein anderer Verein hat (Vergleich nach der Sortierung der Datenbank), wird übergangen.
+     * @param list<string> $aliases
+     * @return list<string> die tatsächlich ergänzten Aliasnamen
+     */
+    public function addAliases(int $id, array $aliases): array
+    {
+        $insert = $this->pdo->prepare('INSERT IGNORE INTO club_aliases (club_id, alias) VALUES (?, ?)');
+        $added = [];
+        foreach ($aliases as $alias) {
+            $insert->execute([$id, $alias]);
+            if ($insert->rowCount() === 1) {
+                $added[] = $alias;
+            }
+        }
+        return $added;
+    }
+
+    /**
      * Speichert nur Felder, deren Wert sich ändert.
      * @param array<string, mixed> $data Felder aus EDITABLE (geprüft); state null heißt nicht gepflegt
      * @return list<string> geänderte Felder

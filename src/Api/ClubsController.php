@@ -5,6 +5,7 @@ namespace App\Api;
 
 use App\Auth\AuthGuard;
 use App\Domain\ClubDirectory;
+use App\Domain\ClubImport;
 use App\Domain\PlayerInput;
 use App\Http\Request;
 use App\Http\Response;
@@ -18,7 +19,7 @@ use PDOException;
 use Throwable;
 
 /**
- * Einfache Vereinsliste bis zum Import der Mitgliederliste (Task 9b).
+ * Vereinsliste, von Hand gepflegt und per Import aus nuLiga ergänzt (Task 9b, siehe import()).
  *  GET /api/clubs  {clubs:[…]}  alle Vereine mit Aliasnamen, auch inaktive (Leserecht clubs)
  *  PUT /api/clubs  {clubs:[{id?, name, short, state, active, aliases}]}  (Schreibrecht clubs)
  *      Einträge mit id ändern diesen Verein, Einträge ohne id legen einen an. Vereine, die fehlen,
@@ -31,6 +32,9 @@ final class ClubsController
 {
     private const KEYS = ['id', 'name', 'short', 'state', 'active', 'aliases'];
     private const STATES = ['BER', 'BRA'];
+    /** Schlüssel je Zeile beim Vereinsimport (die sieben Spalten aus dem nuLiga-Export). */
+    private const IMPORT_KEYS = ['verein_nr', 'dbv_nr', 'name', 'short_name', 'print_name', 'status', 'is_federation'];
+    private const MAX_IMPORT_ROWS = 3000;
 
     private ClubRepo $clubs;
     private PlayerRepo $players;
@@ -50,6 +54,177 @@ final class ClubsController
     {
         $router->add('GET', '/api/clubs', $this->list(...));
         $router->add('PUT', '/api/clubs', $this->save(...));
+        $router->add('POST', '/api/clubs/import', $this->import(...));
+    }
+
+    /**
+     * POST /api/clubs/import  {rows:[…], dry_run:bool}  (Schreibrecht clubs)
+     * Zeilen aus dem nuLiga-Export „Vereine (Stammdaten und Adressen)“ mit genau den Schlüsseln aus
+     * IMPORT_KEYS. Ein anderer Schlüssel (etwa Bank- oder Adressfelder) ergibt 403 für die ganze Anfrage.
+     * Antwort {create, update, unchanged, skipped, warnings}, bei dry_run und beim Übernehmen gleich.
+     * Kürzel und Bundesland setzt der Import nie, Aliasnamen ergänzt er nur.
+     */
+    private function import(Request $r, array $params): Response
+    {
+        if (!$this->permissions->can($this->roles(), 'clubs', Permissions::WRITE)) {
+            return Response::json(['error' => 'forbidden'], 403);
+        }
+        $body = $r->json;
+        if (!is_array($body) || array_is_list($body) || !array_key_exists('rows', $body) || !array_key_exists('dry_run', $body)
+            || array_diff(array_keys($body), ['rows', 'dry_run']) !== [] || !is_bool($body['dry_run'])
+            || !is_array($body['rows']) || $body['rows'] === [] || !array_is_list($body['rows'])) {
+            return Response::json(['error' => 'invalid_body'], 422);
+        }
+        $rows = $body['rows'];
+        if (count($rows) > self::MAX_IMPORT_ROWS) {
+            return Response::json(['error' => 'too_many_rows'], 413);
+        }
+        $denied = [];
+        foreach ($rows as $row) {
+            if (!is_array($row) || ($row !== [] && array_is_list($row))) {
+                return Response::json(['error' => 'invalid_body'], 422);
+            }
+            foreach (array_keys($row) as $k) {
+                if (!in_array($k, self::IMPORT_KEYS, true) && !in_array((string) $k, $denied, true)) {
+                    $denied[] = (string) $k;
+                }
+            }
+        }
+        if ($denied !== []) {
+            return Response::json(['error' => 'forbidden', 'fields' => $denied], 403);
+        }
+        $clean = [];
+        $invalid = [];
+        foreach ($rows as $i => $row) {
+            [$c, $bad] = self::validateImportRow($row);
+            foreach ($bad as $f) {
+                $invalid[] = 'rows.' . $i . '.' . $f;
+            }
+            $clean[] = $c;
+        }
+        if ($invalid !== []) {
+            return Response::json(['error' => 'invalid', 'fields' => $invalid], 422);
+        }
+
+        // Vorschau und Übernehmen laufen gleich: Der Import wird in einer Transaktion ausgeführt, gezählt wird,
+        // was die Datenbank wirklich ändert (auch Spieler, die ihren Verein verlieren oder wechseln).
+        // Bei dry_run wird danach alles zurückgerollt.
+        $user = $this->guard->currentUser();
+        $this->pdo->beginTransaction();
+        try {
+            $result = $this->applyImport($clean, $user?->id);
+            $body['dry_run'] ? $this->pdo->rollBack() : $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+        return Response::json($result);
+    }
+
+    /**
+     * Führt den Import innerhalb einer offenen Transaktion aus.
+     * @param list<array<string, mixed>> $clean geprüfte Zeilen
+     * @return array{create:int, update:int, unchanged:int, skipped:list<array>, warnings:list<array>, players:array{unlinked:int, moved:int}}
+     */
+    private function applyImport(array $clean, ?int $userId): array
+    {
+        $plan = ClubImport::plan($clean, $this->clubs->all());
+        $before = $this->clubIdsOfPlayers();
+        $updated = 0;
+        $unchanged = $plan['unchanged'];
+        foreach ($plan['create'] as $c) {
+            $id = $this->clubs->create(['name' => $c['name'], 'active' => $c['active']]);
+            $this->clubs->markImported($id, $c['member_no']);
+            $fields = ['member_no', 'name', 'active'];
+            if ($this->clubs->addAliases($id, $c['aliases']) !== []) {
+                $fields[] = 'aliases';
+            }
+            $this->audit->log($userId, 'club_import_create', 'club', $id, 'fields: ' . implode(', ', $fields));
+        }
+        foreach ($plan['update'] as $u) {
+            $memberNo = $u['data']['member_no'] ?? null;
+            $fields = $this->clubs->update($u['id'], array_diff_key($u['data'], ['member_no' => true]));
+            if ($memberNo !== null) {
+                $fields[] = 'member_no';
+            }
+            // Ein Alias, den die Datenbank als doppelt ansieht (ohne Akzente verglichen), wird übergangen.
+            if ($this->clubs->addAliases($u['id'], $u['add_aliases']) !== []) {
+                $fields[] = 'aliases';
+            }
+            if ($fields === []) {
+                $unchanged++;
+                continue;
+            }
+            $updated++;
+            $this->clubs->markImported($u['id'], $memberNo);
+            $this->audit->log($userId, 'club_import_update', 'club', $u['id'], 'fields: ' . implode(', ', $fields));
+        }
+        $this->players->reassignClubs($this->clubs->directory());
+        $unlinked = 0;
+        $moved = 0;
+        foreach ($this->clubIdsOfPlayers() as $id => $clubId) {
+            $old = $before[$id] ?? null;
+            if ($old !== null && $clubId === null) {
+                $unlinked++;
+            } elseif ($old !== null && $clubId !== $old) {
+                $moved++;
+            }
+        }
+        return [
+            'create' => count($plan['create']), 'update' => $updated, 'unchanged' => $unchanged,
+            'skipped' => $plan['skipped'], 'warnings' => $plan['warnings'],
+            'players' => ['unlinked' => $unlinked, 'moved' => $moved],
+        ];
+    }
+
+    /** @return array<int, ?int> Spieler-id => club_id */
+    private function clubIdsOfPlayers(): array
+    {
+        $out = [];
+        foreach ($this->pdo->query('SELECT id, club_id FROM players')->fetchAll(PDO::FETCH_ASSOC) as $p) {
+            $out[(int) $p['id']] = $p['club_id'] !== null ? (int) $p['club_id'] : null;
+        }
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array{0: array<string, mixed>, 1: list<string>}
+     */
+    private static function validateImportRow(array $row): array
+    {
+        $bad = [];
+        $out = [];
+        foreach (self::IMPORT_KEYS as $k) {
+            if (!array_key_exists($k, $row)) {
+                $bad[] = $k;
+                continue;
+            }
+            $v = $row[$k];
+            if ($k === 'is_federation') {
+                if (is_bool($v)) {
+                    $out[$k] = $v;
+                } else {
+                    $bad[] = $k;
+                }
+                continue;
+            }
+            $nullable = in_array($k, ['dbv_nr', 'short_name', 'print_name'], true);
+            if ($v === null && $nullable) {
+                $out[$k] = null;
+                continue;
+            }
+            $t = self::text($v);
+            $max = in_array($k, ['name', 'short_name', 'print_name'], true) ? 190 : 20;
+            if ($t === null || mb_strlen($t, 'UTF-8') > $max) {
+                $bad[] = $k;
+                continue;
+            }
+            $out[$k] = $nullable && $t === '' ? null : $t;
+        }
+        return [$out, $bad];
     }
 
     private function list(Request $r, array $params): Response

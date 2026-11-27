@@ -2,3 +2,4 @@
 *.xlsx binary
 *.zip binary
 *.png binary
+tests/fixtures/nuliga/*.csv binary

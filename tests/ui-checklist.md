@@ -80,6 +80,14 @@ Jeder Punkt in Firefox und Safari. Für „Netzwerk“ die Entwicklerwerkzeuge �
 | V1 | Reiter „Vereine“ als `trainer` | Liste nur lesend | | |
 | V2 | als `kaderpflege`: Bundesland, Kürzel, Aliasnamen ändern, Verein anlegen, auf inaktiv setzen | gespeichert; kein Löschen möglich | | |
 | V3 | Alias „Neuer Verein e.V.“ beim passenden Verein eintragen | Befund `unknown_club` für Lindemann, Yara verschwindet | | |
+| N1 | als `kaderpflege`: „Vereine aus nuLiga importieren“, Datei `tests/fixtures/nuliga/vereine-test.csv` | Vorschau: 9 neu, 2 geändert, 0 unverändert, 2 übersprungen; Umlaute richtig („Köpenicker“, „Weißensee“); Zeilen mit Zeilennummer und Grund; Hinweise (verknüpft, Nummer gebildet, Alias-Konflikt) | | |
+| N2 | dabei Netzwerk-Tab: Anfrage an `/api/clubs/import` | enthält weder `DE00` noch `@` noch „Musterstraße“ | | |
+| N3 | „Abbrechen“, dann erneut und „Übernehmen“ | nach Abbrechen nichts gespeichert; nach Übernehmen Vereine mit Mitgliedsnummer in der Liste, Archiv-Vereine inaktiv, Kürzel und Bundesland unverändert | | |
+| N4 | dieselbe Datei noch einmal | 0 neu, 0 geändert, 11 unverändert | | |
+| N5 | Datei mit umbenannter Spalte `DBVNr` (zum Beispiel in einem Texteditor) | Meldung „Spalte DBVNr fehlt“, nichts gesendet | | |
+| N6 | Hinweis „Bei 6 aktiven Vereinen fehlt das Bundesland“, Kästchen „nur ohne Bundesland“ | zeigt genau diese Vereine; nach dem Pflegen des Bundeslands verschwindet der Verein aus dem Hinweis | | |
+| N7 | als `trainer` | keine Schaltfläche für den Import | | |
+| N8 | iPad (Safari): Datei aus „Dateien“ wählen | Vorschau erscheint wie am PC | | |
 
 ## Verwaltung
 

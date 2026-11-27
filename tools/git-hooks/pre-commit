@@ -7,6 +7,7 @@ bad=$(git diff --cached --name-only --diff-filter=ACM | while IFS= read -r f; do
   case "$f" in
     (Stammdaten_*|*/Stammdaten_*|Mitglieder*|*/Mitglieder*) echo "$f" ;;
     (testdata/*.xlsx) ;;
+    (tests/fixtures/nuliga/vereine-test.csv) ;;  # erfunden, erzeugt von make-vereine-test.php
     (config.php|*/config.php|.env|*/.env|dev.env|*/dev.env|*.sql.gz|*.dump|*.sqlite|*.csv|*.xls|*.xlsx|private/*|real-data/*) echo "$f" ;;
   esac
 done)
