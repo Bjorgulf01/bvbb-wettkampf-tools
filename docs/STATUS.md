@@ -4,7 +4,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 27.11.2026, PC (Claude Code), Zweig docs-status-9b-merged |
+| Zuletzt bearbeitet | 27.11.2026, PC (Claude Code), Zweig docs-status-9b-merged (Pull-Request #31) |
 | Aktueller Zweig | main (Task 9b zusammengeführt als Pull-Request #30) |
 | Letzte fertige Aufgabe | Etappe 1 Task 9b Vereinsimport aus nuLiga (Pull-Request #30, zusammengeführt 27.11.2026, Paket 1.2.0 gebaut); davor Task 12 und Plan „Kaderliste rund machen“ |
 | In Arbeit | nichts; offen ist die Prüfung von 1.2.0 auf dem Test-Webspace (Projektinhaber) |
