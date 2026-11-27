@@ -4,10 +4,10 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 
 | Feld | Wert |
 |---|---|
-| Zuletzt bearbeitet | 26.11.2026, PC (Claude Code), Zweig task-9b-club-import |
-| Aktueller Zweig | task-9b-club-import (Pull-Request #30) |
-| Letzte fertige Aufgabe | Etappe 1 Task 12 (Webspace-Prüfung abgeschlossen, 26.11.2026); Plan „Kaderliste rund machen“ (Pull-Requests #20 bis #24, Checkliste 1.1.0 erledigt) |
-| In Arbeit | Task 9b Vereinsimport aus nuLiga: umgesetzt, Review und Pull-Request; danach Paket 1.2.0 und Prüfung auf dem Test-Webspace |
+| Zuletzt bearbeitet | 27.11.2026, PC (Claude Code), Zweig docs-status-9b-merged |
+| Aktueller Zweig | main (Task 9b zusammengeführt als Pull-Request #30) |
+| Letzte fertige Aufgabe | Etappe 1 Task 9b Vereinsimport aus nuLiga (Pull-Request #30, zusammengeführt 27.11.2026, Paket 1.2.0 gebaut); davor Task 12 und Plan „Kaderliste rund machen“ |
+| In Arbeit | nichts; offen ist die Prüfung von 1.2.0 auf dem Test-Webspace (Projektinhaber) |
 
 ## Aufgabenstand (Etappe 1)
 
@@ -24,7 +24,7 @@ Diese Datei ist das gemeinsame Gedächtnis für beide Entwicklungsrechner. Claud
 | 7 Anmeldung, Sitzung, CSRF | fertig | task-7-auth | 24 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #8) |
 | 8 Spieler-Schnittstelle | fertig | task-8-players-api | 23 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #9) |
 | 9 Datenprüfung, Import | fertig | task-9-import | 189 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #10) |
-| 9b Vereinsimport | fertig bis auf die Prüfung auf dem Test-Webspace; 299 PHP-Tests grün gegen `bvbb_test_pc`, Rauchtest 335 Prüfungen grün, Review erledigt, alter Name bleibt bei Umbenennung Alias (27.11.2026) | task-9b-club-import | Plan `docs/superpowers/plans/2026-11-26-vereinsimport.md` (CSV-Export „Vereine (Stammdaten und Adressen)“ aus nuLiga statt Mitgliederliste), Entwurf `docs/superpowers/specs/2026-11-26-vereinsimport-design.md` |
+| 9b Vereinsimport | fertig bis auf die Prüfung auf dem Test-Webspace; 299 PHP-Tests grün gegen `bvbb_test_pc`, Rauchtest 335 Prüfungen grün, Review erledigt, alter Name bleibt bei Umbenennung Alias (27.11.2026) | zusammengeführt (#30) | Plan `docs/superpowers/plans/2026-11-26-vereinsimport.md` (CSV-Export „Vereine (Stammdaten und Adressen)“ aus nuLiga statt Mitgliederliste), Entwurf `docs/superpowers/specs/2026-11-26-vereinsimport-design.md` |
 | 10 Benutzer, Rollen, Protokoll | fertig | task-10-users | 210 Tests grün gegen `bvbb_test_pc` (PHP 8.4), Review erledigt, zusammengeführt (Pull-Request #11) |
 | 11 Oberfläche | fertig | task-11-ui | 213 PHP-Tests grün; Rauchtest (Playwright) 138 Prüfungen grün in Chromium, Firefox, WebKit; Checkliste `tests/ui-checklist.md` am 22.11.2026 vom Projektinhaber in Firefox und Safari durchgegangen, alle Punkte erfüllt; Review erledigt, zusammengeführt (Pull-Request #12) |
 | 12 Auslieferung | fertig (PR #14); Webspace-Prüfung am 22.11.2026, Gegenprobe und Passwortschutz am 26.11.2026 erledigt | task-12-deploy | 217 PHP-Tests grün; Rauchtest 138 Prüfungen grün; Einstiegspunkt lokal mit unsicherer Konfiguration (500), ohne Datenbank (503) und falschem Sitzungsordner (503) geprüft; Apache selbst nicht lokal getestet; zusammengeführt (Pull-Request #14) |
@@ -172,7 +172,7 @@ Plan: `docs/superpowers/plans/2026-11-26-vereinsimport.md`, Entwurf: `docs/super
 | 1 `ClubImport` (Planung ohne Datenbank) | fertig, 24 Tests grün (26.11.2026) | `task-9b-club-import` | `src/Domain/ClubImport.php` |
 | 2 Schnittstelle `POST /api/clubs/import` | fertig, 15 Tests grün gegen `bvbb_test_pc`, Gesamtlauf 290 grün (26.11.2026) | `task-9b-club-import` | keine Migration nötig (`member_no` VARCHAR(20)) |
 | 3 Oberfläche | fertig, Rauchtest 332 Prüfungen grün in Chromium, Firefox, WebKit (26.11.2026) | `task-9b-club-import` | `public/js/csv.js`, `clubs.js`, Checkliste N1 bis N8 |
-| 4 Auslieferung 1.2.0 | fertig bis auf die Prüfung auf dem Test-Webspace (Step 4, Projektinhaber) | `task-9b-club-import` | Paket nach dem Zusammenführen auf `main` bauen |
+| 4 Auslieferung 1.2.0 | fertig bis auf die Prüfung auf dem Test-Webspace (Step 4, Projektinhaber) | `task-9b-club-import` | Paket `dist/bvbb-wettkampf-1.2.0` gebaut (27.11.2026, Commit 9ad7641, keine Migration) |
 
 **Festlegungen (Projektinhaber, 26.11.2026), Abweichungen vom Plan Etappe 1:** CSV-Export „Vereine (Stammdaten und Adressen)“ statt Excel-Mitgliederliste. Mitgliedsnummer ist die `DBVNr` (`08-NNNN`), fehlt sie, wird sie aus der `VereinNr` gebildet, eine abweichende `DBVNr` überspringt die Zeile. Kürzel (`short`) und Bundesland (`state`) setzt der Import nie. Archiv-Vereine werden inaktiv importiert, Verbände übersprungen, der „Test Verein CP“ kommt als Archiv mit. Kurz- und Druckname werden Aliasnamen. Vereine ohne Nummer werden über den Namen verknüpft. Schaltfläche „Vereine aus nuLiga importieren“, Verband bei `1` und „ja“.
 
@@ -197,7 +197,7 @@ Plan: `docs/superpowers/plans/2026-11-26-vereinsimport.md`, Entwurf: `docs/super
 ## Nächster Schritt
 
 1. **Task 12 abgeschlossen (26.11.2026, Projektinhaber):** Die restliche Webspace-Prüfung (Gegenprobe `production` mit `test_auth` und Passwortschutz für `webseiten/`) ist erledigt.
-2. **Task 9b (Vereinsimport aus nuLiga) umgesetzt** (Zweig `task-9b-club-import`, Pull-Request #30, Abschnitt „Vereinsimport aus nuLiga“ oben). Nach Review und Freigabe zusammenführen, dann auf `main` das Paket 1.2.0 bauen (`tools/package.php`) und auf dem Test-Webspace prüfen (Step 4, Projektinhaber). Damit ist Etappe 1 fertig.
+2. **Task 9b (Vereinsimport aus nuLiga) zusammengeführt** (Pull-Request #30, 27.11.2026, Abschnitt „Vereinsimport aus nuLiga“ oben). Paket `dist/bvbb-wettkampf-1.2.0` ist gebaut (Commit 9ad7641, 57 Dateien, keine Migration). **Beim Projektinhaber:** auf den Test-Webspace hochladen, `/api/health` muss `1.2.0` melden, dann den echten nuLiga-Export importieren und die Checkliste N1 bis N8 durchgehen (Step 4). Damit ist Etappe 1 fertig. Ohne Entscheidung blieb: ob eine Zeile mit `name_matches_alias` übersprungen werden soll (bisher nur Warnung).
 3. Erledigt am 26.11.2026 (Projektinhaber): die neuen Punkte der Checkliste für 1.1.0 (I1, I7, D1, K6, K13 bis K22, E1). Beim Projektinhaber: `entwurf.md` und Plan Etappe 1 zur AK ohne Jahrgang im Planungsprojekt nachziehen.
 4. Entwicklungsablauf E1 und E2 sind abgeschlossen, die Tests auf dem MacBook sind grün (25.11.2026, 227 gegen `bvbb_test_mac`). Neue Fassungen künftig mit `tools/package.php` bauen (README, „Paket bauen“). Der reparierte Commit-Schutz (Pull-Request #18) greift auch auf dem PC: am 26.11.2026 in einem Wegwerf-Repository geprüft, `.env` blockiert, normale Datei erlaubt. Geklärt am 24.11.2026 (Projektinhaber): In `HOCHLADEN.txt` kommen die Migrationen zuerst, der Entwurf ist angepasst. Vorgemerkt: Weg B (automatisch zusammenführen) und automatische Versionsnummer. Seit 26.11.2026 (nach dem fehlenden Ordner `sessions/` beim Hochladen von 1.1.0) weist `HOCHLADEN.txt` darauf hin, `bvbb-app/sessions/` nicht zu löschen und bei `{"ok":false}` zuerst diesen Ordner zu prüfen (Zweig `dev-hochladen-sessions-hint`, Pull-Request #25).
 5. Geklärt am 25.11.2026 (Projektinhaber): Drei Planungsdokumente lagen nur im Claude-Projekt und fehlten im Repository. Jetzt abgelegt: `docs/ideenliste.md`, `docs/superpowers/specs/2026-11-24-kaderliste-anpassungen-design.md`, `docs/superpowers/plans/2026-11-24-kaderliste-anpassungen.md`. Neue Regel „Dokumente aus dem Planungsprojekt“ in `CLAUDE.md`, Zuordnung aller Dokumente in `docs/README.md`. Am 26.11.2026 auf dem PC als Patch eingespielt (Zweig `docs-projektdokumente`, ohne Konflikt auf `main` nach Pull-Request #18). Zusammengeführt als Pull-Request #19.
