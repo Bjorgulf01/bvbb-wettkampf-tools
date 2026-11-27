@@ -276,18 +276,28 @@ return [
             return $l;
         }, $log));
     },
-    'Vorschau nennt Spieler, die durch eine Umbenennung ihren Verein verlieren' => function () use ($setup, $send, $row): void {
+    'Umbenennung behält den alten Namen als Alias, Spieler bleiben beim Verein' => function () use ($setup, $send, $row): void {
         $env = $setup();
         $env->pdo->exec("INSERT INTO players (id, last_name, first_name, club_id, club_name, gender, roster_status, active) VALUES (3, 'Weißkopf', 'Ivo', 1, 'SV Sankt Altdorf', 'm', 'LK', 1)");
         [$router, $token] = $env->as('kaderpflege');
         $before = $env->snapshot();
         $res = $send($router, $token, ['rows' => [$row(['verein_nr' => '40', 'dbv_nr' => '08-0040', 'name' => 'SV Sankt Neudorf'])], 'dry_run' => true]);
-        assertSame(['unlinked' => 1, 'moved' => 0], $res->body['players']);
+        assertSame(['unlinked' => 0, 'moved' => 0], $res->body['players']);
         assertSame(1, $res->body['update']);
         assertSame($before, $env->snapshot(), 'Vorschau ändert nichts');
         $done = $send($router, $token, ['rows' => [$row(['verein_nr' => '40', 'dbv_nr' => '08-0040', 'name' => 'SV Sankt Neudorf'])], 'dry_run' => false]);
-        assertSame(['unlinked' => 1, 'moved' => 0], $done->body['players']);
-        assertSame(null, $env->pdo->query('SELECT club_id FROM players WHERE id = 3')->fetchColumn());
+        assertSame(['unlinked' => 0, 'moved' => 0], $done->body['players']);
+        assertSame(1, (int) $env->pdo->query('SELECT club_id FROM players WHERE id = 3')->fetchColumn());
+        assertSame(['SV Sankt Altdorf'], $env->pdo->query("SELECT alias FROM club_aliases WHERE club_id = 1 AND alias = 'SV Sankt Altdorf'")->fetchAll(PDO::FETCH_COLUMN));
+    },
+    'Vorschau nennt Spieler, die ihren Verein verlieren, wenn der alte Name einem anderen Verein gehört' => function () use ($setup, $send, $row): void {
+        $env = $setup();
+        $env->pdo->exec("INSERT INTO players (id, last_name, first_name, club_id, club_name, gender, roster_status, active) VALUES (3, 'Weißkopf', 'Ivo', 1, 'SV Sankt Altdorf', 'm', 'LK', 1)");
+        $env->pdo->exec("INSERT INTO club_aliases (club_id, alias) VALUES (2, 'SV Sankt Altdorf')");
+        [$router, $token] = $env->as('kaderpflege');
+        $res = $send($router, $token, ['rows' => [$row(['verein_nr' => '40', 'dbv_nr' => '08-0040', 'name' => 'SV Sankt Neudorf'])], 'dry_run' => true]);
+        assertSame(1, $res->body['players']['unlinked'] + $res->body['players']['moved']);
+        assertSame(['renamed', 'alias_conflict'], array_map(static fn(array $w): string => $w['code'], $res->body['warnings']));
     },
     'Vorschau nennt Spieler, die zu einem neuen Verein wechseln, mit Warnung' => function () use ($setup, $send, $row): void {
         $env = $setup();

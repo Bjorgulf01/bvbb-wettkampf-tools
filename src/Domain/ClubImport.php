@@ -149,19 +149,29 @@ final class ClubImport
                 }
             }
 
-            // Aliasnamen aus Kurz- und Druckname.
+            // Aliasnamen: bei einer Umbenennung der alte Name (damit Spieler mit diesem Vereinstext beim Verein
+            // bleiben, Entscheidung des Projektinhabers), dazu Kurz- und Druckname.
             $ownKeys = [$key];
-            if ($id !== null) {
+            $cands = [];
+            if (isset($data['name'])) {
+                $cands[] = (string) $clubs[$id]['name'];
+            } elseif ($id !== null) {
                 $ownKeys[] = ClubDirectory::normalize((string) $clubs[$id]['name']);
             }
+            $cands[] = trim((string) ($r['short_name'] ?? ''));
+            $cands[] = trim((string) ($r['print_name'] ?? ''));
             $aliases = [];
-            foreach (['short_name', 'print_name'] as $field) {
-                $cand = trim((string) ($r[$field] ?? ''));
+            foreach ($cands as $j => $cand) {
                 $ck = ClubDirectory::normalize($cand);
                 if ($ck === '' || in_array($ck, $ownKeys, true)) {
                     continue;
                 }
-                $holders = array_merge($names[$ck] ?? [], $others[$ck] ?? []);
+                $nameHolders = $names[$ck] ?? [];
+                if (isset($data['name']) && $j === 0) {
+                    // Den alten Namen hält der Verein selbst noch als Namen; das zählt hier nicht als Alias.
+                    $nameHolders = array_values(array_diff($nameHolders, [$owner]));
+                }
+                $holders = array_merge($nameHolders, $others[$ck] ?? []);
                 if (in_array($owner, $holders, true)) {
                     continue;
                 }

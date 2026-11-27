@@ -64,11 +64,26 @@ return [
     },
     'plan: Namensänderung bei bekannter Nummer, Kürzel und Bundesland bleiben' => function () use ($row, $club, $codes): void {
         $p = ClubImport::plan([$row(['name' => 'SV Neuname'])], [$club()]);
-        assertSame([['row' => 1, 'id' => 1, 'data' => ['name' => 'SV Neuname'], 'add_aliases' => []]], $p['update']);
+        assertSame([['row' => 1, 'id' => 1, 'data' => ['name' => 'SV Neuname'], 'add_aliases' => ['SV Altname']]], $p['update']);
         assertSame([['row' => 1, 'code' => 'renamed', 'detail' => 'SV Altname → SV Neuname']], $p['warnings']);
         assertSame(false, array_key_exists('short', $p['update'][0]['data']));
         assertSame(false, array_key_exists('state', $p['update'][0]['data']));
         assertSame([], $p['create']);
+    },
+    'plan: alter Name wird bei einer Umbenennung Alias (Entscheidung Projektinhaber)' => function () use ($row, $club): void {
+        $p = ClubImport::plan([$row(['name' => 'SV Neuname', 'short_name' => 'SV Neu'])], [$club()]);
+        assertSame(['SV Altname', 'SV Neu'], $p['update'][0]['add_aliases']);
+    },
+    'plan: alter Name als Alias entfällt, wenn er nur in der Schreibweise abweicht' => function () use ($row, $club): void {
+        $p = ClubImport::plan([$row(['name' => 'sv altname'])], [$club()]);
+        assertSame([], $p['update'][0]['add_aliases']);
+    },
+    'plan: alter Name, der einem anderen Verein gehört, wird kein Alias' => function () use ($row, $club, $codes): void {
+        $other = $club(['id' => 2, 'member_no' => '08-0050', 'name' => 'BC Anders', 'short' => 'BCA', 'aliases' => ['SV Altname']]);
+        $p = ClubImport::plan([$row(['name' => 'SV Neuname'])], [$club(), $other]);
+        assertSame([], $p['update'][0]['add_aliases']);
+        assertSame(['renamed', 'alias_conflict'], $codes($p['warnings']));
+        assertSame('SV Altname', $p['warnings'][1]['detail']);
     },
     'plan: unveränderter Verein zählt als unverändert' => function () use ($row, $club): void {
         $p = ClubImport::plan([$row(['name' => 'SV Altname'])], [$club()]);

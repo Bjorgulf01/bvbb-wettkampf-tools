@@ -77,7 +77,7 @@ Im Reiter „Vereine“ der Kaderliste (Rolle `kaderpflege` oder `admin`) über 
 - **Zeichensatz:** nuLiga exportiert Windows-1252. Das wird erkannt, ebenso UTF-8 (mit oder ohne BOM). Umlaute und ß kommen richtig an.
 - **Was übertragen wird:** nur sieben Spalten (Vereinsnummer, DBV-Nummer, Name, Kurzname, Druckname, Status, „Verein ist Verband …“). **Bank-, Adress- und Kontaktdaten verlassen den Browser nicht.**
 - **Was passiert:** Die DBV-Nummer (`08-` plus vierstellige Vereinsnummer) wird Mitgliedsnummer. Fehlt sie, wird sie aus der Vereinsnummer gebildet. Archiv-Vereine kommen als inaktiv dazu, Verbände nicht. Kurz- und Druckname werden Aliasnamen. Kürzel und Bundesland ändert der Import nie. Von Hand angelegte Vereine ohne Mitgliedsnummer werden über den Namen verknüpft.
-- **Ablauf:** Zuerst zeigt eine Vorschau, was neu, geändert, unverändert und übersprungen ist, mit Hinweisen (zum Beispiel „umbenannt: alt → neu“). Erst „Übernehmen“ speichert. Danach bei allen aktiven Vereinen das Bundesland pflegen (Kästchen „nur ohne Bundesland“) und die Datenprüfung der Kaderliste aufrufen.
+- **Ablauf:** Zuerst zeigt eine Vorschau, was neu, geändert, unverändert und übersprungen ist, mit Hinweisen (zum Beispiel „umbenannt: alt → neu“). Bei einer Umbenennung bleibt der alte Name als Alias erhalten, damit Spieler mit diesem Vereinstext beim Verein bleiben. Erst „Übernehmen“ speichert. Danach bei allen aktiven Vereinen das Bundesland pflegen (Kästchen „nur ohne Bundesland“) und die Datenprüfung der Kaderliste aufrufen.
 - Die echte Exportdatei gehört nie ins Repository. Zum Ausprobieren gibt es die erfundene Datei `tests/fixtures/nuliga/vereine-test.csv`.
 
 ## Prüfen nach dem Hochladen

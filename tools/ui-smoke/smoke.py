@@ -290,8 +290,8 @@ def club_import(s, bname, first):
     fc.value.set_files(path)
     expect(panel).to_contain_text("Vorschau Vereinsimport", timeout=20000)
     check(f"{bname} N5: Warnung umbenannt mit alt → neu", "umbenannt: BC Bemerkung Test → BC Bemerkung Neu Test" in panel.inner_text(), panel.inner_text())
-    check(f"{bname} N5: Vorschau nennt Spieler, die ihren Verein verlieren (Review Task 9b)",
-          re.search(r"[1-9]\d* Spieler verlieren durch den Import ihren Verein", panel.inner_text()) is not None, panel.inner_text())
+    check(f"{bname} N5: Umbenennung trennt keine Spieler, alter Name bleibt Alias (Entscheidung Projektinhaber)",
+          "verlieren durch den Import ihren Verein" not in panel.inner_text(), panel.inner_text())
     panel.get_by_role("button", name="Abbrechen").click()
     # Hinweis und Filter „ohne Bundesland“
     hint = pg.locator(".clubs-state-hint")
